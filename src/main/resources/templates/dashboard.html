@@ -1,0 +1,155 @@
+<!DOCTYPE html >
+<html lang="en" th:replace="layout:: layout(~{::title}, ~{::link}, ~{::div.dashboard-content})" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" th:href="@{/img/favicon.ico}" type="image/x-icon">
+    <link rel="stylesheet" th:href="@{/css/dashboard.js}">
+    <script>console.log("dashboard")</script>
+    <title>CSHelpDesk | Dashboard</title>
+</head>
+<body>
+<!-- Dashboard Content -->
+<div class="dashboard-content" >
+    <!-- Toggle Buttons -->
+    <div class="d-flex flex-row" id="toggle-buttons">
+        <div class="active" id="btnEmployees">Nhân Viên</div>
+        <div class="" id="btnTickets">Tickets</div>
+    </div>
+
+    <div class="row">
+        <!-- Employee List Section -->
+        <div class="col-12 mb-4" id="employeeSection">
+            <div class="card employee-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-people-fill"></i>
+                        Danh Sách Nhân Viên
+                    </h3>
+                    <span class="badge bg-primary employee-count">0</span>
+                </div>
+                <table id="employeeTable" class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th data-sort="name">Tên nhân viên</th>
+                        <th data-sort="userGroup">Vai trò</th>
+                        <th data-sort="ticketCount">Số lượng ticket</th>
+                        <th data-sort="status">Trạng thái</th>
+                        <th data-sort="statusTime">Thời gian trạng thái</th>
+                    </tr>
+                    </thead>
+                    <tbody id="employeeList2">
+                    <!-- employee rows will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Ticket Section -->
+        <div class="col-12 d-none" id="ticketSection">
+            <!-- Ticket Metrics -->
+            <div class="row pt-3 pb-3">
+                <div class="col">
+                    <div class="metric-card total-tickets">
+                        <div class="metric-icon">
+                            <i class="bi bi-ticket-perforated-fill"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h4 class="metric-title">Tổng Ticket</h4>
+                            <p class="metric-value" id="totalTickets">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="metric-card in-progress">
+                        <div class="metric-icon">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h4 class="metric-title">Đang Xử Lý</h4>
+                            <p class="metric-value" id="inProgressTickets">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="metric-card on-hold">
+                        <div class="metric-icon">
+                            <i class="bi bi-pause-circle-fill"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h4 class="metric-title">Đang Chờ</h4>
+                            <p class="metric-value" id="onHoldTickets">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="metric-card resolved">
+                        <div class="metric-icon">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h4 class="metric-title">Đã Xử Lý</h4>
+                            <p class="metric-value" id="resolvedTickets">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="metric-card refresh-container">
+                        <button class="btn-refresh" id="refreshDashboard">
+                            <i class="bi bi-arrow-clockwise"></i>
+                            <span>Làm Mới</span>
+                        </button>
+                        <p class="last-updated">
+                            <small>Cập nhật lúc: <span id="lastUpdated">--:--</span></small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ticket List -->
+            <div class="card ticket-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-list-ul"></i>
+                        Danh Sách Ticket Trong Ngày
+                    </h3>
+                    <div class="card-tools">
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-sm"
+                                   placeholder="Tìm kiếm..." id="ticketSearch">
+                            <button class="btn btn-sm btn-primary" type="button">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="row p-3" id="ticketList">
+                        <!-- Ticket cards will be loaded here -->
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="pagination-container">
+                        <ul class="pagination pagination-sm justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1">Trước</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Sau</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script src="a"></script>
+<script src="b"></script>
+<script src="c"></script>
+<script src="d"></script>
+<script src="e"></script>
+</html>

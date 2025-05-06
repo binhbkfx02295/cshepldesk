@@ -1,0 +1,56 @@
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar" th:fragment="sidebar">
+    <div class="sidebar-header">
+        <h1 class="logo">
+            <i class="bi bi-headset"></i>
+            <span>Help Desk</span>
+        </h1>
+        <button class="btn-toggle-sidebar d-lg-none" id="toggleSidebar">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+    <ul class="sidebar-menu">
+        <li class="active">
+            <a th:href="@{/dashboard}">
+                <i class="bi bi-speedometer2"></i>
+                <span>Bảng Điều Khiển</span>
+                <i class="bi bi-arrow-right-short"></i>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/ticket}">
+                <i class="bi bi-ticket-perforated"></i>
+                <span>Quản Lý Ticket</span>
+                <i class="bi bi-arrow-right-short"></i>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/customer}">
+                <i class="bi bi-people"></i>
+                <span>Người Dùng</span>
+                <i class="bi bi-arrow-right-short"></i>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/performance}">
+                <i class="bi bi-graph-up"></i>
+                <span>Hiệu Suất</span>
+                <i class="bi bi-arrow-right-short"></i>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/reporting}">
+                <i class="bi bi-bar-chart"></i>
+                <span>Báo Cáo</span>
+                <i class="bi bi-arrow-right-short"></i>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/setting}">
+                <i class="bi bi-gear"></i>
+                <span>Cài Đặt</span>
+                <i class="bi bi-arrow-right-short"></i>
+            </a>
+        </li>
+    </ul>
+</div>

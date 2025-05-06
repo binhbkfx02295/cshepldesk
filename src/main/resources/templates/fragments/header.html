@@ -1,0 +1,53 @@
+<!-- Header -->
+<header class="header" th:fragment="header">
+    <div class="header-left">
+        <button class="btn-toggle-sidebar d-lg-none" id="showSidebar">
+            <i class="bi bi-list"></i>
+        </button>
+        <h2 class="page-title">Bảng Điều Khiển</h2>
+    </div>
+    <div class="header-right">
+        <div class="date-time">
+            <i class="bi bi-calendar3"></i>
+            <span id="currentDate">--/--/----</span>
+        </div>
+
+        <div class="status-dropdown dropdown">
+            <button class="dropdown-toggle" type="button" id="statusDropdown" aria-expanded="false">
+                <span class="status-indicator online"></span>
+                <span id="currentStatusText">Online</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="statusDropdown">
+                <li><a class="dropdown-item" href="#">Online</a></li>
+                <li><a class="dropdown-item" href="#">Away</a></li>
+            </ul>
+        </div>
+
+        <div class="language-dropdown dropdown">
+            <button class="dropdown-toggle" type="button" id="languageDropdown" aria-expanded="false">
+                <span id="currentLanguage">VI</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                <li><a class="dropdown-item" href="#" onclick="setLanguage('VI')">VI</a></li>
+                <li><a class="dropdown-item" href="#" onclick="setLanguage('EN')">EN</a></li>
+            </ul>
+        </div>
+
+
+        <div class="user-dropdown dropdown">
+            <button class="dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                <img src="img/profile-placeholder.jpg" alt="User Avatar" class="user-avatar">
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> Hồ sơ</a></li>
+                <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Cài đặt</a></li>
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+                <li><a class="dropdown-item" th:href="@{/logout}"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</header>

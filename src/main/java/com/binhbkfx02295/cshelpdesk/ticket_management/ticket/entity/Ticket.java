@@ -1,0 +1,80 @@
+package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity;
+
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
+import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
+import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
+import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
+import com.binhbkfx02295.cshelpdesk.ticket_management.note.entity.Note;
+import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.entity.ProgressStatus;
+import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.Satisfaction;
+import com.binhbkfx02295.cshelpdesk.ticket_management.tag.entity.Tag;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.sql.Timestamp;
+import java.util.List;
+
+@Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Ticket {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    private String title;
+
+    @CreationTimestamp
+    private Timestamp createdAt;
+
+    @UpdateTimestamp
+    private Timestamp lastUpdateAt;
+
+    private Timestamp closedAt;
+
+    // Người xử lý (username hoặc tên người dùng)
+    @ManyToOne
+    @JoinColumn(name = "employee_id")
+    private Employee assignee;
+
+    // khách hàng
+    @ManyToOne
+    @JoinColumn(name = "facebook_user_id", nullable = false)
+    private FacebookUser facebookUser;
+
+
+    @ManyToOne
+    @JoinColumn(name = "progress_status_id", nullable = false)
+    private ProgressStatus progressStatus;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
+
+    @ManyToOne
+    @JoinColumn(name = "emotion_id")
+    private Emotion emotion;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "satisfaction_id")
+    private Satisfaction satisfaction;
+
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinTable(
+            name = "ticket_tag",
+            joinColumns = @JoinColumn(name = "ticket_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private List<Tag> tags;
+
+    @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
+    private List<Note> notes;
+
+
+}
