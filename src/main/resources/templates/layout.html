@@ -28,12 +28,12 @@
 </div>
 
 <div class="app-container">
-    <div th:replace="fragments/sidebar :: sidebar"></div>
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
 
     <div class="main-content">
-        <div th:replace="fragments/header :: header"></div>
+        <div th:replace="~{fragments/header :: header}"></div>
         <div th:replace="${content}"></div>
-        <div th:replace="fragments/footer :: footer"></div>
+        <div th:replace="~{fragments/footer :: footer}"></div>
     </div>
 </div>
 

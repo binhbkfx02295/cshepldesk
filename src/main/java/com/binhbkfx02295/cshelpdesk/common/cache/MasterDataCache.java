@@ -112,6 +112,11 @@ public class MasterDataCache {
     public Map<String, Category> getAllCategories() {
         return categoryMap;
     }
+
+    public Map<Integer, UserGroup> getAllUserGroup() {
+        return groupMap;
+    }
+
     public Map<String, Status> getAllStatus() {
         return statusMap;
     }

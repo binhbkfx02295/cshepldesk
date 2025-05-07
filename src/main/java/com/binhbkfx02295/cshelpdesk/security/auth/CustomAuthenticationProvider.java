@@ -43,7 +43,6 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         APIResultSet<LoginResponseDTO> result = authenticationService.login(loginRequestDTO);
         if (!result.isSuccess()) {
             log.warn("❌ Xác thực thất bại với mã HTTP {} - {}", result.getHttpCode(), result.getMessage());
-            authentication.setAuthenticated(false);
 
             if (result.getHttpCode() == 400 || result.getHttpCode() == 401) {
                 log.info("throw new BadCredentialsException(result.getMessage());");

@@ -39,38 +39,38 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeMapper mapper;
 
     @Override
-    public APIResultSet<EmployeeDTO> createUser(EmployeeDTO employee) {
-        if (employeeRepository.existsById(employee.getUsername())) {
+    public APIResultSet<EmployeeDTO> createUser(EmployeeDTO employeeDTO) {
+        if (cache.getEmployee(employeeDTO.getUsername()) != null) {
+            log.info("check cache: user {} not exists yet", employeeDTO.getUsername());
             return APIResultSet.badRequest("Username already exists");
         }
-
-        Optional<UserGroup> groupOpt = userGroupRepository.findById(employee.getGroupId());
-        if (groupOpt.isEmpty()) {
+        UserGroup group = cache.getUserGroup(employeeDTO.getGroupId());
+        if (group == null) {
             return APIResultSet.badRequest("Invalid user group");
         }
 
         try {
             Employee user = new Employee();
-            user.setUsername(employee.getUsername());
-            user.setName(employee.getName());
-            user.setPassword(passwordEncoder.encode(employee.getPassword()));
-            user.setUserGroup(groupOpt.get());
-            user.setDescription(employee.getDescription());
+            user.setUsername(employeeDTO.getUsername());
+            user.setName(employeeDTO.getName());
+            user.setPassword(passwordEncoder.encode(employeeDTO.getPassword()));
+            user.setUserGroup(group);
+            user.setDescription(employeeDTO.getDescription());
             user.setActive(true);
             user.setFailedLoginCount(0);
 
-            if (employee.getStatusLog() == null) {
-                Status status = new Status();
-                status.setId(3);
-                StatusLog log = new StatusLog();
-                log.setStatus(status);
-                log.setEmployee(user);
-                user.getStatusLogs().add(log);
+            //add status log
+            if (employeeDTO.getStatusLog() == null) {
+                Status status = cache.getStatus("offline");
+                StatusLog newLog = new StatusLog();
+                newLog.setStatus(status);
+                newLog.setEmployee(user);
+                user.getStatusLogs().add(newLog);
             }
 
             user = employeeRepository.save(user);
             cache.updateEmployee(user);
-            APIResultSet<EmployeeDTO> result = APIResultSet.ok("User created", employee);
+            APIResultSet<EmployeeDTO> result = APIResultSet.ok(String.format("User %s created", user.getUsername()), mapper.toDTO(user));
             log.info(result.getMessage());
             return result;
 

@@ -1,0 +1,22 @@
+<!DOCTYPE html >
+<html lang="en" th:replace="~{layout:: layout(~{::title}, ~{::link}, ~{::div.error-content})}" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" th:href="@{/img/favicon.ico}" type="image/x-icon">
+    <link rel="stylesheet" th:href="@{/js/dashboard.js}">
+    <script>console.log("error")</script>
+    <title>CSHelpDesk | Loi </title>
+</head>
+<body>
+
+<div class="error-content text-center" style="margin-top: 80px;">
+    <!--    TODO: add content for 404 not found-->
+    <!--    purpose: to notify user that this page is not available-->
+    <!--    example: display large heading with fae background-->
+
+    <h1 style="font-size: 64px; color: #dc3545;">404</h1>
+    <p style="font-size: 24px;">Trang bạn tìm kiếm không tồn tại.</p>
+    <a href="/" class="btn btn-primary mt-3">Quay lại Trang chính</a>
+</div>
+</body>
+</html>

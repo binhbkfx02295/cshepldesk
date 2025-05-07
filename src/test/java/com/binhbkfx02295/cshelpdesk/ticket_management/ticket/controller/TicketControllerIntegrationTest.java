@@ -1,6 +1,7 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.controller;
 
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.Employee;
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeDTO;
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.service.EmployeeServiceImpl;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDetailDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.service.FacebookUserServiceImpl;
@@ -67,12 +68,10 @@ class TicketControllerIntegrationTest {
 
     @BeforeAll
     void setUp() {
-        ;
         globalHeaders.setContentType(MediaType.APPLICATION_JSON);
         txStatus = txManager.getTransaction(new DefaultTransactionDefinition());
         seedFacebookUser();
         seedEmployee();
-        login();
         for (int i = 1; i <= 11; i++) {
             TicketDetailDTO ticketDTO = new TicketDetailDTO();
             ticketDTO.setAssignee("testacc");
@@ -86,9 +85,11 @@ class TicketControllerIntegrationTest {
         ticketDetailDTO.setAssignee("testacc");
         ticketDetailDTO.setFacebookUser("test-989897796767");
         ticketDetailDTO.setProgressStatus("pending");
+        ticketService.createTicket(ticketDetailDTO);
 
 
         txManager.commit(txStatus);
+        login();
 
     }
 
@@ -97,7 +98,7 @@ class TicketControllerIntegrationTest {
     void tearDown() {
         // ✅ dùng globalHeaders chứa cookie để logout
         HttpEntity<Void> logoutRequest = new HttpEntity<>(null, globalHeaders);
-        restTemplate.exchange("http://localhost:" + port + "/logout", HttpMethod.GET, logoutRequest, Void.class);
+        restTemplate.exchange("http://localhost:" + port + "/logout", HttpMethod.POST, logoutRequest, Void.class);
         // cleanup manually
         if (ticketId > 0) {
             ticketService.deleteById(ticketId);
@@ -105,12 +106,12 @@ class TicketControllerIntegrationTest {
         facebookUserService.deleteById("test-989897796767");
         employeeService.deleteByUsername("testacc");
         ticketRepository.deleteAll();
-        txManager.commit(txStatus);
     }
 
     @Test
     @Order(1)
     void testCreateTicket_success() throws Exception {
+
         HttpEntity<String> request = new HttpEntity<>(objectMapper.writeValueAsString(ticketDetailDTO), globalHeaders);
         ResponseEntity<String> response = restTemplate.postForEntity(baseUrl(), request, String.class);
 
@@ -133,12 +134,16 @@ class TicketControllerIntegrationTest {
     @Order(4)
     void testUpdateTicketTitle_success() throws Exception {
         ticketDetailDTO.setTitle("Updated Title");
+        ticketId = 1;
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> request = new HttpEntity<>(objectMapper.writeValueAsString(ticketDetailDTO), headers);
+        HttpEntity<String> request = new HttpEntity<>(objectMapper.writeValueAsString(ticketDetailDTO), globalHeaders);
         ResponseEntity<String> response = restTemplate.exchange(baseUrl() + "/" + ticketId, HttpMethod.PUT, request, String.class);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+
         JsonNode json = objectMapper.readTree(response.getBody());
+        log.info(json.asText());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+
+
         assertEquals("Updated Title", json.path("data").path("title").asText());
     }
 
@@ -273,14 +278,14 @@ class TicketControllerIntegrationTest {
 
     private void seedEmployee() {
         //seed dữ lieuej thaajt truocws khi tesst
-        Employee emp = new Employee();
+        EmployeeDTO emp = new EmployeeDTO();
         emp.setUsername("testacc");
         emp.setPassword("Abcd@1234");
         emp.setName("Test User");
         emp.setGroupId(1);
-        if (employeeService.existsByUsername(emp.getUsername()).getHttpCode() != 200) {
-            APIResultSet<Employee> result = employeeService.createUser(emp);
-        }
+
+        APIResultSet<EmployeeDTO> result = employeeService.createUser(emp);
+        log.info(result.getMessage());
     }
 
     public void login() {

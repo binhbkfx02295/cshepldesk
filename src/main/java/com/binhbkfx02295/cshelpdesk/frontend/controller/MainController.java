@@ -1,72 +1,82 @@
 package com.binhbkfx02295.cshelpdesk.frontend.controller;
 
-import com.binhbkfx02295.cshelpdesk.employee_management.authentication.dto.LoginRequestDTO;
-import com.binhbkfx02295.cshelpdesk.employee_management.authentication.dto.LoginResponseDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.authentication.service.AuthenticationServiceImpl;
-import com.binhbkfx02295.cshelpdesk.util.APIResponseEntityHelper;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.util.Locale;
+import java.io.IOException;
 
 @Controller
 @RequiredArgsConstructor
 public class MainController {
 
-    private final AuthenticationServiceImpl authenticationService;
+    @GetMapping("/")
+    public void index(HttpServletResponse response) throws IOException {
+        response.sendRedirect("/dashboard");
+    }
 
     @GetMapping("/dashboard")
-    public String dashboard(Model model) {
-        return "dashboard"; // layout.html sẽ chèn fragment này
+    public String dashboard() {
+        return "dashboard";
     }
 
     @GetMapping("/login")
     public String showLoginPage() {
-        return "login"; // Thymeleaf login.html
+        return "login";
     }
 
     @GetMapping("/ticket")
-    public String ticket(Model model) {
-        model.addAttribute("pageTitle", "Trang Dashboard");
-        model.addAttribute("body", "dashboard :: body"); // tên file + tên fragment
-        return "dashboard"; // layout.html sẽ chèn fragment này
+    public String ticket() {
+        return "ticket";
     }
 
     @GetMapping("/customer")
-    public String customer(Model model) {
-        model.addAttribute("pageTitle", "Trang Dashboard");
-        model.addAttribute("body", "dashboard :: body"); // tên file + tên fragment
-        return "layout"; // layout.html sẽ chèn fragment này
+    public String customer() {
+        return "customer";
     }
 
     @GetMapping("/performance")
-    public String performance(Model model) {
-        model.addAttribute("pageTitle", "Trang Dashboard");
-        model.addAttribute("body", "dashboard :: body"); // tên file + tên fragment
-        return "layout"; // layout.html sẽ chèn fragment này
+    public String performance() {
+        return "performance";
     }
 
     @GetMapping("/reporting")
-    public String reporting(Model model) {
-        model.addAttribute("pageTitle", "Trang Dashboard");
-        model.addAttribute("body", "dashboard :: body"); // tên file + tên fragment
-        return "layout"; // layout.html sẽ chèn fragment này
+    public String reporting() {
+        return "reporting"; // layout.html sẽ chèn fragment này
     }
 
     @GetMapping("/setting")
-    public String setting(Model model) {
-        model.addAttribute("pageTitle", "Trang Dashboard");
-        model.addAttribute("body", "dashboard :: body"); // tên file + tên fragment
-        return "layout"; // layout.html sẽ chèn fragment này
+    public String setting() {
+        return "setting"; // layout.html sẽ chèn fragment này
+    }
+
+    @GetMapping("/error")
+    public String error(HttpServletResponse res, HttpServletRequest req) throws IOException {
+
+        String path =req.getRequestURI();
+        String accept = req.getHeader("Accept");
+
+        // Nếu là file tĩnh (css/js/img/...) → không trả HTML
+        if (isStaticAsset(path) || accept == null || !accept.contains("text/html")) {
+            res.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            res.setContentType("application/json");
+            res.getWriter().write("{\"error\": \"Not found\"}");
+            return null;
+        }
+
+        res.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        return "error"; // Chỉ khi là HTML trang chính
+    }
+
+    @GetMapping("/pending")
+    public String pending() {
+        return "pending"; // layout.html sẽ chèn fragment này
+    }
+
+    private boolean isStaticAsset(String path) {
+        return path.matches(".*\\.(css|js|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot)$");
     }
 }
