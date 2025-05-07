@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface EmployeeService {
     APIResultSet<EmployeeDTO> createUser(EmployeeDTO employeeDTO);
-    APIResultSet<EmployeeDTO> updateUser(String username, EmployeeDTO employeeDTO);
+    APIResultSet<EmployeeDTO> updateUser(String username, EmployeeDTO employee);
     APIResultSet<Void> lockUser(String username);
     APIResultSet<EmployeeDTO> getUserByUsername(String username);
     APIResultSet<List<EmployeeDTO>> getAllUsers();
@@ -22,4 +22,5 @@ public interface EmployeeService {
     APIResultSet<List<StatusLogDTO>> findWithAllLogs(EmployeeDTO employeeDTO);
     APIResultSet<Void> updateOnlineStatus(String username, StatusLogDTO logDTO);
     APIResultSet<List<StatusDTO>> getAllOnlineStatus();
+    APIResultSet<Void> deleteByUsername(String testaccount);
 }

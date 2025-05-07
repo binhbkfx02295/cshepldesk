@@ -17,4 +17,6 @@ public interface FacebookUserDAO {
     FacebookUser update(FacebookUser updatedUser);
 
     boolean existsById(String id);
+
+    void deleteById(String facebookUserId);
 }

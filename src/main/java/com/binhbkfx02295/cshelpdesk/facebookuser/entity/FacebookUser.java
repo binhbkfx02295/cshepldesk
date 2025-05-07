@@ -19,7 +19,6 @@ public class FacebookUser {
     private String facebookFirstName;
     private String facebookLastName;
     private String facebookProfilePic;
-    private String fullName;
     private String email;
     private String phone;
     private String zalo;

@@ -8,16 +8,17 @@ import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroup;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
-import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.Satisfaction;
+import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisfaction;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.entity.ProgressStatus;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.CategoryRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.repository.EmotionRepository;
-import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.SatisfactionRepository;
+import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.repository.SatisfactionRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.repository.ProgressStatusRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.entity.Tag;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.repository.TagRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class MasterDataCache {
 
     private final ProgressStatusRepository progressStatusRepository;
@@ -46,8 +48,7 @@ public class MasterDataCache {
     private Map<Integer, UserGroup> groupMap;
     private Map<String, Tag> tagMap;
 
-    @PostConstruct
-    public void init() {
+    public void refresh() {
         updateAllProgressStatus();
         updateAllEmotions();
         updateAllSatisfactions();
@@ -56,6 +57,7 @@ public class MasterDataCache {
         updateAllEmployees();
         updateAllGroups();
         updateALlTags();
+        log.info("caching successfully");
     }
 
     private void updateALlTags() {

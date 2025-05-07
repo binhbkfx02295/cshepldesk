@@ -18,7 +18,7 @@ public class TicketSearchCriteria {
     private String progressStatus;
     private LocalDateTime fromDate;
     private LocalDateTime toDate;
-    private Category category;
+    private String category;
     private int emotion;
     private int satisfaction;
 }

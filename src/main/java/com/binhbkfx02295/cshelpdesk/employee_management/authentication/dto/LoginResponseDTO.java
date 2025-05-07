@@ -10,7 +10,7 @@ import java.util.Set;
 
 @Data
 public class LoginResponseDTO {
-    private EmployeeDTO employee;
+    private EmployeeDTO employeeDTO;
     private UserGroupDTO group;
     private ValidationResult validationResult;
     private Set<PermissionDTO> permissions;

@@ -2,7 +2,9 @@ package com.binhbkfx02295.cshelpdesk.ticket_management.category.mapper;
 
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.dto.CategoryDTO;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CategoryMapper {
 
     public CategoryDTO toDTO(Category category) {

@@ -1,6 +1,7 @@
 <!-- layout.html -->
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:fragment="layout (title, links, content)">
+<html lang="vi"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" xmlns:th="http://www.thymeleaf.org" th:fragment="layout (title, links, content)">
 <head>
     <meta charset="UTF-8">
     <title th:replace="${title}">Customer Help Desk</title>

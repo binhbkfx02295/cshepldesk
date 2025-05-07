@@ -6,13 +6,11 @@ import com.binhbkfx02295.cshelpdesk.employee_management.authentication.dto.Login
 import com.binhbkfx02295.cshelpdesk.employee_management.authentication.util.ValidationHelper;
 import com.binhbkfx02295.cshelpdesk.employee_management.authentication.util.ValidationResult;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeDTO;
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.StatusLogDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Status;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.StatusLog;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.EmployeeRepository;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.StatusLogRepository;
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.service.EmployeeService;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.service.EmployeeServiceImpl;
 import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupDTO;
@@ -94,7 +92,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         employeeDTO.setName(employee.getName());
         employeeDTO.setDescription(employee.getDescription());
         employeeDTO.setGroupId(employee.getUserGroup().getGroupId());
-        response.setEmployee(employeeDTO);
+        response.setEmployeeDTO(employeeDTO);
 
         UserGroupDTO groupDTO = new UserGroupDTO();
         groupDTO.setGroupId(employee.getUserGroup().getGroupId());

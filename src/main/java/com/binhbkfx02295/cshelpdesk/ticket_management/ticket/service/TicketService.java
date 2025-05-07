@@ -27,4 +27,5 @@ public interface TicketService {
     APIResultSet<Set<NoteDTO>> getNotes(int ticketId);
     APIResultSet<Void> updateCategoryForTicket(int ticketId, int categoryId);
     APIResultSet<Void> removeCategoryFromTicket(int ticketId, int categoryId);
+    APIResultSet<Void> deleteById(int ticketId);
 }

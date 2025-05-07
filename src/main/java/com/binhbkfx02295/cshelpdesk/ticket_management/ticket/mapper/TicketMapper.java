@@ -6,7 +6,7 @@ import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.entity.ProgressStatus;
-import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.Satisfaction;
+import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisfaction;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDetailDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
@@ -14,7 +14,6 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.tag.entity.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.List;
 import java.util.Collections;
 import java.util.stream.Collectors;
@@ -104,40 +103,35 @@ public class TicketMapper {
         // 3. Assignee (username)
         if (dto.getAssignee() != null && (entity.getAssignee() == null ||
                 !dto.getAssignee().equals(entity.getAssignee().getUsername()))) {
-            Employee assignee = new Employee();
-            assignee.setUsername(dto.getAssignee());
+            Employee assignee = cache.getEmployee(dto.getAssignee());
             entity.setAssignee(assignee);
         }
 
         // 4. ProgressStatus (name hoặc code)
         if (dto.getProgressStatus() != null && (entity.getProgressStatus() == null ||
-                !dto.getProgressStatus().equals(entity.getProgressStatus().getName()))) {
-            ProgressStatus status = new ProgressStatus();
-            status.setName(dto.getProgressStatus());
+                !dto.getProgressStatus().equals(entity.getProgressStatus().getCode()))) {
+            ProgressStatus status = cache.getProgress(dto.getProgressStatus());
             entity.setProgressStatus(status);
         }
 
         // 5. Category (name)
         if (dto.getCategory() != null && (entity.getCategory() == null ||
                 !dto.getCategory().equals(entity.getCategory().getName()))) {
-            Category category = new Category();
-            category.setName(dto.getCategory());
+            Category category = cache.getCategory(dto.getCategory());
             entity.setCategory(category);
         }
 
         // 6. Emotion (by ID)
         if (dto.getEmotion() > 0 && (entity.getEmotion() == null ||
                 dto.getEmotion() != entity.getEmotion().getId())) {
-            Emotion emotion = new Emotion();
-            emotion.setId(dto.getEmotion());
+            Emotion emotion = cache.getEmotion(dto.getEmotion());
             entity.setEmotion(emotion);
         }
 
         // 7. Satisfaction (by score)
         if (dto.getSatisfaction() > 0 && (entity.getSatisfaction() == null ||
                 dto.getSatisfaction() != entity.getSatisfaction().getScore())) {
-            Satisfaction satisfaction = new Satisfaction();
-            satisfaction.setScore(dto.getSatisfaction());
+            Satisfaction satisfaction = cache.getSatisfaction(dto.getSatisfaction());
             entity.setSatisfaction(satisfaction);
         }
 

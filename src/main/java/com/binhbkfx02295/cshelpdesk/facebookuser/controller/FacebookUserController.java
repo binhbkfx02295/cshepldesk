@@ -1,6 +1,7 @@
 package com.binhbkfx02295.cshelpdesk.facebookuser.controller;
 
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDTO;
+import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDetailDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
 import com.binhbkfx02295.cshelpdesk.facebookuser.service.FacebookUserServiceImpl;
@@ -34,20 +35,20 @@ public class FacebookUserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<APIResultSet<FacebookUserDTO>> get(@PathVariable String id) {
-        APIResultSet<FacebookUserDTO> resultSet = facebookUserService.get(id);
+    public ResponseEntity<APIResultSet<FacebookUserDetailDTO>> get(@PathVariable String id) {
+        APIResultSet<FacebookUserDetailDTO> resultSet = facebookUserService.get(id);
         return ResponseEntity.status(resultSet.getHttpCode()).body(resultSet);
     }
 
     @PutMapping
-    public ResponseEntity<APIResultSet<FacebookUserDTO>> createFacebookUser(@RequestBody FacebookUser user) {
-        APIResultSet<FacebookUserDTO> resultSet = facebookUserService.save(user);
+    public ResponseEntity<APIResultSet<FacebookUserDetailDTO>> createFacebookUser(@RequestBody FacebookUserDetailDTO user) {
+        APIResultSet<FacebookUserDetailDTO> resultSet = facebookUserService.save(user);
         return ResponseEntity.status(resultSet.getHttpCode()).body(resultSet);
     }
 
     @PostMapping
-    public ResponseEntity<APIResultSet<FacebookUserDTO>> updateFacebookUser(@RequestBody FacebookUser user) {
-        APIResultSet<FacebookUserDTO> resultSet = facebookUserService.update(user);
+    public ResponseEntity<APIResultSet<FacebookUserDetailDTO>> updateFacebookUser(@RequestBody FacebookUserDetailDTO user) {
+        APIResultSet<FacebookUserDetailDTO> resultSet = facebookUserService.update(user);
         return ResponseEntity.status(resultSet.getHttpCode()).body(resultSet);
     }
 

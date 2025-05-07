@@ -6,7 +6,7 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.entity.Note;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.entity.ProgressStatus;
-import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.Satisfaction;
+import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisfaction;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.entity.Tag;
 import jakarta.persistence.*;
 import lombok.*;
@@ -75,6 +75,4 @@ public class Ticket {
 
     @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     private List<Note> notes;
-
-
 }

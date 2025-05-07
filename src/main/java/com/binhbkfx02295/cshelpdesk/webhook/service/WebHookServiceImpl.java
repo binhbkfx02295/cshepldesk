@@ -4,6 +4,7 @@ import com.binhbkfx02295.cshelpdesk.facebookgraphapi.config.FacebookAPIPropertie
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.dto.FacebookUserProfileDTO;
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.service.FacebookGraphAPIService;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDTO;
+import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDetailDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.facebookuser.service.FacebookUserService;
 import com.binhbkfx02295.cshelpdesk.message.service.MessageServiceImpl;
@@ -41,7 +42,7 @@ public class WebHookServiceImpl implements WebHookService {
                 String recipientId = messaging.getRecipient().getId();
                 String messageText = messaging.getMessage().getText();
                 Timestamp timestamp = new Timestamp(messaging.getTimestamp());
-                FacebookUserDTO facebookUser = senderId.equalsIgnoreCase(properties.getPageId()) ?
+                FacebookUserDetailDTO facebookUser = senderId.equalsIgnoreCase(properties.getPageId()) ?
                         getOrCreateFacebookUser(recipientId) : getOrCreateFacebookUser(senderId);
 
                 TicketDetailDTO ticket = getOrCreateActiveTicket(facebookUser);
@@ -50,27 +51,26 @@ public class WebHookServiceImpl implements WebHookService {
         }
     }
 
-    private FacebookUserDTO getOrCreateFacebookUser(String facebookId) {
+    private FacebookUserDetailDTO getOrCreateFacebookUser(String facebookId) {
         if (facebookId.equalsIgnoreCase(properties.getPageId())) {
             return null;
         }
-        APIResultSet<FacebookUserDTO> existing = facebookUserService.get(facebookId);
+        APIResultSet<FacebookUserDetailDTO> existing = facebookUserService.get(facebookId);
         if (existing.getHttpCode() == 200) return existing.getData();
 
         FacebookUserProfileDTO profile = facebookGraphAPIService.getUserProfile(facebookId);
-        FacebookUser newUser = FacebookUser.builder()
+        FacebookUserDetailDTO newUser = FacebookUserDetailDTO.builder()
                 .facebookId(profile.getId())
                 .facebookFirstName(profile.getFirstName())
                 .facebookLastName(profile.getLastName())
-                .fullName(profile.getFirstName() + " " + profile.getLastName())
                 .facebookProfilePic(profile.getPicture().getData().getUrl())
                 .email(profile.getEmail())
                 .build();
-        facebookUserService.save(newUser);
-        return new FacebookUserDTO(newUser);
+        APIResultSet<FacebookUserDetailDTO> result = facebookUserService.save(newUser);
+        return result.getData();
     }
 
-    private TicketDetailDTO getOrCreateActiveTicket(FacebookUserDTO facebookUser) {
+    private TicketDetailDTO getOrCreateActiveTicket(FacebookUserDetailDTO facebookUser) {
         APIResultSet<TicketDetailDTO> latestResult = ticketService.findLatestByFacebookUserId(facebookUser.getFacebookId());
         if (latestResult.getHttpCode() != 200 || latestResult.getData() == null || latestResult.getData().getProgressStatus().equalsIgnoreCase("resolved")) {
             TicketDetailDTO dto = new TicketDetailDTO();

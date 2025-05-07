@@ -1,6 +1,5 @@
 package com.binhbkfx02295.cshelpdesk.employee_management.employee.entity;
 
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroup;
 import jakarta.persistence.*;
 import lombok.Data;

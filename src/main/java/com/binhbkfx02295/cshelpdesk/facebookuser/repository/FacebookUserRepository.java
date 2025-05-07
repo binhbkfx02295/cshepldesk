@@ -74,7 +74,6 @@ public class FacebookUserRepository implements FacebookUserDAO {
             FacebookUser existing = entityManager.find(FacebookUser.class, updatedUser.getFacebookId());
             if (existing == null) return null;
 
-            if (updatedUser.getFullName() != null) existing.setFullName(updatedUser.getFullName());
             if (updatedUser.getFacebookFirstName() != null) existing.setFacebookFirstName(updatedUser.getFacebookFirstName());
             if (updatedUser.getFacebookLastName() != null) existing.setFacebookLastName(updatedUser.getFacebookLastName());
             if (updatedUser.getFacebookProfilePic() != null) existing.setFacebookProfilePic(updatedUser.getFacebookProfilePic());
@@ -96,6 +95,21 @@ public class FacebookUserRepository implements FacebookUserDAO {
         } catch (Exception e) {
             log.error("Error checking existence of FacebookUser with id={}", id, e);
             throw new RuntimeException("Failed to check existence", e);
+        }
+    }
+
+    @Override
+    public void deleteById(String facebookUserId) {
+        try {
+            FacebookUser entity = entityManager.find(FacebookUser.class, facebookUserId);
+            if (entity != null) {
+                entityManager.remove(entity);
+            } else {
+                log.warn("FacebookUser not found with id: {}", facebookUserId);
+            }
+        } catch (Exception e) {
+            log.error("Delete FacebookUser failed {}", e.getMessage(), e);
+            throw new RuntimeException("Delete FacebookUser failed", e);
         }
     }
 }

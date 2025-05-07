@@ -1,6 +1,6 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.mapper;
 
-import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.Satisfaction;
+import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisfaction;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.dto.SatisfactionDTO;
 
 public class SatisfactionMapper {

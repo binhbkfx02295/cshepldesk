@@ -23,8 +23,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer>, JpaSpe
 
     @Query("SELECT t FROM Ticket t WHERE t.id = :id")
     @EntityGraph(attributePaths = {
-            "employee", "facebookUser", "emotion", "satisfaction",
-            "progressStatus", "facebookUser", "tags", "notes"
+            "assignee", "facebookUser", "emotion", "satisfaction",
+            "progressStatus", "facebookUser"
     })
     Optional<Ticket> findByIdWithDetails(int id);
 

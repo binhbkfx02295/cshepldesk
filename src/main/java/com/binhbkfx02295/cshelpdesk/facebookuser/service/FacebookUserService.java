@@ -2,6 +2,7 @@ package com.binhbkfx02295.cshelpdesk.facebookuser.service;
 
 
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDTO;
+import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDetailDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
 
@@ -21,15 +22,17 @@ public interface FacebookUserService {
 
     static final String MSG_ERROR_NOT_ALLOWED = "MSG_ERROR_NOT_ALLOWED";
 
-    APIResultSet<FacebookUserDTO> save(FacebookUser user);
+    APIResultSet<FacebookUserDetailDTO> save(FacebookUserDetailDTO user);
 
-    APIResultSet<FacebookUserDTO> update(FacebookUser updatedUser);
+    APIResultSet<FacebookUserDetailDTO> update(FacebookUserDetailDTO updatedUser);
 
     APIResultSet<List<FacebookUserDTO>> search(String name);
 
-    APIResultSet<FacebookUserDTO> get(String id);
+    APIResultSet<FacebookUserDetailDTO> get(String id);
 
     APIResultSet<List<FacebookUserDTO>> getAll();
 
     APIResultSet<Void> existsById(String facebookId);
+
+    APIResultSet<Void> deleteById(String s);
 }

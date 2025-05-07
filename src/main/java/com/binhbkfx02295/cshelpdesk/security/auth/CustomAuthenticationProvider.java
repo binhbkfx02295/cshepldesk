@@ -62,7 +62,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
                 .collect(Collectors.toSet());
 
         authorities.add(new SimpleGrantedAuthority("ROLE_" + response.getGroup().getName().toUpperCase()));
-
+        log.info(authorities.toString());
         return new UsernamePasswordAuthenticationToken(response,null, authorities);
     }
 

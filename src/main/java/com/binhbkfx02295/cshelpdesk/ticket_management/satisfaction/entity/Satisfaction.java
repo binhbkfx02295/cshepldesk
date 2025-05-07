@@ -1,4 +1,4 @@
-package com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction;
+package com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

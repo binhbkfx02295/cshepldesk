@@ -7,6 +7,7 @@ import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.StatusLogDT
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Status;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.StatusLog;
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeMapper;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.StatusLogRepository;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroup;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupRepository;
@@ -35,29 +36,30 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final StatusLogRepository statusLogRepository;
     private final MessageSource messageSource;
     private final MasterDataCache cache;
+    private final EmployeeMapper mapper;
 
     @Override
-    public APIResultSet<EmployeeDTO> createUser(EmployeeDTO employeeDTO) {
-        if (employeeRepository.existsById(employeeDTO.getUsername())) {
+    public APIResultSet<EmployeeDTO> createUser(EmployeeDTO employee) {
+        if (employeeRepository.existsById(employee.getUsername())) {
             return APIResultSet.badRequest("Username already exists");
         }
 
-        Optional<UserGroup> groupOpt = userGroupRepository.findById(employeeDTO.getGroupId());
+        Optional<UserGroup> groupOpt = userGroupRepository.findById(employee.getGroupId());
         if (groupOpt.isEmpty()) {
             return APIResultSet.badRequest("Invalid user group");
         }
 
         try {
             Employee user = new Employee();
-            user.setUsername(employeeDTO.getUsername());
-            user.setName(employeeDTO.getName());
-            user.setPassword(passwordEncoder.encode(employeeDTO.getPassword()));
+            user.setUsername(employee.getUsername());
+            user.setName(employee.getName());
+            user.setPassword(passwordEncoder.encode(employee.getPassword()));
             user.setUserGroup(groupOpt.get());
-            user.setDescription(employeeDTO.getDescription());
+            user.setDescription(employee.getDescription());
             user.setActive(true);
             user.setFailedLoginCount(0);
 
-            if (employeeDTO.getStatusLog() == null) {
+            if (employee.getStatusLog() == null) {
                 Status status = new Status();
                 status.setId(3);
                 StatusLog log = new StatusLog();
@@ -68,7 +70,9 @@ public class EmployeeServiceImpl implements EmployeeService {
 
             user = employeeRepository.save(user);
             cache.updateEmployee(user);
-            return APIResultSet.ok("User created", employeeDTO);
+            APIResultSet<EmployeeDTO> result = APIResultSet.ok("User created", employee);
+            log.info(result.getMessage());
+            return result;
 
         } catch (Exception e) {
             log.error("Failed to create user", e);
@@ -78,7 +82,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public APIResultSet<EmployeeDTO> updateUser(String username, EmployeeDTO employeeDTO) {
-        Optional<Employee> userOpt = employeeRepository.findById(username);
+        Optional<com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee> userOpt = employeeRepository.findById(username);
         if (userOpt.isEmpty()) {
             log.info("Update user: user not found");
             return APIResultSet.notFound("Update user: user not found");
@@ -90,7 +94,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         try {
-            Employee user = userOpt.get();
+            com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee user = userOpt.get();
             user.setName(employeeDTO.getName());
             user.setDescription(employeeDTO.getDescription());
             user.setUserGroup(groupOpt.get());
@@ -111,7 +115,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (userOpt.isEmpty()) return APIResultSet.notFound("User not found");
 
         try {
-            Employee user = userOpt.get();
+           Employee user = userOpt.get();
             user.setActive(false);
             user = employeeRepository.save(user);
             cache.updateEmployee(user);
@@ -224,7 +228,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 EmployeeDTO employeeDTO = toDTO(employee);
                 if (!employee.getStatusLogs().isEmpty()) {
                     List<StatusLogDTO> logs = new ArrayList<>();
-                    for (StatusLog log: employee.getStatusLogs()) {
+                    for (StatusLog log : employee.getStatusLogs()) {
                         StatusLogDTO logDTO = new StatusLogDTO();
                         logDTO.setStatus(log.getStatus().getName());
                         logDTO.setFrom(log.getTimestamp());
@@ -266,7 +270,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
 
-
     @Override
     public APIResultSet<List<StatusLogDTO>> findWithAllLogs(EmployeeDTO employeeDTO) {
         String username = employeeDTO.getUsername();
@@ -296,9 +299,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     public APIResultSet<Void> updateOnlineStatus(String username, StatusLogDTO logDTO) {
 
         try {
-            Optional<Employee> employeeDTO = employeeRepository.findByUsername(username);
+            Optional<com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee> employeeDTO = employeeRepository.findByUsername(username);
             if (employeeDTO.isPresent()) {
-                Employee employee = employeeDTO.get();
+                com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee employee = employeeDTO.get();
                 StatusLog newLog = new StatusLog();
                 Status status = cache.getStatus(logDTO.getStatus());
                 newLog.setStatus(status);
@@ -316,14 +319,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
-    // Helper method
     private EmployeeDTO toDTO(Employee user) {
         EmployeeDTO dto = new EmployeeDTO();
         dto.setUsername(user.getUsername());
         dto.setName(user.getName());
         dto.setDescription(user.getDescription());
         dto.setGroupId(user.getUserGroup().getGroupId());
-
 
         return dto;
     }
@@ -344,5 +345,18 @@ public class EmployeeServiceImpl implements EmployeeService {
             log.error("Lấy danh sách status bị lỗi ", e);
             return APIResultSet.internalError();
         }
+    }
+
+    @Override
+    public APIResultSet<Void> deleteByUsername(String username) {
+        try {
+            employeeRepository.deleteByUsername(username);
+            APIResultSet<Void> result = APIResultSet.ok(String.format("Xoa user %s thanh cong", username), null);
+            log.info(result.getMessage());
+            return result;
+        } catch (Exception e) {
+            return APIResultSet.internalError();
+        }
+
     }
 }
