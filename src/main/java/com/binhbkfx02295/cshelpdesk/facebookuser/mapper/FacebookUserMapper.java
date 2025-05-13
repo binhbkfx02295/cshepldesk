@@ -46,5 +46,24 @@ public class FacebookUserMapper {
         entity.setFacebookProfilePic(dto.getFacebookProfilePic());
         return entity;
     }
-    ;
+
+    public FacebookUser toEntity(FacebookUserDTO dto) {
+        FacebookUser entity = new FacebookUser();
+        entity.setFacebookId(dto.getFacebookId());
+        entity.setFacebookLastName(dto.getFacebookLastName());
+        entity.setFacebookFirstName(dto.getFacebookFirstName());
+        entity.setFacebookProfilePic(dto.getFacebookProfilePic());
+        return entity;
+    }
+
+
+    public FacebookUserDTO toDTO(FacebookUser dto) {
+        FacebookUserDTO entity = new FacebookUserDTO();
+        entity.setFacebookId(dto.getFacebookId());
+        entity.setFacebookLastName(dto.getFacebookLastName());
+        entity.setFacebookFirstName(dto.getFacebookFirstName());
+        entity.setFacebookProfilePic(dto.getFacebookProfilePic());
+        return entity;
+    }
+
 }

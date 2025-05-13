@@ -23,10 +23,10 @@ public class FacebookUserServiceImpl implements FacebookUserService {
     private final FacebookUserMapper mapper;
 
     @Override
-    public APIResultSet<FacebookUserDetailDTO> save(FacebookUserDetailDTO userDTO) {
+    public APIResultSet<FacebookUserDTO> save(FacebookUserDTO userDTO) {
         try {
             FacebookUser user = facebookUserRepository.save(mapper.toEntity(userDTO));
-            APIResultSet<FacebookUserDetailDTO> result = APIResultSet.ok(MSG_SUCCESS, mapper.toDetailDTO(user));
+            APIResultSet<FacebookUserDTO> result = APIResultSet.ok(MSG_SUCCESS, mapper.toDTO(user));
             log.info(result.getMessage());
             return result;
         } catch (Exception e) {
@@ -61,11 +61,11 @@ public class FacebookUserServiceImpl implements FacebookUserService {
     }
 
     @Override
-    public APIResultSet<FacebookUserDetailDTO> get(String id) {
+    public APIResultSet<FacebookUserDTO> get(String id) {
         try {
             return Optional.ofNullable(facebookUserRepository.get(id))
                     .map(user -> {
-                        APIResultSet<FacebookUserDetailDTO> result = APIResultSet.ok(MSG_SUCCESS, mapper.toDetailDTO(user));
+                        APIResultSet<FacebookUserDTO> result = APIResultSet.ok(MSG_SUCCESS, mapper.toDTO(user));
                         log.info(result.getMessage());
                         return result;
                     })

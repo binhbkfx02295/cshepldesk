@@ -22,13 +22,13 @@ public interface FacebookUserService {
 
     static final String MSG_ERROR_NOT_ALLOWED = "MSG_ERROR_NOT_ALLOWED";
 
-    APIResultSet<FacebookUserDetailDTO> save(FacebookUserDetailDTO user);
+    APIResultSet<FacebookUserDTO> save(FacebookUserDTO user);
 
     APIResultSet<FacebookUserDetailDTO> update(FacebookUserDetailDTO updatedUser);
 
     APIResultSet<List<FacebookUserDTO>> search(String name);
 
-    APIResultSet<FacebookUserDetailDTO> get(String id);
+    APIResultSet<FacebookUserDTO> get(String id);
 
     APIResultSet<List<FacebookUserDTO>> getAll();
 

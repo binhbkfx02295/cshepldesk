@@ -35,14 +35,14 @@ public class FacebookUserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<APIResultSet<FacebookUserDetailDTO>> get(@PathVariable String id) {
-        APIResultSet<FacebookUserDetailDTO> resultSet = facebookUserService.get(id);
+    public ResponseEntity<APIResultSet<FacebookUserDTO>> get(@PathVariable String id) {
+        APIResultSet<FacebookUserDTO> resultSet = facebookUserService.get(id);
         return ResponseEntity.status(resultSet.getHttpCode()).body(resultSet);
     }
 
     @PutMapping
-    public ResponseEntity<APIResultSet<FacebookUserDetailDTO>> createFacebookUser(@RequestBody FacebookUserDetailDTO user) {
-        APIResultSet<FacebookUserDetailDTO> resultSet = facebookUserService.save(user);
+    public ResponseEntity<APIResultSet<FacebookUserDTO>> createFacebookUser(@RequestBody FacebookUserDTO user) {
+        APIResultSet<FacebookUserDTO> resultSet = facebookUserService.save(user);
         return ResponseEntity.status(resultSet.getHttpCode()).body(resultSet);
     }
 
