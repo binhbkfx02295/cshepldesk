@@ -11,18 +11,26 @@ import com.binhbkfx02295.cshelpdesk.employee_management.permission.Permission;
 import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionRepository;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroup;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupRepository;
+import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDTO;
+import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
+import com.binhbkfx02295.cshelpdesk.facebookuser.repository.FacebookUserRepository;
+import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
+import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.CategoryRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisfaction;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.entity.ProgressStatus;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.repository.EmotionRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.repository.SatisfactionRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.repository.ProgressStatusRepository;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,7 +48,9 @@ public class MasterDataSeeder implements CommandLineRunner {
     private final PermissionRepository permissionRepository;
     private final EmployeeRepository employeeRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final CategoryRepository categoryRepository;
     private final MasterDataCache cache;
+    private final FacebookUserRepository facebookUserRepository;
 
 
     @Override
@@ -52,9 +62,95 @@ public class MasterDataSeeder implements CommandLineRunner {
         seedProgressStatuses();
         seedCustomerEmotions();
         seedCustomerSatisfactions();
+        seedCategory();
+        seedFacebookUsers();
+        seedTickets();
 
         log.info("seeding done");
         cache.refresh();
+    }
+
+    private void seedTickets() {
+    }
+
+    private void seedFacebookUsers() {
+        FacebookUser user = new FacebookUser();
+        user.setFacebookId("9788775675676567");
+        user.setFacebookFirstName("Minh Duc");
+        user.setFacebookLastName("Le");
+        user.setFacebookProfilePic("/img/placeholder-facebook-1.jpg");
+        if (!facebookUserRepository.existsById("9788775675676567")) {
+            facebookUserRepository.save(user);
+        }
+
+        FacebookUser u = new FacebookUser();
+        u.setFacebookId("9788775675676565");
+        u.setFacebookFirstName("Duc Vy");
+        u.setFacebookLastName("Le Minh");
+        u.setFacebookProfilePic("/img/placeholder-facebook-2.jpg");
+        if (!facebookUserRepository.existsById("9788775675676565")) {
+            facebookUserRepository.save(u);
+        }
+
+        FacebookUser u3 = new FacebookUser();
+        u3.setFacebookId("9788775642676567");
+        u3.setFacebookFirstName("Hoa Dong");
+        u3.setFacebookLastName("Tan");
+        u3.setFacebookProfilePic("/img/placeholder-facebook-3.jpg");
+        if (!facebookUserRepository.existsById("9788775642676567")) {
+            facebookUserRepository.save(u3);
+        }
+
+        FacebookUser u4 = new FacebookUser();
+        u4.setFacebookId("9788775615676567");
+        u4.setFacebookFirstName("Elise");
+        u4.setFacebookLastName("Nguyen");
+        u4.setFacebookProfilePic("/img/placeholder-facebook-4.jpg");
+        if (!facebookUserRepository.existsById("9788775615676567")) {
+            facebookUserRepository.save(u4);
+        }
+
+        FacebookUser u5 = new FacebookUser();
+        u5.setFacebookId("9788555675676567");
+        u5.setFacebookFirstName("Tran Nam");
+        u5.setFacebookLastName("Dinh");
+        u5.setFacebookProfilePic("/img/placeholder-facebook-5.jpg");
+        if (!facebookUserRepository.existsById("9788555675676567")) {
+            facebookUserRepository.save(u5);
+        }
+    }
+
+    private void seedCategory() {
+        Category category1 = new Category();
+        category1.setCode("purchase");
+        category1.setName("Mua Hàng");
+        addCategoryIfMissing(category1);
+
+        Category category2 = new Category();
+        category2.setCode("complaint");
+        category2.setName("Khiếu Nại");
+        addCategoryIfMissing(category2);
+
+        Category category3 = new Category();
+        category3.setCode("payment");
+        category3.setName("Thanh Toán");
+        addCategoryIfMissing(category3);
+
+        Category category4 = new Category();
+        category4.setCode("promotion");
+        category4.setName("Khuyến Mãi");
+        addCategoryIfMissing(category4);
+
+        Category category5 = new Category();
+        category5.setCode("refund");
+        category5.setName("Hoàn Tiền");
+        addCategoryIfMissing(category5);
+    }
+
+    private void addCategoryIfMissing(Category category) {
+        if (!categoryRepository.existsByCode(category.getCode())) {
+            categoryRepository.save(category);
+        }
     }
 
     private void seedPermission() {
@@ -122,8 +218,8 @@ public class MasterDataSeeder implements CommandLineRunner {
 
 
     private void seedProgressStatuses() {
-        addProgressIfMissing("pending", "Chờ xử lý");
-        addProgressIfMissing("onHold", "Tạm hoãn");
+        addProgressIfMissing("pending", "Đang xử lý");
+        addProgressIfMissing("on-hold", "Đang chờ");
         addProgressIfMissing("resolved", "Đã xử lý");
     }
 
@@ -136,11 +232,11 @@ public class MasterDataSeeder implements CommandLineRunner {
     }
 
     private void seedCustomerSatisfactions() {
-        addSatisfactionIfMissing(1, "VeryBad");
-        addSatisfactionIfMissing(2, "Unhappy");
-        addSatisfactionIfMissing(3, "Neutral");
-        addSatisfactionIfMissing(4, "Pleased");
-        addSatisfactionIfMissing(5, "Happy");
+        addSatisfactionIfMissing("verybad", "Rất Tệ");
+        addSatisfactionIfMissing("unhappy", "Không Vui");
+        addSatisfactionIfMissing("neutral", "Trung Lập");
+        addSatisfactionIfMissing("pleased", "Tạm Được");
+        addSatisfactionIfMissing("happy", "Rất Vui");
     }
 
     private void addProgressIfMissing(String code, String name) {
@@ -168,9 +264,9 @@ public class MasterDataSeeder implements CommandLineRunner {
         }
     }
 
-    private void addSatisfactionIfMissing(int score, String comment) {
-        if (!satisfactionRepository.existsByScore(score)) {
-            satisfactionRepository.save(new Satisfaction(0, score, comment));
+    private void addSatisfactionIfMissing(String code, String name) {
+        if (!satisfactionRepository.existsByCode(code)) {
+            satisfactionRepository.save(new Satisfaction(0, code, name));
         }
     }
 

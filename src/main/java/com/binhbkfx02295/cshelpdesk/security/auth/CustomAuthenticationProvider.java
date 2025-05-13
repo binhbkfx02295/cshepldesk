@@ -54,15 +54,21 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         }
 
         LoginResponseDTO response = result.getData();
-        log.info("✅ Xác thực thành công: {}", username);
         // Tạo danh sách quyền (authorities)
         Set<GrantedAuthority> authorities = response.getPermissions().stream()
                 .map(p -> new SimpleGrantedAuthority(p.getName()))
                 .collect(Collectors.toSet());
-
         authorities.add(new SimpleGrantedAuthority("ROLE_" + response.getGroup().getName().toUpperCase()));
+        log.info("✅ Xác thực thành công: {}", username);
         log.info(authorities.toString());
-        return new UsernamePasswordAuthenticationToken(response,null, authorities);
+        UserPrincipal principal = UserPrincipal.builder()
+                .username(response.getEmployeeDTO().getUsername())
+                .fullName(response.getEmployeeDTO().getName())
+                .description(response.getEmployeeDTO().getDescription())
+                .authorities(authorities)
+                .build();
+
+        return new UsernamePasswordAuthenticationToken(principal,null, authorities);
     }
 
     @Override

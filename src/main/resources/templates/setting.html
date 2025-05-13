@@ -1,20 +1,17 @@
 <!DOCTYPE html >
-<html lang="en" th:replace="layout:: layout(~{::title}, ~{::link}, ~{::div.pending-content})" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="en" th:replace="~{layout:: layout(~{::title}, ~{}, ~{::div.page-content})}"
+      xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="UTF-8">
-    <link rel="shortcut icon" th:href="@{/img/favicon.ico}" type="image/x-icon">
-    <link rel="stylesheet" th:href="@{/css/dashboard.js}">
-    <script>console.log("pending")</script>
-    <title>CSHelpDesk | Cài Dat </title>
+    <title>CSHelpDesk | Hệ Thống</title>
 </head>
 <body>
-<!-- Pending Content -->
-<div class="pending-content text-center" style="margin-top: 100px;">
-    <h1 style="font-size: 48px; color: #6c757d;">
-        <i class="bi bi-tools"></i> Trang đang phát triển
-    </h1>
-    <p style="font-size: 20px;">Chức năng này hiện chưa sẵn sàng. Vui lòng quay lại sau.</p>
-    <a href="/" class="btn btn-secondary mt-4">Quay về Trang chính</a>
+
+<h2 class="page-title">Hệ Thống</h2>
+<div class="page-content">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div th:replace="~{fragments/header:: header(~{::h2.page-title})}"></div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
 </div>
+
 </body>
 </html>

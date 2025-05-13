@@ -9,6 +9,7 @@ public class CategoryMapper {
 
     public CategoryDTO toDTO(Category category) {
         CategoryDTO dto = new CategoryDTO();
+        if (category == null) return dto;
         dto.setName(category.getName());
         dto.setId(category.getId());
         dto.setCode(category.getCode());

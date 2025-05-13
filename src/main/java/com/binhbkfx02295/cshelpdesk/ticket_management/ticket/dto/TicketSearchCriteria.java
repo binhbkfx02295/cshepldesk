@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Data
@@ -16,9 +17,9 @@ public class TicketSearchCriteria {
     private String title;
     private String tag;
     private String progressStatus;
-    private LocalDateTime fromDate;
-    private LocalDateTime toDate;
+    private Timestamp fromDate;
+    private Timestamp toDate;
     private String category;
-    private int emotion;
-    private int satisfaction;
+    private String emotion;
+    private String satisfaction;
 }

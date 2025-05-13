@@ -2,7 +2,9 @@ package com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.mapper;
 
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.entity.ProgressStatus;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.dto.ProgressStatusDTO;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ProgressStatusMapper {
 
     public ProgressStatusDTO toDTO(ProgressStatus progressStatus) {

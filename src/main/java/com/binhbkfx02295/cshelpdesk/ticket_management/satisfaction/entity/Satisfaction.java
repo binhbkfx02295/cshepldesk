@@ -14,6 +14,6 @@ public class Satisfaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    private int score;       // e.g., 1 to 5 stars
-    private String comment;  // Optional feedback
+    private String code;
+    private String name;
 }

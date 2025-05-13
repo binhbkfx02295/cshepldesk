@@ -26,8 +26,8 @@ public class LogoutSuccessHandlerImpl implements LogoutSuccessHandler {
                                 HttpServletResponse response,
                                 Authentication authentication) throws IOException, ServletException {
         EmployeeDTO employeeDTO = new EmployeeDTO();
-        LoginResponseDTO res = (LoginResponseDTO) authentication.getPrincipal();
-        employeeDTO.setUsername(res.getEmployeeDTO().getUsername());
+        UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
+        employeeDTO.setUsername(user.getUsername());
 
         authenticationService.logout(employeeDTO);
         log.info("Inside logout handler");

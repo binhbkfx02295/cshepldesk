@@ -3,7 +3,9 @@ package com.binhbkfx02295.cshelpdesk.ticket_management.tag.mapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.entity.Tag;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.dto.TagDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
+import org.springframework.stereotype.Component;
 
+@Component
 public class TagMapper {
 
      public TagDTO toDTO(Tag tag) {

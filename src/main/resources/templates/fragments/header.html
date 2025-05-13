@@ -1,10 +1,10 @@
 <!-- Header -->
-<header class="header" th:fragment="header">
+<header class="page-header" th:fragment="header (page_title)">
     <div class="header-left">
         <button class="btn-toggle-sidebar d-lg-none" id="showSidebar">
             <i class="bi bi-list"></i>
         </button>
-        <h2 class="page-title">Bảng Điều Khiển</h2>
+        <h2 th:replace="${page_title}">Bảng Điều Khiển</h2>
     </div>
     <div class="header-right">
         <div class="date-time">
@@ -13,7 +13,7 @@
         </div>
 
         <div class="status-dropdown dropdown">
-            <button class="dropdown-toggle" type="button" id="statusDropdown" aria-expanded="false">
+            <button class="dropdown-toggle" type="button" id="statusDropdown" aria-expanded="false" data-bs-toggle="dropdown">
                 <span class="status-indicator online"></span>
                 <span id="currentStatusText">Online</span>
             </button>
@@ -23,8 +23,9 @@
             </ul>
         </div>
 
+
         <div class="language-dropdown dropdown">
-            <button class="dropdown-toggle" type="button" id="languageDropdown" aria-expanded="false">
+            <button class="dropdown-toggle" type="button" id="languageDropdown" aria-expanded="false" data-bs-toggle="dropdown">
                 <span id="currentLanguage">VI</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
@@ -34,18 +35,22 @@
         </div>
 
 
+
         <div class="user-dropdown dropdown">
             <button class="dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown"
                     aria-expanded="false">
-                <img src="img/profile-placeholder.jpg" alt="User Avatar" class="user-avatar">
+                <img th:src="@{img/profile-placeholder.jpg}" alt="User Avatar" class="user-avatar">
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> Hồ sơ</a></li>
-                <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Cài đặt</a></li>
+                <li><a class="dropdown-item" href="#" id="user-profile-button"><i class="bi bi-person"></i>
+                    Hồ sơ</a></li>
+                <li><a class="dropdown-item" href="#" id="setting-button"><i class="bi bi-gear"></i> Cài
+                    đặt</a></li>
                 <li>
                     <hr class="dropdown-divider">
                 </li>
-                <li><a class="dropdown-item" th:href="@{/logout}"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+                <li><a class="dropdown-item" th:href="@{/logout}"><i class="bi bi-box-arrow-right"></i> Đăng
+                    xuất</a>
                 </li>
             </ul>
         </div>

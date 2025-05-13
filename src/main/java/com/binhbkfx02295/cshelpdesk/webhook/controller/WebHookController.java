@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 public class WebHookController {
 
     private final WebHookService webhookService;
-    private final FacebookGraphAPIService facebookGraphAPIService;
 
     // Facebook webhook verify (GET)
     @GetMapping
@@ -36,7 +35,6 @@ public class WebHookController {
         return ResponseEntity.status(403).body("Verification failed");
     }
 
-    // Facebook webhook callback (POST)
     @PostMapping
     public ResponseEntity<String> receive(
             HttpServletRequest request) throws IOException {

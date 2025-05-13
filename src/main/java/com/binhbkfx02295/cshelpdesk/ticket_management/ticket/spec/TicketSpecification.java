@@ -36,10 +36,10 @@ public class TicketSpecification  {
             if (criteria.getCategory() != null) {
                 predicates.add(cb.equal(root.get("category").get("code"), criteria.getCategory()));
             }
-            if (criteria.getEmotion() != 0) {
+            if (criteria.getEmotion() != null) {
                 predicates.add(cb.equal(root.get("emotion").get("code"), criteria.getEmotion()));
             }
-            if (criteria.getSatisfaction() != 0) {
+            if (criteria.getSatisfaction() != null) {
                 predicates.add(cb.equal(root.get("satisfaction").get("code"), criteria.getSatisfaction()));
             }
 

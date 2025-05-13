@@ -2,6 +2,7 @@ package com.binhbkfx02295.cshelpdesk.employee_management.employee.service;
 
 import com.binhbkfx02295.cshelpdesk.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeDTO;
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeDashboardDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.StatusDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.StatusLogDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
@@ -82,7 +83,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public APIResultSet<EmployeeDTO> updateUser(String username, EmployeeDTO employeeDTO) {
-        Optional<com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee> userOpt = employeeRepository.findById(username);
+        Optional<Employee> userOpt = employeeRepository.findById(username);
         if (userOpt.isEmpty()) {
             log.info("Update user: user not found");
             return APIResultSet.notFound("Update user: user not found");
@@ -94,7 +95,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         try {
-            com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee user = userOpt.get();
+            Employee user = userOpt.get();
             user.setName(employeeDTO.getName());
             user.setDescription(employeeDTO.getDescription());
             user.setUserGroup(groupOpt.get());
@@ -137,7 +138,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             return APIResultSet.notFound(String.format("Find Employee %s: not found", username));
         } else {
             log.info(String.format("Find Employee %s: found", username));
-            return APIResultSet.ok(String.format("Find Employee %s: found", username), toDTO(employee));
+            return APIResultSet.ok(String.format("Find Employee %s: found", username), mapper.toDTO(employee));
         }
 
     }
@@ -146,7 +147,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public APIResultSet<List<EmployeeDTO>> getAllUsers() {
         try {
             List<Employee> users = cache.getAllEmployees().values().stream().toList();
-            List<EmployeeDTO> result = users.stream().map(this::toDTO).toList();
+            List<EmployeeDTO> result = users.stream().map(mapper::toDTO).toList();
             log.info("Find all employee: found");
             return APIResultSet.ok("All users", result);
         } catch (Exception e) {
@@ -164,7 +165,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 return APIResultSet.notFound("getUsersByGroup: group not found");
             }
             List<Employee> users = cache.getAllEmployees().values().stream().filter(employee -> employee.getUserGroup().getGroupId() == groupId).toList();
-            List<EmployeeDTO> result = users.stream().map(this::toDTO).toList();
+            List<EmployeeDTO> result = users.stream().map(mapper::toDTO).toList();
             return APIResultSet.ok("getUsersByGroup: ok", result);
         } catch (Exception e) {
             log.info("getUsersByGroup: group not found", e);
@@ -173,12 +174,17 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public APIResultSet<Void> changePassword(String username, String newPassword) {
-        Optional<Employee> userOpt = employeeRepository.findById(username);
-        if (userOpt.isEmpty()) return APIResultSet.notFound("User not found");
+    public APIResultSet<Void> changePassword(String username, String password, String newPassword) {
 
         try {
+            Optional<Employee> userOpt = employeeRepository.findById(username);
+            if (userOpt.isEmpty()) return APIResultSet.unauthorized("Sai mật khẩu hoặc tên đăng nhập");
+
             Employee user = userOpt.get();
+            //validate password
+            if (passwordEncoder.matches(password, user.getPassword())) {
+                APIResultSet.unauthorized("Sai mật khẩu hoặc tên đăng nhập");
+            }
             user.setPassword(passwordEncoder.encode(newPassword));
             employeeRepository.save(user);
             return APIResultSet.ok("Password updated", null);
@@ -189,7 +195,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public APIResultSet<Void> updateStatus(String username, boolean isActive) {
+    public APIResultSet<Void> lockUser(String username, boolean isActive) {
         Optional<Employee> userOpt = employeeRepository.findById(username);
         if (userOpt.isEmpty()) return APIResultSet.notFound("User not found");
 
@@ -221,27 +227,14 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public APIResultSet<List<EmployeeDTO>> findALlWithStatusLog() {
+    public APIResultSet<List<EmployeeDashboardDTO>> findALlWithStatusLog() {
         try {
             List<Employee> list = employeeRepository.findAllWithTop1EmployeeStatusLog();
-            List<EmployeeDTO> listDTO = list.stream().map(employee -> {
-                EmployeeDTO employeeDTO = toDTO(employee);
-                if (!employee.getStatusLogs().isEmpty()) {
-                    List<StatusLogDTO> logs = new ArrayList<>();
-                    for (StatusLog log : employee.getStatusLogs()) {
-                        StatusLogDTO logDTO = new StatusLogDTO();
-                        logDTO.setStatus(log.getStatus().getName());
-                        logDTO.setFrom(log.getTimestamp());
-                        logs.add(logDTO);
-                    }
-                    employeeDTO.setStatusLog(logs);
-                }
-                return employeeDTO;
+            APIResultSet<List<EmployeeDashboardDTO>> result = APIResultSet.ok("Lay nhan vien dashboard thanh cong", list.stream().map(mapper::toDashboardDTO).toList());
 
-            }).toList();
+            log.info(result.getMessage());
 
-
-            return APIResultSet.ok("Lấy thành công", listDTO);
+            return result;
 
         } catch (Exception e) {
             log.error("Lỗi lấy user với status log ", e);
@@ -250,7 +243,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public APIResultSet<StatusLogDTO> findFirstStatusLogByUsername(String username) {
+    public APIResultSet<StatusLogDTO> getLatestOnlineStatus(String username) {
         log.info("finding latest log for {}", username);
         try {
             Optional<StatusLog> logOpt = statusLogRepository.findFirstByEmployee_UsernameOrderByTimestampDesc(username);
@@ -319,15 +312,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
-    private EmployeeDTO toDTO(Employee user) {
-        EmployeeDTO dto = new EmployeeDTO();
-        dto.setUsername(user.getUsername());
-        dto.setName(user.getName());
-        dto.setDescription(user.getDescription());
-        dto.setGroupId(user.getUserGroup().getGroupId());
-
-        return dto;
-    }
 
 
     public APIResultSet<List<StatusDTO>> getAllOnlineStatus() {

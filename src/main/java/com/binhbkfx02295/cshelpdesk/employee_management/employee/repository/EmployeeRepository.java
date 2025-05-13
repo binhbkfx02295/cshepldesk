@@ -1,6 +1,7 @@
 package com.binhbkfx02295.cshelpdesk.employee_management.employee.repository;
 
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -33,6 +34,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
         WHERE l2.employee = e
     )
 """)
+    @EntityGraph(attributePaths = "userGroup")
     List<Employee> findAllWithTop1EmployeeStatusLog();
 
     @Query("""

@@ -1,54 +1,213 @@
-let currentSort = { field: null, direction: 'asc' };
-let ONLINE_STATUS = {
-  class: {
-    1: "online",
-    2: "away",
-    3: "offline"
-  },
-  text: {
-    1: "Online",
-    2: "Away",
-    3: "Offline"
-  },
-}
+const currentSort = { field: null, direction: 'asc' };
+
+const BASE = window.location.href.includes(`cshelpdesk.online`) ? "" : `http://localhost:8080`;
+const API_EMPLOYEE = `${BASE}/api/employee-management`;
+const API_PERMISSION = `${BASE}/api/employee-management/permission`;
+const API_USERGROUP = `${BASE}/api/employee-management/user-group`;
+const API_TICKET = `${BASE}/api/ticket`;
+const API_CATEGORY = `${BASE}/api/category`;
+const API_TAG = `${BASE}/api/tag`;
+const API_ONLINE_STATUS = `${BASE}/api/employee-management/online-status`;
+const API_PROGRESS_STATUS = `${BASE}/api/progress-status`;
+const API_EMOTION = `${BASE}/api/emotion`;
+const API_SATISFACTION = `${BASE}/api/satisfaction`;
+const API_MESSAGE = `${BASE}/api/message`;
+const USERS = []
+const CATEGORIES = []
+const PROGRESS_STATUS = [];
+const EMOTIONS = [];
+const SATISFACTIONS = [];
+window.USERS
+
+
+
 $(document).ready(() => {
   // Simulate loading time
-  setTimeout(() => {
-    // Hide loading overlay
+//  setTimeout(() => {
+//    // Hide loading overlay
+//    $("#loadingOverlay").fadeOut()
+//    initHeader()
+//    initDashboard()
+//    initTicket()
+//    initTicketDetailModal();
+//
+//  }, 500)
     $("#loadingOverlay").fadeOut()
-
-    // Initialize dashboard
+    initHeader()
     initDashboard()
-  }, 500)
+    initTicket()
+    initTicketDetailModal();
+
+  if (window.location.href.endsWith("dashboard")) {
+        $(".sidebar-menu li").removeClass("active");
+        $(".sidebar-menu li").get(0).addClass("active");
+      } else if (window.location.href.endsWith("ticket")) {
+        $(".sidebar-menu li").removeClass("active");
+        $(".sidebar-menu li").get(1).addClass("active");
+      } else if (window.location.href.endsWith("customer")) {
+        $(".sidebar-menu li").removeClass("active");
+        $(".sidebar-menu li").get(2).addClass("active");
+      } else if (window.location.href.endsWith("performance")) {
+        $(".sidebar-menu li").removeClass("active");
+        $(".sidebar-menu li").get(3).addClass("active");
+      } else if (window.location.href.endsWith("report")) {
+        $(".sidebar-menu li").removeClass("active");
+        $(".sidebar-menu li").get(4).addClass("active");
+      } else if (window.location.href.endsWith("setting")) {
+        $(".sidebar-menu li").removeClass("active");
+        $(".sidebar-menu li").get(5).addClass("active");
+      }
 
 
-  // Refresh dashboard
-  $("#refreshDashboard").click(() => {
-    refreshDashboard()
+
+
+
+
+
+
+})
+
+//ticket.html
+function initTicket() {
+  console.log("init ticket search ..");
+  window.fullModal = new bootstrap.Modal(document.getElementById("ticketFullDetailModal"));
+
+  initTicketSearch();
+  initTicketSortingByIndex();
+  initTicketCreate();
+}
+
+
+function initHeader() {
+  //init current date
+  const now = new Date()
+  $("#currentDate").text(formatDate(now))
+  $("#lastUpdated").text(formatTime(now))
+  loadDashboardEmployees()
+
+  $('#btnEmployees').click(function () {
+    $('#employeeSection').removeClass('d-none');
+    $('#ticketSection').addClass('d-none');
+    $(this).addClass('active');
+    $('#btnTickets').removeClass('active');
+    loadDashboardEmployees()
+  });
+
+  $('#btnTickets').click(function () {
+    $('#ticketSection').removeClass('d-none');
+    $('#employeeSection').addClass('d-none');
+    $(this).addClass('active');
+    $('#btnEmployees').removeClass('active');
+    loadDashboardTickets()
+  });
+
+  //get API to get online status
+  const statusText = $(this).text().trim();
+  const statusValue = statusText.toLowerCase();
+  var $indicator = $('.status-dropdown .status-indicator');
+  var $statusText = $('.status-dropdown #currentStatusText');
+
+  $.ajax({
+    url: `${API_EMPLOYEE}/online-status`,
+    method: 'GET',
+    contentType: 'application/json',
+    success: function (res) {
+      // Cập nhật UI nếu thành công
+      console.log(res);
+      const statusValue = res.status;
+      const statusText = toCapital(statusValue);
+      $indicator.addClass(statusValue);
+
+      $statusText.text(statusText);
+    },
+    error: function (res) {
+      console.log(res.message);
+      console.log();
+    }
   })
 
-  // Search tickets
-  $("#ticketSearch").on("keyup", function () {
-    const searchTerm = $(this).val().toLowerCase()
-    filterTickets(searchTerm)
+  const userProfileModal = new bootstrap.Modal(document.getElementById("userProfileModal"));
+  const settingModal = new bootstrap.Modal(document.getElementById("settingModal"));
+  const confirmResetModal = new bootstrap.Modal(document.getElementById("confirmResetModal"));
+  $("#user-profile-button").on("click", function (e) {
+    e.preventDefault();
+    userProfileModal.show();
+  });
+
+
+  $("#setting-button").on("click", function (e) {
+    e.preventDefault();
+    settingModal.show();
+  });
+
+  // Bấm nút "Đặt lại mật khẩu" => mở modal xác nhận
+  $("#resetPasswordBtn").on("click", function () {
+    $("#confirmResetModal").find("input").each(function (e) {
+      $(e).val("");
+    });
+    confirmResetModal.show();
+  });
+
+
+
+  $("#confirmResetModal input").on("keyup", function () {
+    console.log("Hello");
+    setTimeout(() => validateChangePassword(), 1000);
   })
 
+  // Xác nhận reset
+  $("#confirmResetBtn").on("click", function () {
+    console.log("Đã xác nhận đặt lại mật khẩu");
+    body = JSON.stringify({
+      password: $("#password").val(),
+      newPassword: $("#new-password").val(),
+    })
+    console.log(body);
+    $.ajax({
+      url: `${API_EMPLOYEE}/me/password`,
+      method: "PUT",
+      data: body,
+      contentType: "application/json",
+      success: function (res) {
+        successToast(res.message);
+        $(location).attr('href', '/logout');
+      },
+      error: function (res) {
+        errorToast(res.responseJSON.message);
+      }
 
+    })
+
+    // Tắt modal xác nhận
+    $("#confirmResetModal").modal("hide");
+  });
 
   // Đổi trạng thái Online/Away
   $('.status-dropdown .dropdown-item').click(function (e) {
-    e.preventDefault();
-    var status = $(this).text().trim();
+    const statusText = $(this).text().trim();
+    const statusValue = statusText.toLowerCase();
     var $indicator = $('.status-dropdown .status-indicator');
     var $statusText = $('.status-dropdown #currentStatusText');
+    // Gửi request đến backend để cập nhật trạng thái
+    $.ajax({
+      url: `${API_EMPLOYEE}/me/online-status`,
+      method: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify({ status: statusValue }),
+      success: function (res) {
+        successToast(res.message);
+        if (statusValue === 'online') {
+          $indicator.removeClass('away').addClass('online');
+        } else if (statusValue === 'away') {
+          $indicator.removeClass('online').addClass('away');
+        }
 
-    if (status === 'Online') {
-      $indicator.removeClass('away').addClass('online');
-    } else if (status === 'Away') {
-      $indicator.removeClass('online').addClass('away');
-    }
-
-    $statusText.text(status);
+        $statusText.text(statusText);
+      },
+      error: function (res) {
+        errorToast(res.responseJSON.message);
+      }
+    });
   });
 
   // Đổi ngôn ngữ VI/EN
@@ -57,47 +216,27 @@ $(document).ready(() => {
     var lang = $(this).text().trim();
     $('#currentLanguage').text(lang);
   });
-
-})
+}
 
 // Initialize dashboard
 function initDashboard() {
+  //TODO:
+  $("#refreshDashboardTicket").click(() => {
+    refreshDashboardTicket()
+  })
 
-
-  // Set current date
-  const now = new Date()
-  $("#currentDate").text(formatDate(now))
-  $("#lastUpdated").text(formatTime(now))
-
-  // Load employee list
-  loadEmployees()
-
-  // Load ticket metrics
-  loadTicketMetrics()
-
-  // Load ticket list
-  loadTickets()
-
-  $('#btnEmployees').click(function () {
-    $('#employeeSection').removeClass('d-none');
-    $('#ticketSection').addClass('d-none');
-    $(this).addClass('active');
-    $('#btnTickets').removeClass('active');
-  });
-
-  $('#btnTickets').click(function () {
-    $('#ticketSection').removeClass('d-none');
-    $('#employeeSection').addClass('d-none');
-    $(this).addClass('active');
-    $('#btnEmployees').removeClass('active');
-  });
-
+  // Search tickets
+  //TODO:
+  $("#ticketSearch").on("keyup", function () {
+    const searchTerm = $(this).val().toLowerCase()
+    filterTickets(searchTerm)
+  })
 }
 
 // Refresh dashboard
-function refreshDashboard() {
+function refreshDashboardTicket() {
   // Show loading animation on refresh button
-  const refreshBtn = $("#refreshDashboard")
+  const refreshBtn = $("#refreshDashboardTicket")
   const originalContent = refreshBtn.html()
   refreshBtn.html('<i class="bi bi-arrow-repeat"></i> <span>Đang tải...</span>')
   refreshBtn.prop("disabled", true)
@@ -105,87 +244,246 @@ function refreshDashboard() {
 
 
   // Simulate refresh delay
-  setTimeout(() => {
-    // Update last updated time
+//  setTimeout(() => {
+//    // Update last updated time
+//    const now = new Date()
+//    $("#lastUpdated").text(formatTime(now))
+//
+//    // Reload data
+//    loadDashboardTickets()
+//
+//    // Restore refresh button
+//    refreshBtn.html(originalContent)
+//    refreshBtn.prop("disabled", false)
+//  }, 500)
+// Update last updated time
     const now = new Date()
     $("#lastUpdated").text(formatTime(now))
 
     // Reload data
-    loadEmployees()
-    loadTicketMetrics()
-    loadTickets()
-
-
+    loadDashboardTickets()
 
     // Restore refresh button
     refreshBtn.html(originalContent)
     refreshBtn.prop("disabled", false)
-  }, 1000)
 
 
 
 }
 
 //Load employee2 list
-function loadEmployees(sortField = null) {
+function loadDashboardEmployees(sortField = null) {
   const employeeList = $("#employeeList2");
   employeeList.empty();
 
-  // Update employee count
-  $(".employee-count").text(employees.length);
+  //fetch employees;
+  $.ajax({
+    url: `${API_EMPLOYEE}/dashboard`,
+    type: 'GET',
+    dataType: 'json',
+    success: function (data) {
+      console.log(data);
+      employees = data.data;
+      // Update employee count
+      $(".employee-count").text(employees.length);
 
-  // Sort nếu cần
-  if (sortField) {
-    if (currentSort.field === sortField) {
-      currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-    } else {
-      currentSort.field = sortField;
-      currentSort.direction = 'asc';
+      // Sort nếu cần
+      if (sortField) {
+        if (currentSort.field === sortField) {
+          currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+          currentSort.field = sortField;
+          currentSort.direction = 'asc';
+        }
+
+        employees.sort((a, b) => {
+          let valA = a[sortField];
+          let valB = b[sortField];
+
+          if (typeof valA === "string") valA = valA.toLowerCase();
+          if (typeof valB === "string") valB = valB.toLowerCase();
+
+          if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+          if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+
+      // Render
+      employees.forEach((employee) => {
+
+        const employeeRow = `
+          <tr class="show">
+            <td>${employee.name}</td>
+            <td>${employee.userGroup.name}</td>
+            <td>${employee.ticketCount || 0}/6</td>
+            <td style="text-transform: capitalize;">
+              <span class="status-indicator ${employee.statusLog[0].status}"></span>
+              ${employee.statusLog[0].status}
+            </td>
+            ${employee.statusLog[0].status == "offline" ?  "" : `<td class="time-elapse" data-timestamp="${employee.statusLog[0].from}">${startElapsedTimer(employee.statusLog[0].from)}</td>`}
+
+          </tr>
+        `;
+
+        employeeList.append(employeeRow);
+      });
+
+      if (window.startElapsedTimerInterval) {
+        clearInterval(window.startElapsedTimerInterval);
+        console.log("cleared window.startElapsedTimerInterval");
+      }
+      window.startElapsedTimerInterval = setInterval(function () {
+        $(".time-elapse").each(function () {
+          const timestamp = $(this).attr("data-timestamp");
+          $(this).text(startElapsedTimer(timestamp));
+        })
+      })
+    },
+    error: function (xhr, status, error) {
+      console.error('Lỗi:', error);
+    }
+  })
+
+}
+
+
+// Load ticket list
+function loadDashboardTickets() {
+  $.ajax({
+    url: `${API_TICKET}/dashboard`,
+    method: "GET",
+    success: function (res) {
+      console.log(res);
+      //populateDashboard
+      showTicketListLoading($("#ticketList"));
+//      setTimeout(function () {
+//        populateDashboardTicket(res.data);
+//        populateDashboardTicketMetrics(res.data);
+//        hideTicketListLoading($("#ticketList"));
+//      }, 500)
+        populateDashboardTicket(res.data);
+        populateDashboardTicketMetrics(res.data);
+        hideTicketListLoading($("#ticketList"));
+    },
+    error: function (res) {
+      errorToast(res.responseJSON.message);
+    }
+  })
+}
+
+
+//Populate Dashboard tick
+function populateDashboardTicket(tickets) {
+  const ticketList = $("#ticketList")
+  ticketList.empty()
+
+  tickets.forEach((ticket, index) => {
+    const card = $(`
+        <div class="item mb-2" data-ticket-id="${ticket.id}">
+            <div class="d-flex flex-row">
+                <div class=" w-100 d-flex flex-column me-2">
+                    <div class="messages mb-1"></div>
+                    <div class="title mb-1">
+                        <span class="ticket-id me-2">#${ticket.id}</span> - ${ticket.title || "Chưa có tiêu đề"}
+                    </div>
+                    <div class="user">
+                        <span class="avatar me-2 text-center">
+                        <img src="${ticket.facebookUser.profile_pic}">
+                        </span><i class="bi bi-messenger me-2"></i>${ticket.facebookUser.first_name} ${ticket.facebookUser.last_name}</span>
+
+                    </div>
+                </div>
+                <div class="w-25 d-flex flex-column justify-content-between me-2">
+                    <div class="mb-1">
+                        <i class="bi bi-activity me-2"></i><span class="badge progress-status ${ticket.progressStatus.code}">${ticket.progressStatus.name}</span>
+                    </div>
+                    <div class="assignee mb-1"><i class="bi bi-person-check me-2"></i>${ticket.assignee?.name || "Chưa có"}</div>
+                    <div class="">
+                      <i class="bi bi-hourglass me-2"></i><span class="duration time-elapse" data-timestamp=${ticket.createdAt}>${startElapsedTimer(ticket.createAt)}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+      `)
+    ticketList.append(card);
+    window.card = card;
+    setTimeout(function () {
+      card.addClass("visible");
+    }, index * 50);
+
+
+  })
+  if (window.startElapsedTimerTicketInterval) {
+    clearInterval(window.startElapsedTimerTicketInterval);
+    console.log("cleared ticket timer interval")
+  }
+  window.startElapsedTimerTicketInterval = setInterval(function () {
+    $(".time-elapse").each(function () {
+      const timestamp = $(this).attr("data-timestamp");
+      $(this).text(startElapsedTimer(timestamp));
+    })
+  })
+
+  $("#ticketList .item").click(function () {
+    loadTicketDetail($(this).data("ticket-id"));
+  });
+
+  $("input#ticketSearch").on("keydown", function (e) {
+    if (window.searchTimeout) clearTimeout(window.searchTimeout);
+
+    window.searchTimeout = setTimeout(() => {
+      filterTickets();
+    }, 500);
+
+  });
+}
+
+//Dashboard
+function filterTickets() {
+  const keyword = $("#ticketSearch").val().toLowerCase().trim();
+  const field = $("#searchField").val();
+
+  $("#ticketList .item").each(function () {
+    const $item = $(this);
+    let text = "";
+
+    switch (field) {
+      case "title":
+        text = $item.find(".title").text();
+        break;
+      case "facebook":
+        text = $item.find(".user").text();
+        break;
+      case "assignee":
+        text = $item.find(".assignee").text();
+        break;
+      case "status":
+        text = $item.find(".progress-status").text();
+        break;
+      case "category":
+        text = $item.find(".category").text(); // nếu có
+        break;
+      default:
+        text = $item.text();
     }
 
-    employees.sort((a, b) => {
-      let valA = a[sortField];
-      let valB = b[sortField];
-
-      if (typeof valA === "string") valA = valA.toLowerCase();
-      if (typeof valB === "string") valB = valB.toLowerCase();
-
-      if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
-      if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }
-
-  // Render
-  employees.forEach((employee) => {
-    const statusClass = ONLINE_STATUS.class[employee.status];
-    const statusText = ONLINE_STATUS.text[employee.status];
-
-    const employeeRow = `
-      <tr class="show">
-        <td>${employee.name}</td>
-        <td>${employee.userGroup}</td>
-        <td>${employee.ticketCount}</td>
-        <td>
-          <span class="status-indicator ${statusClass}"></span>
-          ${statusText}
-        </td>
-        <td>${employee.statusTime}</td>
-      </tr>
-    `;
-
-    employeeList.append(employeeRow);
+    if (text.toLowerCase().includes(keyword)) {
+      $item.addClass("visible").show();
+    } else {
+      $item.removeClass("visible").hide();
+    }
   });
 }
 
 
-// Load ticket metrics
-function loadTicketMetrics() {
+// Dashboard Load ticket metrics
+function populateDashboardTicketMetrics(tickets) {
   // Count tickets by status
   const totalTickets = tickets.length
-  const pendingTickets = tickets.filter((ticket) => ticket.processingStatus === "pending").length
-  const onHoldTickets = tickets.filter((ticket) => ticket.processingStatus === "on-hold").length
-  const resolvedTickets = tickets.filter((ticket) => ticket.processingStatus === "resolved").length
+  const pendingTickets = tickets.filter((ticket) => ticket.progressStatus.id === 1).length
+  const onHoldTickets = tickets.filter((ticket) => ticket.progressStatus.id === 2).length
+  const resolvedTickets = tickets.filter((ticket) => ticket.progressStatus.id === 3).length
   const closedTickets = tickets.filter((ticket) => ticket.status === "closed").length
 
   // Update metrics
@@ -194,34 +492,6 @@ function loadTicketMetrics() {
   $("#onHoldTickets").text(onHoldTickets)
   $("#resolvedTickets").text(resolvedTickets)
   $("#closedTickets").text(closedTickets)
-}
-
-// Load ticket list
-function loadTickets() {
-  const ticketList = $("#ticketList")
-  ticketList.empty()
-
-  tickets.forEach(ticket => {
-    const card = `
-        <div class="item col-md-6 col-lg-12 mb-3" data-ticket-id="${ticket.id}">
-          <div class="d-flex flex-row">
-            <div class="d-flex flex-column me-2">
-              <div class="title"><span class="ticket-id me-2">#${ticket.id}</span> - ${ticket.title}</div>
-              <div class="user"><span class="avatar me-2 text-center"><img src="${ticket.facebookUser.avtSrc}"></span>${ticket.facebookUser.firstName + " " + ticket.facebookUser.lastName} - <span class="badge progress-status ${PROGRESS_STATUS_CLASS[ticket.progressStatus]}">${PROGRESS_STATUS[ticket.progressStatus]}</span></div>
-              <div class="created-at ">${formatEpochTimestamp(ticket.createdAt)}</div>
-            </div>
-          </div>
-        </div>
-    `
-    ticketList.append(card);
-  })
-
-  // Add click event to ticket rows
-  $("#ticketList .item").click(function () {
-    const ticketId = $(this).data("ticket-id");
-    console.log(ticketId);
-    showTicketDetail(ticketId)
-  })
 }
 
 // Filter tickets
@@ -235,93 +505,38 @@ function filterTickets(searchTerm) {
     }
   })
 }
-
-// Show ticket detail
-function showTicketDetail(ticketId) {
-  const ticket = tickets.find(t => t.id === ticketId);
-  if (!ticket) return;
-
-  // Lưu dữ liệu gốc để revert
+function populateTicketDetail(ticket) {
+  console.log("populateTicketDetail", ticket);
   originalTicketData = JSON.parse(JSON.stringify(ticket));
-  currentEditingTicketId = ticketId;
+  currentEditingTicketId = ticket.id;
 
-  // Fill dữ liệu form
   $("#editTicketId").val(ticket.id);
-  $("#editTitle").val(ticket.title);
-  $("#editFacebookUser").val(`${ticket.facebookUser.firstName} ${ticket.facebookUser.lastName}`);
-  $("#editAssignee").val(ticket.employee?.name || "Chưa có");
+  $("#editTitle").val(ticket.title || "Chưa có tiêu đề");
+  $("#editFacebookUser").val(`${ticket.facebookUser.id}`);
+  $("#editAssignee").val(ticket.assignee?.name || "-");
   $("#editCreatedAt").val(formatEpochTimestamp(ticket.createdAt));
-  $("#editCategory").val(ticket.category);
+  $("#editCategory").val(ticket.category?.name || "");
+  $("#editProgressStatus").val(ticket.progressStatus?.name || "");
+  $("#editEmotion").val(ticket.emotion?.name || "-");
+  $("#editSatisfaction").val(ticket.satisfaction?.name || "-");
+  $("#editNote").val(ticket.description || "");
+
+
+  $("#editCategory").attr("data-category-code", ticket.category?.code || null);
+  $("#editProgressStatus").attr("data-progress-code", ticket.progressStatus.code || null);
+  $("#editEmotion").attr("data-emotion-code", ticket.emotion?.code || null);
+  $("#editSatisfaction").attr("data-satisfaction-code", ticket.satisfaction?.code || null);
+  $("#editAssignee").attr("data-username", ticket.assignee?.username || null);
 
   // Load Tags (nhiều tag)
-  if (ticket.tags && Array.isArray(ticket.tags)) {
-    $("#editTags").val(ticket.tags);
-  } else {
-    $("#editTags").val([]);
-  }
-
-  // Emotion và Satisfaction readonly
-  $("#editEmotion").val(EMOTION[ticket.emotion] || "Không xác định");
-  $("#editSatisfaction").val(SATISFACTION[ticket.satisfaction] || "Không xác định");
-
-  $("#editNote").val(ticket.description || ""); // Dùng field description làm Note
-
-  // Reset buttons
+  // if (ticket.tags && Array.isArray(ticket.tags)) {
+  //   $("#editTags").val(ticket.tags);
+  // } else {
+  //   $("#editTags").val([]);
+  // }
   disableEditButtons();
-
-  // Load message
-  loadTicketMessages(ticketId);
-
-  // Load ticket history
-  loadTicketHistory(ticket.facebookUser.id);
-
-  // Show modal
-  const fullModal = new bootstrap.Modal(document.getElementById("ticketFullDetailModal"));
-  fullModal.show();
-
 }
 
-
-// Show ticket detail
-function showTicketDetail2(ticketId) {
-  const ticket = tickets.find((t) => t.id === ticketId)
-  console.log(ticket);
-
-  if (ticket) {
-    // Populate modal with ticket details
-    $("#detailId").text(ticket.id)
-    $("#detailTitle").text(ticket.title)
-    $("#detailDescription").text(ticket.description)
-    $("#detailCreatedAt").text(formatEpochTimestamp(ticket.createdAt))
-    $("#detailUpdatedAt").text(formatEpochTimestamp(ticket.updatedAt))
-
-    const statusText = ticket.status === "open" ? "Mở" : "Đóng"
-    $("#detailStatus").text(statusText)
-
-    let processingStatusText = ""
-    switch (ticket.processingStatus) {
-      case "pending":
-        processingStatusText = "Đang xử lý"
-        break
-      case "on-hold":
-        processingStatusText = "Đang chờ"
-        break
-      case "resolved":
-        processingStatusText = "Đã xử lý"
-        break
-    }
-    $("#detailProcessingStatus").text(processingStatusText)
-
-    $("#detailAssignee").text(ticket.assignee)
-    $("#detailCategory").text(ticket.category)
-    $("#detailEmotion").text(ticket.emotion || "Không có")
-    $("#detailSatisfaction").text(ticket.satisfaction || "Chưa đánh giá")
-
-    // Show modal
-    const ticketModal = new bootstrap.Modal(document.getElementById("ticketDetailModal"))
-    ticketModal.show()
-  }
-}
 
 // Format date
 function formatDate(date) {
@@ -347,43 +562,6 @@ function formatDateTime(dateString) {
   return `${formatDate(date)} ${formatTime(date)}`
 }
 
-// Khi form có thay đổi, enable nút
-$("#ticketEditForm").on("input change", "input, select, textarea", function () {
-  enableEditButtons();
-});
-
-// Cancel edit, revert data
-$("#cancelEdit").click(function () {
-  if (!originalTicketData) return;
-
-  $("#editTitle").val(originalTicketData.title);
-  $("#editCategory").val(originalTicketData.category);
-  $("#editStatus").val(originalTicketData.status);
-  $("#editProcessingStatus").val(originalTicketData.progressStatus);
-  $("#editAssignee").val(originalTicketData.employee?.name || "");
-  $("#editDescription").val(originalTicketData.description || "");
-
-  disableEditButtons();
-});
-
-// Save edit
-$("#saveEdit").click(function () {
-  const updatedData = {
-    id: currentEditingTicketId,
-    title: $("#editTitle").val(),
-    category: parseInt($("#editCategory").val()),
-    status: $("#editStatus").val(),
-    progressStatus: parseInt($("#editProcessingStatus").val()),
-    assignee: $("#editAssignee").val(),
-    description: $("#editDescription").val()
-  };
-
-  console.log("Updated Ticket Data:", updatedData);
-
-  // TODO: Gửi dữ liệu cập nhật về server hoặc update local mock
-
-  disableEditButtons();
-});
 
 // Helper function
 function enableEditButtons() {
@@ -396,57 +574,6 @@ function disableEditButtons() {
   $("#cancelEdit").prop("disabled", true);
 }
 
-// Load messages kiểu chat
-function loadTicketMessages(ticketId) {
-  $("#messageList").empty();
-
-  const ticketMessages = messages.filter(m => m.ticketId === ticketId);
-  ticketMessages.sort((a, b) => a.timestamp - b.timestamp);
-
-  ticketMessages.forEach(msg => {
-    const senderClass = msg.isSenderStaff ? "staff" : "user";
-    const formattedTime = formatEpochTimestamp(msg.timestamp);
-
-    const bubble = `
-      <div class="d-flex mb-2 ${senderClass === "user" ? "justify-content-start" : "justify-content-end"}">
-        <div class="chat-bubble ${senderClass}">
-          <div class="message-text">${msg.text}</div>
-          <div class="message-timestamp text-muted small mt-1" title="Timestamp: ${msg.timestamp}">${formattedTime}</div>
-        </div>
-      </div>
-    `;
-    $("#messageList").append(bubble);
-  });
-
-  scrollToBottomMessageList();
-}
-
-// Auto scroll to bottom
-function scrollToBottomMessageList() {
-  const messageList = document.getElementById('messageList');
-  if (messageList) {
-    messageList.scrollTop = messageList.scrollHeight;
-  }
-}
-
-
-
-// Load ticket history
-function loadTicketHistory(facebookUserId) {
-  $("#historyList").empty();
-  const history = tickets.filter(t => t.facebookUser.id === facebookUserId);
-
-  history.forEach(hist => {
-    const item = `
-      <li class="list-group-item d-flex flex-column">
-        <strong>#${hist.id}</strong>
-        <small>${hist.title}</small>
-        <small>${formatEpochTimestamp(hist.createdAt)}</small>
-      </li>
-    `;
-    $("#historyList").append(item);
-  });
-}
 
 function formatEpochTimestamp(epochMillis) {
   if (!epochMillis || isNaN(epochMillis)) {
@@ -478,4 +605,1077 @@ function toTime(epochMillis) {
   const seconds = date.getSeconds().toString().padStart(2, "0");
 
   return `${hours}:${minutes}:${seconds}`;
+}
+
+function fetch_online_status() {
+  $.ajax({
+    url: API_ONLINE_STATUS,
+    type: 'GET',
+    dataType: 'json',
+    success: function (data) {
+      console.log(data);
+      employees = data.data;
+      ONLINE_STATUS = {}
+    },
+    error: function (xhr, status, error) {
+      console.error('Lỗi:', error);
+    }
+  })
+}
+
+function startElapsedTimer(startTimestamp) {
+  const ms = Date.now() - startTimestamp;
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+  const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+  const seconds = String(totalSeconds % 60).padStart(2, '0');
+  return `${hours}:${minutes}:${seconds}`;
+
+}
+
+function toCapital(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+
+function loadDropdownField(ul, input, loadFn, globalVarName, dataKey, labelKey, valueKey) {
+  (async function () {
+    await loadFn(); // Gọi hàm load dữ liệu
+    ul.html("");
+    addClearForDropdown(ul, input);
+    const list = globalVarName;
+    list.forEach(item => {
+      const li = $(`<li data-${dataKey}="${item[valueKey]}">`);
+      const a = $("<a>").addClass("dropdown-item").text(item[labelKey]);
+      li.append(a);
+      ul.append(li);
+      li.on("click", function () {
+        input.val(item[labelKey]);
+        input.attr(`data-${dataKey}`, item[valueKey]);
+        ul.removeClass("show");
+      });
+    });
+    ul.toggleClass("show");
+  })()
+}
+
+function addClearForDropdown(ul, input) {
+  const clear = $(`
+    <li>
+      <a class="dropdown-item">Xóa</a>
+    </li>
+    <li><hr class="dropdown-divider"></li>
+    `);
+  clear.click(function () {
+    input.val("");
+    $.each(input[0].attributes, function () {
+      if (this.name.startsWith("data-")) {
+        input.removeAttr(this.name);
+      }
+    })
+    ul.removeClass("show");
+  });
+  ul.append(clear);
+}
+function initTicketCreate() {
+
+  // Sự kiện mở modal
+  $("#form-create-ticket").click(function () {
+    $("#createTicketModal").modal("show");
+  });
+
+  // Gửi dữ liệu ticket mới
+  $("#submitCreateTicket").click(function () {
+
+    const assignee = $("#create_assignee").attr("data-username")
+      ? { username: $("#create_assignee").attr("data-username") } : null;
+
+    const facebookUser = $("#create_facebookuser").val() ?
+      { id: $("#create_facebookuser").val() } : null
+
+
+    const category = $("#create_category").attr("data-category-code") ?
+      { code: $("#create_category").attr("data-category-code") } : null
+
+    const progressStatus = $("#create_progress-status").attr("data-progress-code") ?
+      { code: $("#create_progress-status").attr("data-progress-code") } : null
+
+    const emotion = $("#create_emotion").attr("data-emotion-code") ?
+      { code: $("#create_emotion").attr("data-emotion-code") } : null
+
+    const satisfaction = $("#create-satisfaction").attr("data-satisfaction-code") ?
+      { code: $("#create-satisfaction").attr("data-satisfaction-code") } : null
+
+    const ticketData = {
+      title: $("#create_title").val(),
+      assignee: assignee,
+      facebookUser: facebookUser,
+      category: category,
+      progressStatus: progressStatus,
+      emotion: emotion,
+      satisfaction: satisfaction
+    };
+
+    console.log(ticketData);
+
+    $.ajax({
+      url: `${API_TICKET}`,
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify(ticketData),
+      success: function (response) {
+        successToast(response.message);
+        $("#createTicketModal").modal("hide");
+        // refresh danh sách
+      },
+      error: function (res) {
+        errorToast(res.responseJSON.message)
+      }
+    });
+  });
+
+
+  $("#resetCreateTicket").click(function () {
+    $("#createTicketForm")[0].reset();
+
+    $("#createTicketForm input").each(function () {
+      $(this).removeAttr("data-id");
+    });
+
+    $("#createTicketForm .dropdown-menu").removeClass("show");
+  });
+
+}
+
+function initTicketDetailModal() {
+  const i = $(".field-group i");
+
+
+  i.click(function () {
+    const container = $(this).closest(".field-group"); //traverse up to get parent container
+    const ul = $(container).find("ul"); //find parent's target ul
+    const input = $(container).find("input");
+
+    //now based on the container's className to call load
+    if (container.attr("class").includes("assignee")) {
+      loadDropdownField(
+        ul,
+        input,
+        loadUsers,
+        USERS,
+        "username",
+        "name",
+        "username"
+      );
+    } else if (container.attr("class").includes("category")) {
+      loadDropdownField(
+        ul,
+        input,
+        loadCategories,
+        CATEGORIES,
+        "category-code",
+        "name",
+        "code"
+      );
+    } else if (container.attr("class").includes("progress-status")) {
+      loadDropdownField(
+        ul,
+        input,
+        loadProgressStatus,
+        PROGRESS_STATUS,
+        "progress-code",
+        "name",
+        "code"
+      );
+    } else if (container.attr("class").includes("emotion")) {
+      loadDropdownField(
+        ul,
+        input,
+        loadEmotions,
+        EMOTIONS,
+        "emotion-code",
+        "name",
+        "code"
+      );
+    } else if (container.attr("class").includes("satisfaction")) {
+      loadDropdownField(
+        ul,
+        input,
+        loadSatisfaction,
+        SATISFACTIONS,
+        "satisfaction-code",
+        "name",
+        "code"
+      );
+    }
+
+
+  })
+
+  $("#ticketInfoColumn").on("input change", "input, select, textarea", function () {
+    enableEditButtons();
+  });
+
+  $("#cancelEdit").click(function () {
+    if (!originalTicketData) return;
+
+    $("#editTitle").val(originalTicketData.title);
+    $("#editCategory").val(originalTicketData.category);
+    $("#editStatus").val(originalTicketData.status);
+    $("#editProcessingStatus").val(originalTicketData.progressStatus);
+    $("#editAssignee").val(originalTicketData.employee?.name || "");
+    $("#editDescription").val(originalTicketData.description || "");
+
+    disableEditButtons();
+  });
+
+  // Save edit
+  $("#saveEdit").click(function () {
+    const category = $("#editCategory").attr("data-category-code") ?
+      { code: $("#editCategory").attr("data-category-code") } : null
+
+    const progressStatus = $("#editProgressStatus").attr("data-progress-code") ?
+      { code: $("#editProgressStatus").attr("data-progress-code") } : null
+
+    const ticketData = {
+      title: $("#editTitle").val(),
+      category: category,
+      progressStatus: progressStatus,
+    };
+
+    console.log("Updated Ticket Data:", ticketData);
+
+    $.ajax({
+      url: `${API_TICKET}/${$("#editTicketId").val()}`,
+      method: "PUT",
+      contentType: "application/json",
+      data: JSON.stringify(ticketData),
+      success: function (response) {
+        successToast(response.message);
+        populateTicketDetail(response.data);
+        // performTicketSearch(0, $('#pageSize').val());
+        // refresh danh sách
+      },
+      error: function (res) {
+        errorToast(res.responseJSON.message)
+      }
+    });
+
+    disableEditButtons();
+  });
+
+
+}
+
+function performTicketSearch(page, pageSize) {
+  $(this).prop("disabled", true);
+  loadTicketSearch(page, pageSize);
+  $(this).prop("disabled", false);
+}
+
+function initTicketSearch() {
+  //button submit
+  $("#form-submit").click(function (e) {
+    performTicketSearch(0, $('#pageSize').val());
+  });
+
+  // Nút Làm Mới
+  $("#form-reset").click(function () {
+    $("#form-ticket-search input").val(""); // reset tất cả input
+    $("#dateRangeLabel input").val("Thời gian");
+    resetDateField();
+  });
+
+  initDataExport()
+  loadDatetimePickerField();
+}
+
+function loadDatetimePickerField() {
+  const now = new Date();
+
+  $("#ticket-search #dateRangeLabel-container").click(function (e) {
+    console.log("clock");
+    $(".fast-pick .dropdown-menu").toggleClass("show");
+  });
+
+  $(".date-range .dropdown-item").click(function () {
+    const range = $(this).data("range");
+    const today = new Date();
+
+    let from, to;
+
+    $("#customPickerContainer").hide();
+
+    switch (range) {
+      case "today": {
+        from = new Date(today);
+        from.setHours(0, 0, 0, 0);
+
+        to = new Date(from);
+        to.setDate(to.getDate() + 1);
+        setDateRange(from, to, "Hôm nay");
+        break;
+      }
+
+      case "yesterday": {
+        from = new Date(today);
+        from.setDate(from.getDate() - 1);
+        from.setHours(0, 0, 0, 0);
+
+        to = new Date(from);
+        to.setDate(to.getDate() + 1);
+        setDateRange(from, to, "Hôm qua");
+        break;
+      }
+
+      case "this_week": {
+        from = new Date(today);
+        from.setDate(today.getDate() - today.getDay() + 1 + 1);
+        from.setHours(0, 0, 0, 0);
+
+        to = new Date(today);
+        to.setDate(to.getDate() + 1);
+        to.setHours(0, 0, 0, 0);
+        setDateRange(from, to, "Tuần này");
+        break;
+      }
+
+      case "last_7_days": {
+        from = new Date(today);
+        from.setDate(from.getDate() - 7);
+        from.setHours(0, 0, 0, 0);
+
+        to = new Date(today);
+        to.setDate(to.getDate() + 1);
+        to.setHours(0, 0, 0, 0);
+        setDateRange(from, to, "7 Ngày");
+        break;
+      }
+
+      case "this_month": {
+        from = new Date(today.getFullYear(), today.getMonth(), 1);
+        from.setHours(0, 0, 0, 0);
+
+        to = new Date(today);
+        to.setDate(to.getDate() + 1);
+        to.setHours(0, 0, 0, 0);
+        setDateRange(from, to, "Tháng này");
+        break;
+      }
+
+      case "last_30_days": {
+        from = new Date(today);
+        from.setDate(from.getDate() - 30);
+        from.setHours(0, 0, 0, 0);
+
+        to = new Date(today);
+        to.setDate(to.getDate() + 1);
+        to.setHours(0, 0, 0, 0);
+        setDateRange(from, to, "30 Ngày");
+        break;
+      }
+
+      case "custom": {
+        $("#customPickerContainer").show();
+        break;
+      }
+    }
+
+    $(".date-range .dropdown-menu").removeClass("show");
+  });
+
+  resetDateField();
+
+  flatpickr("#customDateRange", {
+    mode: "range",
+    dateFormat: "Y-m-d",
+    locale: "vn",
+    onClose: function (selectedDates) {
+      if (selectedDates.length === 2) {
+        setDateRange(selectedDates[0], new Date(selectedDates[1].getTime() + 24 * 60 * 60 * 1000), "Tùy chỉnh");
+      }
+    }
+  });
+}
+
+function resetDateField() {
+  console.log("tự load");
+  const today = new Date();
+  const from = new Date(today);
+  from.setHours(0, 0, 0, 0);
+  const to = new Date(today);
+  to.setDate(today.getDate() + 1);
+  setDateRange(from, to, "Hôm nay");
+}
+
+async function loadUsers() {
+  if (USERS.length === 0) {
+    try {
+      const res = await new Promise((resolve, reject) => {
+        $.ajax({
+          url: `${API_EMPLOYEE}/get-all-user`,
+          method: 'GET',
+          contentType: 'application/json',
+          success: function (data) {
+            console.log(data);
+            resolve(data);
+          },
+          error: reject
+        });
+      });
+      USERS.push(...res.data);
+    } catch (err) {
+      console.error("Lỗi khi tải user:", err.responseText || err);
+    }
+  }
+}
+
+async function loadProgressStatus() {
+  if (PROGRESS_STATUS.length === 0) {
+    try {
+      const res = await new Promise((resolve, reject) => {
+        $.ajax({
+          url: `${API_PROGRESS_STATUS}`,
+          method: 'GET',
+          contentType: 'application/json',
+          success: function (data) {
+            console.log(data);
+            resolve(data);
+          },
+          error: reject
+        });
+      });
+      PROGRESS_STATUS.push(...res.data);
+    } catch (err) {
+      console.error("Lỗi khi tải PROGRESS_STATUS:", err.responseText || err);
+    }
+  }
+}
+
+async function loadCategories() {
+  if (CATEGORIES.length === 0) {
+    try {
+      const res = await new Promise((resolve, reject) => {
+        $.ajax({
+          url: `${API_CATEGORY}`,
+          method: 'GET',
+          contentType: 'application/json',
+          success: resolve,
+          error: reject
+        });
+      });
+      CATEGORIES.push(...res.data);
+    } catch (err) {
+      console.error("Lỗi khi tải Phana loaij:", err.responseText || err);
+    }
+  }
+}
+
+async function loadEmotions() {
+  if (EMOTIONS.length === 0) {
+    try {
+      const res = await new Promise((resolve, reject) => {
+        $.ajax({
+          url: `${API_EMOTION}`,
+          method: 'GET',
+          contentType: 'application/json',
+          success: function (data) {
+            console.log(data);
+            resolve(data);
+          },
+          error: reject
+        });
+      });
+      EMOTIONS.push(...res.data);
+    } catch (err) {
+      console.error("Lỗi khi tải Phana loaij:", err.responseText || err);
+    }
+  }
+}
+
+async function loadSatisfaction() {
+  if (SATISFACTIONS.length === 0) {
+    try {
+      const res = await new Promise((resolve, reject) => {
+        $.ajax({
+          url: `${API_SATISFACTION}`,
+          method: 'GET',
+          contentType: 'application/json',
+          success: function (data) {
+            console.log(data);
+            resolve(data);
+          },
+          error: reject
+        });
+      });
+      SATISFACTIONS.push(...res.data);
+    } catch (err) {
+      console.error("Lỗi khi tải Mức Hài Lòng:", err.responseText || err);
+    }
+  }
+}
+
+function _formatDate(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function setDateRange(from, to, label = '') {
+  console.log("Set date range to ", label);
+  $('#fromDate').val(_formatDate(from));
+  $('#toDate').val(_formatDate(to));
+  $('#dateRangeLabel').val(label);
+  // $('#fromDate').attr("data-timestamp-from", Math.round(from.getTime()));
+  // $('#toDate').attr("data-timestamp-to", Math.round(to.getTime()));
+}
+
+function populateTicketSearchResult(data) {
+  const content = data.content;
+  console.log(data)
+  console.log(data.totalElements == 0)
+  const container = $("#ticket-list-body");
+  container.html("");
+
+  if (data.totalElements == 0) {
+    container.append($(`
+      <div id="no-ticket-result" class="text-center text-muted py-3" style="display: block;">
+        <i class="bi bi-inbox me-1"></i> Không có kết quả phù hợp.
+      </div>
+      `))
+    return;
+  }
+
+  content.forEach(function (ticket) {
+    const html = `
+      <div class="row border-bottom item"
+           data-ticket-id="${ticket.id}"
+           data-facebookId="${ticket.facebookUser.id}">
+        <div class="col text-truncate" title="${ticket.id}">${ticket.id}</div>
+        <div class="col text-truncate" title="${ticket.title || ""}">${ticket.title || "Chưa có tiêu đề"}</div>
+        <div class="col text-truncate" title="${ticket.assignee?.name || ticket.assignee?.username}">
+          ${ticket.assignee?.name || ticket.assignee?.username || "-"}
+        </div>
+        <div class="col text-truncate" title="${ticket.facebookUser.id}">
+          ${ticket.facebookUser.id}
+        </div>
+        <div class="col text-truncate progress-status-${ticket.progressStatus.code}"
+             title="${ticket.progressStatus.name}">
+          ${ticket.progressStatus.name}
+        </div>
+        <div class="col text-truncate category-${ticket.category?.code || ''}"
+             title="${ticket.category?.name || ''}">
+          ${ticket.category?.name || ''}
+        </div>
+        <div class="col text-truncate" title="${formatEpochTimestamp(ticket.createdAt)}">
+          ${ticket.progressStatus.code == "resolved" ? "-" : formatEpochTimestamp(ticket.createdAt)}
+        </div>
+        <div class="col text-truncate emotion-${ticket.emotion?.code || ''}"
+             title="${ticket.emotion?.name || ''}">
+          ${ticket.emotion?.name || ''}
+        </div>
+        <div class="col text-truncate satisfaction-${ticket.satisfaction?.code || ''}"
+             title="${ticket.satisfaction?.name || ''}">
+          ${ticket.satisfaction?.name || ''}
+        </div>
+      </div>
+    `;
+
+    container.append(html);
+    // initColumnResizeHandles();
+
+    //paging
+
+
+
+  });
+
+  // Gán sự kiện click cho từng item
+  $("#ticket-list-body .item").click(function () {
+    const ticketId = $(this).attr("data-ticket-id");
+    loadTicketDetail(ticketId);
+  })
+}
+
+function loadTicketDetail(ticketId) {
+  console.log("click ticket view ", ticketId);
+  window.fullModal.show();
+
+  $.ajax({
+    url: `${API_TICKET}`,
+    method: 'GET',
+    data: { id: ticketId },
+    success: function (response) {
+      populateTicketDetail(response.data);
+      loadTicketMessages(response.data.id);
+      loadTicketHistory(response.data.facebookUser.id);
+    },
+    error: function (res) {
+      errorToast(rres.responseJSON.message);
+    }
+  });
+
+  // Khởi tạo lại tooltip (nếu dùng Bootstrap tooltip)
+  $('[data-bs-toggle="tooltip"]').tooltip?.();
+}
+function loadTicketSearch(page = null, pageSize = null) {
+  console.log("button submit: page and pagesize", page, pageSize);
+  console.log(`${API_TICKET}/search?page=${page}&size=${pageSize}&sort=createdAt,DESC`);
+  //get ticketDetailDTO data
+  const ticketSearchCriteria = {
+    assignee: $("#ticket-search #assignee").attr("data-username") || null,          // assignee
+    facebookUserId: $("#ticket-search #facebookuser").val() || null,
+    title: $("#ticket-search #title").val() || null,
+    progressStatus: $("#ticket-search #progress-status").attr("data-progress-status-code") || null,
+    fromDate: toTimestamp($("#fromDate").val()),
+    toDate: toTimestamp($("#toDate").val()),
+    category: $("#ticket-search #category").attr("data-category-code") || null,
+    emotion: $("#ticket-search #emotion").attr("data-emotion-code") || null,
+    satisfaction: $("#ticket-search #satisfaction").attr("satisfaction") || null,
+  }
+  console.log("ticketSearchCriteria ", ticketSearchCriteria);
+
+  //TODO: call API search
+  $.ajax({
+    url: `${API_TICKET}/search?page=${page}&size=${pageSize}&sort=createdAt,DESC`,
+    method: "POST",
+    contentType: "application/json",
+    data: JSON.stringify(ticketSearchCriteria),
+    beforeSend: function () {
+
+    },
+    success: function (res) {
+      successToast(res.message);
+      //TODO: populate list
+      showTicketListLoading($("#ticket-list-body"));
+      setTimeout(function () {
+        hideTicketListLoading($("#ticket-list-body"));
+        populateTicketSearchResult(res.data)
+        renderPagination(res.data.page,
+          res.data.totalElements,
+          res.data.size);
+      }, 300);
+      // populateTicketSearchResult(res.data);
+    },
+    error: function (err) {
+      errorToast(res.responseJSON.message);
+    },
+  })
+}
+function resizeColumnByContent(index) {
+  const $headerRow = $(".ticket-list-header");
+  const $bodyRows = $(".ticket-list-body .row");
+
+  const $cells = $([$headerRow.children().eq(index)[0]]);
+  $bodyRows.each(function () {
+    const $cell = $(this).children().eq(index);
+    if ($cell.length) $cells.push($cell[0]);
+  });
+
+  const $testSpan = $("<span>")
+    .css({
+      visibility: "hidden",
+      whiteSpace: "nowrap",
+      position: "absolute",
+      font: $headerRow.children().eq(index).css("font")
+    })
+    .appendTo("body");
+
+  let maxWidth = 0;
+  $cells.each(function () {
+    $testSpan.text($(this).text());
+    const width = $testSpan[0].offsetWidth + 24; // trừ hao
+    maxWidth = Math.max(maxWidth, width);
+  });
+
+  $testSpan.remove();
+
+  $cells.each(function () {
+    $(this).css({
+      flex: "none",
+      width: `${maxWidth}px`
+    });
+  });
+}
+
+function initColumnResizeHandles() {
+  $('.ticket-list-header .resizable').each(function () {
+    const $col = $(this);
+    const $handle = $("<div>")
+      .css({
+        width: "5px",
+        cursor: "col-resize",
+        position: "absolute",
+        right: "0",
+        top: "0",
+        bottom: "0",
+        zIndex: "10"
+      })
+      .appendTo($col);
+
+    // Kéo để resize
+    $handle.on("mousedown", function (e) {
+      e.preventDefault();
+      const startX = e.pageX;
+      const startWidth = $col.outerWidth();
+      const index = $col.index();
+
+      function onMouseMove(e) {
+        const newWidth = startWidth + (e.pageX - startX);
+        $(`.ticket-list-header .col:nth-child(${index + 1}),
+           .ticket-list-body .row .col:nth-child(${index + 1})`).css({
+          flex: "none",
+          width: `${newWidth}px`
+        });
+      }
+
+      function onMouseUp() {
+        $(document).off("mousemove", onMouseMove);
+        $(document).off("mouseup", onMouseUp);
+      }
+
+      $(document).on("mousemove", onMouseMove);
+      $(document).on("mouseup", onMouseUp);
+    });
+
+    // Double click để auto resize theo nội dung
+    $handle.on("dblclick", function (e) {
+      e.preventDefault();
+      const index = $col.index();
+      resizeColumnByContent(index);
+    });
+  });
+}
+
+
+function renderPagination(currentPageZeroBased, totalElements, pageSize) {
+  const totalPages = Math.ceil(totalElements / pageSize);
+  const $pagination = $("#ticket-pagination");
+  $pagination.empty();
+
+  if (totalPages <= 1) return; // Không cần hiển thị nếu chỉ có 1 trang
+
+  const currentPage = currentPageZeroBased + 1; // 1-based để hiển thị
+
+  const createPageItem = (page, label = null, active = false, disabled = false) => {
+    const li = $(`
+      <li class="page-item ${active ? 'active' : ''} ${disabled ? 'disabled' : ''}">
+        <a class="page-link" href="#">${label || page}</a>
+      </li>
+    `);
+    if (!disabled && !active) {
+      li.click(function (e) {
+        e.preventDefault();
+        loadTicketSearch(page - 1, pageSize); // Truyền page 0-based
+      });
+    }
+    return li;
+  };
+
+  // Prev button
+  $pagination.append(createPageItem(currentPage - 1, "Prev", false, currentPage === 1));
+
+  let startPage = Math.max(1, currentPage - 1);
+  let endPage = Math.min(totalPages, startPage + 2);
+
+  if (endPage - startPage < 2 && startPage > 1) {
+    startPage = Math.max(1, endPage - 2);
+  }
+
+  // Nếu chưa phải trang 1 → hiển thị trang 1 + ...
+  if (startPage > 1) {
+    $pagination.append(createPageItem(1));
+    if (startPage > 2) {
+      $pagination.append(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
+    }
+  }
+
+  // Các trang chính
+  for (let page = startPage; page <= endPage; page++) {
+    $pagination.append(createPageItem(page, null, page === currentPage));
+  }
+
+  // Nếu còn nhiều trang sau
+  if (endPage < totalPages - 1) {
+    $pagination.append(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
+  }
+
+  // Hiển thị trang cuối nếu chưa có
+  if (endPage < totalPages) {
+    $pagination.append(createPageItem(totalPages));
+  }
+
+  // Next button
+  $pagination.append(createPageItem(currentPage + 1, "Next", false, currentPage === totalPages));
+}
+
+function initTicketSorting() {
+  console.log("init ticket sorting");
+  $(".page-list-header .col.resizable").click(function () {
+    const $col = $(this);
+    const sortField = $col.data("sort");
+    let currentDirection = $col.data("sort-direction") || "none";
+
+    // Reset các cột khác
+    $(".page-list-header .col.resizable").not($col).data("sort-direction", "none");
+
+    // Toggle hướng sắp xếp
+    const newDirection = currentDirection === "asc" ? "desc" : "asc";
+    $col.data("sort-direction", newDirection);
+
+    // Gọi hàm reload list (ví dụ từ server hoặc sort tại client)
+    sortTicketListByIndex(sortField, newDirection);
+  });
+}
+
+function sortTicketListBy(field, direction) {
+  const $rows = $("#ticket-list-body .row").get();
+
+  $rows.sort((a, b) => {
+    const aText = $(a).find(`.col[data-field="${field}"]`).text().trim();
+    const bText = $(b).find(`.col[data-field="${field}"]`).text().trim();
+
+    if (!isNaN(aText) && !isNaN(bText)) {
+      return direction === "asc" ? aText - bText : bText - aText;
+    } else {
+      return direction === "asc"
+        ? aText.localeCompare(bText)
+        : bText.localeCompare(aText);
+    }
+  });
+
+  console.log($rows);
+  $("#ticket-list-body").html($rows);
+}
+
+function initTicketSortingByIndex() {
+  $(".page-list-header .col.resizable").click(function () {
+    const $col = $(this);
+    const index = $col.index();
+    let direction = $col.data("sort-direction") || "none";
+
+    // Reset các cột khác
+    $(".page-list-header .col.resizable").not($col).data("sort-direction", "none");
+
+    // Toggle hướng
+    direction = direction === "asc" ? "desc" : "asc";
+    $col.data("sort-direction", direction);
+
+    sortTicketListByIndex(index, direction);
+  });
+}
+
+
+function sortTicketListByIndex(colIndex, direction) {
+  const $rows = $("#ticket-list-body .row").get();
+
+  $rows.sort((a, b) => {
+    const aText = $(a).children(".col").eq(colIndex).text().trim();
+    const bText = $(b).children(".col").eq(colIndex).text().trim();
+
+    if (!isNaN(aText) && !isNaN(bText)) {
+      return direction === "asc" ? aText - bText : bText - aText;
+    } else {
+      return direction === "asc"
+        ? aText.localeCompare(bText)
+        : bText.localeCompare(aText);
+    }
+  });
+
+  $("#ticket-list-body").html($rows);
+}
+
+// Sự kiện mở modal
+function initDataExport() {
+  // Nút Xuất Excel (stub)
+  $("#form-export-excel").click(function () {
+    const data = {
+      assignee: $("#ticket-search #assignee").attr("data-username") || null,          // assignee
+      facebookUserId: $("#ticket-search #facebookuser").val() || null,
+      title: $("#ticket-search #title").val() || null,
+      progressStatus: $("#ticket-search #progress-status").attr("data-progress-status-code") || null,
+      fromDate: toTimestamp($("#fromDate").val()),
+      toDate: toTimestamp($("#toDate").val()),
+      category: $("#ticket-search #category").attr("data-category-code") || null,
+      emotion: $("#ticket-search #emotion").attr("data-emotion-code") || null,
+      satisfaction: $("#ticket-search #satisfaction").attr("satisfaction") || null,
+    };
+
+    console.log(data);
+    console.log(JSON.stringify(data))
+    $.ajax({
+      url: `${API_TICKET}/export-excel`, // Stub endpoint, bạn có thể cập nhật
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify(data),
+      xhrFields: {
+        responseType: 'blob' // để tải về file
+      },
+      success: function (blob) {
+        successToast("tải thành công");
+        const link = document.createElement("a");
+        link.href = window.URL.createObjectURL(blob);
+        link.download = "tickets.xlsx";
+        link.click();
+      },
+      error: function (res) {
+        errorToast("Lỗi tải xuống excel");
+      },
+    });
+  });
+}
+
+function toTimestamp(dateString) {
+  return new Date(dateString).getTime();
+}
+
+function showTicketListLoading(container) {
+  container.html(`
+    <div class="row loading-row justify-content-center text-muted py-3">
+      <div class="col-auto">
+        <div class="spinner-border spinner-border-sm me-2 text-primary" role="status"></div>
+        Đang tải dữ liệu...
+      </div>
+    </div>
+  `);
+}
+
+function hideTicketListLoading(container) {
+  container.find(".loading-row").remove();
+}
+
+
+function showToast(type, message) {
+  const toastId = `toast-${Date.now()}`;
+
+  const toastHtml = `
+    <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
+      <div class="d-flex">
+        <div class="toast-body">${message}</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  `;
+
+  const $container = $("#toastContainer");
+  $container.append(toastHtml);
+
+  const toast = new bootstrap.Toast(document.getElementById(toastId));
+  toast.show();
+
+  $(`#${toastId}`).on('hidden.bs.toast', function () {
+    $(this).remove();
+  });
+}
+
+function successToast(message) {
+  showToast("success", message || "🎉 Thành công!");
+}
+
+function errorToast(message) {
+  showToast("danger", message || "❌ Có lỗi xảy ra!");
+}
+
+function validationToast(message) {
+  showToast("warning", message || "⚠️ Dữ liệu không hợp lệ.");
+}
+
+// Load messages kiểu chat
+function loadTicketMessages(ticketId) {
+  $("#messageList").empty();
+  $.ajax({
+    url: `${API_MESSAGE}`,
+    method: 'GET',
+    data: { ticketId: ticketId },
+    success: function (response) {
+      console.log("get message Success:", response);
+      const ticketMessages = response.data;
+      ticketMessages.sort((a, b) => a.timestamp - b.timestamp);
+
+      ticketMessages.forEach(msg => {
+        const senderClass = msg.senderEmployee ? "staff" : "user";
+        const formattedTime = formatEpochTimestamp(msg.timestamp);
+
+        const bubble = `
+      <div class="d-flex mb-2 ${senderClass === "user" ? "justify-content-start" : "justify-content-end"}">
+        <div class="chat-bubble ${senderClass}">
+          <div class="message-text">${msg.text}</div>
+          <div class="message-timestamp text-muted small mt-1" title="Timestamp: ${msg.timestamp}">${formattedTime}</div>
+        </div>
+      </div>
+    `;
+        $("#messageList").append(bubble);
+      });
+      scrollToBottomMessageList();
+
+    },
+    error: (res) => errorToast(res.responseJSON.message)
+  });
+}
+
+
+// Auto scroll to bottom
+function scrollToBottomMessageList() {
+  const messageList = document.getElementById('messageList');
+  if (messageList) {
+    messageList.scrollTop = messageList.scrollHeight;
+  }
+}
+
+
+
+// Load ticket history
+function loadTicketHistory(facebookUserId) {
+  $("#historyList").empty();
+
+  $.ajax({
+    url: `${API_TICKET}/get-by-facebook-id`,
+    method: 'GET',
+    data: { id: facebookUserId },
+    beforeSend: function () {
+      console.log("loading screen.show")
+      // $('#loadingScreen').show();
+    },
+    success: function (response) {
+      const history = response.data;
+      history.forEach(hist => {
+        const item = `
+          <li class="list-group-item d-flex flex-column">
+            <strong>#${hist.id}</strong>
+            <small>${hist.title || "Chưa có tiêu đề"}</small>
+            <small>${formatEpochTimestamp(hist.createdAt)}</small>
+          </li>
+        `;
+        $("#historyList").append(item);
+      });
+      scrollToBottomMessageList();
+
+    },
+    error: function (xhr, status, error) {
+      alert("Đã xảy ra lỗi khi tải thông tin ticket.");
+    },
+    complete: function () {
+      // $('#loadingScreen').hide();
+      console.log("loading screen.off")
+    }
+  });
+}
+
+
+function validateChangePassword() {
+  const pw = $("#password");
+  const newPw = $("#new-password");
+  const confirmPw = $("#confirm-password");
+  const errPw = $("#error-password");
+  const errNewPw = $("#error-new-password");
+  const errConfirmPw = $("#error-confirm-password");
+  pw.val() === "" ? errPw.removeClass("d-none") : errPw.addClass("d-none");
+  newPw.val() === "" ? errNewPw.removeClass("d-none") : errNewPw.addClass("d-none");
+  confirmPw.val() != newPw.val() ? errConfirmPw.removeClass("d-none") : errConfirmPw.addClass("d-none");
+
+  const result = pw.val() === "" && newPw.val() === "" && confirmPw.val() != newPw.val();
+  if (result == false) {
+    $("#confirmResetBtn").prop("disabled", result);
+  }
 }

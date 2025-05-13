@@ -16,11 +16,21 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.repository.Sa
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.repository.ProgressStatusRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.entity.Tag;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.repository.TagRepository;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.mapper.TicketMapper;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.repository.TicketRepository;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.service.TicketServiceImpl;
+import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,15 +48,81 @@ public class MasterDataCache {
     private final EmployeeRepository employeeRepository;
     private final UserGroupRepository groupRepository;
     private final TagRepository tagRepository;
+    private final TicketRepository ticketRepository;
+
 
     private Map<String, ProgressStatus> progressMap;
-    private Map<Integer, Emotion> emotionMap;
-    private Map<Integer, Satisfaction> satisfactionMap;
+    private Map<String, Emotion> emotionMap;
+    private Map<String, Satisfaction> satisfactionMap;
     private Map<String, Category> categoryMap;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     private Map<String, Status> statusMap;
     private Map<String, Employee> employeeMap;
     private Map<Integer, UserGroup> groupMap;
     private Map<String, Tag> tagMap;
+    private Map<Integer,Ticket> openingTickets;
 
     public void refresh() {
         updateAllProgressStatus();
@@ -57,10 +133,35 @@ public class MasterDataCache {
         updateAllEmployees();
         updateAllGroups();
         updateALlTags();
+        updateOpeningTickets();
         log.info("caching successfully");
     }
 
-    private void updateALlTags() {
+    public void updateOpeningTickets() {
+        try {
+            LocalDate today = LocalDate.now();
+            LocalDateTime startDateTime = today.atStartOfDay();
+            LocalDateTime endDateTime = today.plusDays(1).atStartOfDay().minusNanos(1);
+            Timestamp startOfDay = Timestamp.valueOf(startDateTime);
+            Timestamp endOfDay = Timestamp.valueOf(endDateTime);
+            List<Ticket> result = ticketRepository.findOpeningOrToday(startOfDay, endOfDay);
+            openingTickets = result.stream().collect(Collectors.toMap(Ticket::getId, Function.identity()));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        }
+    }
+
+    public Map<Integer, Ticket> getALlTickets() {
+        return openingTickets;
+    }
+
+    public Ticket getTicket(int id) {
+        return openingTickets.getOrDefault(id, null);
+    }
+
+    public void updateALlTags() {
         this.tagMap = tagRepository.findAll().stream().collect(Collectors.toMap(Tag::getName, Function.identity()));
     }
 
@@ -69,12 +170,12 @@ public class MasterDataCache {
         return progressMap.getOrDefault(code, null);
     }
 
-    public Emotion getEmotion(int id) {
-        return emotionMap.getOrDefault(id, null);
+    public Emotion getEmotion(String code) {
+        return emotionMap.getOrDefault(code, null);
     }
 
-    public Satisfaction getSatisfaction(int score) {
-        return satisfactionMap.getOrDefault(score, null);
+    public Satisfaction getSatisfaction(String code) {
+        return satisfactionMap.getOrDefault(code, null);
     }
 
     public Category getCategory(String code) {
@@ -101,11 +202,11 @@ public class MasterDataCache {
         return progressMap;
     }
 
-    public Map<Integer, Emotion> getAllEmotions() {
+    public Map<String, Emotion> getAllEmotions() {
         return emotionMap;
     }
 
-    public Map<Integer, Satisfaction> getAllSatisfactions() {
+    public Map<String, Satisfaction> getAllSatisfactions() {
         return satisfactionMap;
     }
 
@@ -130,12 +231,12 @@ public class MasterDataCache {
 
     public void updateAllEmotions() {
         this.emotionMap = emotionRepository.findAll().stream()
-                .collect(Collectors.toMap(Emotion::getId, Function.identity()));
+                .collect(Collectors.toMap(Emotion::getCode, Function.identity()));
     }
 
     public void updateAllSatisfactions() {
         this.satisfactionMap = satisfactionRepository.findAll().stream()
-                .collect(Collectors.toMap(Satisfaction::getScore, Function.identity()));
+                .collect(Collectors.toMap(Satisfaction::getCode, Function.identity()));
     }
 
     public void updateAllCategories() {
