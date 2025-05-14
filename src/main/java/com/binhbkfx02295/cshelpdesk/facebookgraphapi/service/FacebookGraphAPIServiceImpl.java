@@ -2,17 +2,15 @@ package com.binhbkfx02295.cshelpdesk.facebookgraphapi.service;
 
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.config.FacebookAPIProperties;
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.dto.FacebookTokenResponseDTO;
-import com.binhbkfx02295.cshelpdesk.facebookgraphapi.dto.FacebookUserProfileDTO;
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.entity.FacebookToken;
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.repository.FacebookTokenRepository;
-import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDTO;
+import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserFetchDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -89,21 +87,21 @@ public class FacebookGraphAPIServiceImpl implements FacebookGraphAPIService {
     }
 
     @Override
-    public FacebookUserDTO getUserProfile(String userId) {
+    public FacebookUserFetchDTO getUserProfile(String userId) {
         log.info("📥 Đang lấy thông tin người dùng Facebook với ID: {}", userId);
 
         String token = getValidAccessToken();
         String url = buildProfileUrl(userId, token);
 
         try {
-            return restTemplate.getForObject(url, FacebookUserDTO.class);
+            return restTemplate.getForObject(url, FacebookUserFetchDTO.class);
         } catch (Exception ex) {
             log.warn("⚠️ Gặp lỗi khi gọi API lấy profile: {}", ex.getMessage());
             if (ex.getMessage().contains("code\":190")) {
                 log.info("🔄 Token có thể đã hết hạn. Đang làm mới token và thử lại...");
                 String newToken = saveShortLivedToken(token).getLongLivedAccessToken();
                 String retryUrl = buildProfileUrl(userId, newToken);
-                return restTemplate.getForObject(retryUrl, FacebookUserDTO.class);
+                return restTemplate.getForObject(retryUrl, FacebookUserFetchDTO.class);
             }
             log.error("❌ Lỗi không xử lý được khi lấy profile từ Facebook", ex);
             throw ex;
