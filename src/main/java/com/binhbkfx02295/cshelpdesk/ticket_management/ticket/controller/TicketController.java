@@ -1,7 +1,7 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.controller;
 
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.dto.NoteDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDTO;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketListDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDetailDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketSearchCriteria;
@@ -16,7 +16,6 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.List;
 @RestController
@@ -53,7 +51,7 @@ public class TicketController {
 //    }
 
     @GetMapping("/get-by-facebook-id")
-    public ResponseEntity<APIResultSet<List<TicketDTO>>> getByFacebookId(@RequestParam(value = "id") String id) {
+    public ResponseEntity<APIResultSet<List<TicketListDTO>>> getByFacebookId(@RequestParam(value = "id") String id) {
         return APIResponseEntityHelper.from(ticketService.findAllByFacebookUserId(id));
     }
 
@@ -87,7 +85,7 @@ public class TicketController {
     }
 
     @PostMapping("/search")
-    public ResponseEntity<APIResultSet<PaginationResponse<TicketDetailDTO>>> search(
+    public ResponseEntity<APIResultSet<PaginationResponse<TicketListDTO>>> search(
             @RequestBody TicketSearchCriteria criteria,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info(pageable.toString());
@@ -103,8 +101,8 @@ public class TicketController {
     public ResponseEntity<InputStreamResource> exportExcel(@RequestBody TicketSearchCriteria criteria) {
         try {
             // Lấy tất cả dữ liệu, không phân trang
-            APIResultSet<PaginationResponse<TicketDetailDTO>> result = ticketService.searchTickets(criteria, Pageable.unpaged());
-            List<TicketDetailDTO> tickets = result.getData().getContent();
+            APIResultSet<PaginationResponse<TicketListDTO>> result = ticketService.searchTickets(criteria, Pageable.unpaged());
+            List<TicketListDTO> tickets = result.getData().getContent();
 
             ByteArrayInputStream in = TicketExcelExporter.exportToExcel(tickets);
 

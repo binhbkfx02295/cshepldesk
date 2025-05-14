@@ -1,9 +1,9 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.repository;
 
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDetailDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -42,4 +42,10 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer>, JpaSpe
 """)
     List<Ticket> findOpeningOrToday(@Param("startOfDay") Timestamp startOfDay,
                                     @Param("endOfDay") Timestamp endOfDay);
+
+    @EntityGraph(attributePaths = {
+            "assignee", "facebookUser", "category", "progressStatus", "emotion", "satisfaction"
+    })
+    @Override
+    Page<Ticket> findAll(Specification<Ticket> spec, Pageable pageable);
 }
