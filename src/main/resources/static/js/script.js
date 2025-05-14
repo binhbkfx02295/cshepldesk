@@ -12,6 +12,7 @@ const API_PROGRESS_STATUS = `${BASE}/api/progress-status`;
 const API_EMOTION = `${BASE}/api/emotion`;
 const API_SATISFACTION = `${BASE}/api/satisfaction`;
 const API_MESSAGE = `${BASE}/api/message`;
+const API_FACEBOOK_USER = `${BASE}/api/facebookuser`
 const USERS = []
 const CATEGORIES = []
 const PROGRESS_STATUS = [];
@@ -23,58 +24,248 @@ window.USERS
 
 $(document).ready(() => {
   // Simulate loading time
-//  setTimeout(() => {
-//    // Hide loading overlay
-//    $("#loadingOverlay").fadeOut()
-//    initHeader()
-//    initDashboard()
-//    initTicket()
-//    initTicketDetailModal();
-//
-//  }, 500)
-    $("#loadingOverlay").fadeOut()
-    initHeader()
-    initDashboard()
-    initTicket()
-    initTicketDetailModal();
+  //  setTimeout(() => {
+  //    // Hide loading overlay
+  //    $("#loadingOverlay").fadeOut()
+  //    initHeader()
+  //    initDashboard()
+  //    initTicket()
+  //    initTicketDetailModal();
+  //
+  //  }, 500)
+  $("#loadingOverlay").fadeOut()
+  initHeader();
 
-  if (window.location.href.endsWith("dashboard")) {
-        $(".sidebar-menu li").removeClass("active");
-        $(".sidebar-menu li").get(0).addClass("active");
-      } else if (window.location.href.endsWith("ticket")) {
-        $(".sidebar-menu li").removeClass("active");
-        $(".sidebar-menu li").get(1).addClass("active");
-      } else if (window.location.href.endsWith("customer")) {
-        $(".sidebar-menu li").removeClass("active");
-        $(".sidebar-menu li").get(2).addClass("active");
-      } else if (window.location.href.endsWith("performance")) {
-        $(".sidebar-menu li").removeClass("active");
-        $(".sidebar-menu li").get(3).addClass("active");
-      } else if (window.location.href.endsWith("report")) {
-        $(".sidebar-menu li").removeClass("active");
-        $(".sidebar-menu li").get(4).addClass("active");
-      } else if (window.location.href.endsWith("setting")) {
-        $(".sidebar-menu li").removeClass("active");
-        $(".sidebar-menu li").get(5).addClass("active");
+  if (window.location.href.includes("dashboard") || window.location.href.includes("index")
+  ) {
+    initDashboard();
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(0).classList.add("active");
+  } else if (window.location.href.includes("ticket")) {
+
+    initTicket()
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(1).classList.add("active");
+  } else if (window.location.href.includes("customer")) {
+    initCustomer();
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(2).classList.add("active");
+
+  } else if (window.location.href.includes("performance")) {
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(3).classList.add("active");
+  } else if (window.location.href.includes("report")) {
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(4).classList.add("active");
+  } else if (window.location.href.includes("setting")) {
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(5).classList.add("active");
+  }
+})
+
+//customer/html
+function initCustomer() {
+  console.log("init customer page");
+  window.customerViewDetailModal = new bootstrap.Modal(document.getElementById("ticketFullDetailModal"));
+  window.customerViewDetailModal = new bootstrap.Modal(document.getElementById("ticketFullDetailModal"));
+  window.customerDeleteModal = new bootstrap.Modal(document.getElementById("ticketFullDetailModal"));
+  bindItemClickEvents(); //TODO: delete after testing
+  bindItemClickEvents(); //TODO: delete after testing
+  bindItemClickEvents(); //TODO: delete after testing
+  $(".delete-checkbox").click(() => openCustomerDeleteModal());
+
+
+  $(".select-all input[type=checkbox]").click(function (e) {
+    $("#customer-list-body .item input[type=checkbox]").prop("checked", $(this).prop("checked"));
+  });
+
+  $(".search-common i").click(function (e) {
+    performSearchCustomer(page= 0, size=$("#pageSize"));
+  });
+
+  $("#customer-export-excel").click(function (e) {
+    console.log("click");
+    //TODO:
+  });
+
+  $("#customer-create-ticket").click(function (e) {
+    console.log("click");
+    //TODO:
+  });
+
+  function performSearchCustomer(page = 0, size = 10) {
+    const fieldName = $(".search-common .searchField").val();
+    const value = $(".search-common input").val();
+    queryParam = {
+      page: page,
+      size: size,
+      facebookId: fieldName.includes("facebookId") ? value : null,
+      facebookName: fieldName.includes("facebookName") ? value : null,
+      realName: fieldName.includes("realName") ? value : null,
+      phone: fieldName.includes("phone") ? value : null,
+      email: fieldName.includes("email") ? value : null,
+      zalo: fieldName.includes("zalo") ? value : null
+    }
+    console.log(queryParam);
+
+    getAPI({
+      url: `${API_FACEBOOK_USER}/search?${buildQueryParams(queryParam)}`,
+      container: $("#customer-list-body"),
+      renderItem: renderCustomerItem,
+      noResultNode: $("#no-customer-result"),
+      loadingNode: $("#loading-result"),
+      onSuccess: (res) => {
+        console.log("day ne ", res);
+        bindItemClickEvents();
+        console.log({
+          currentPageZeroBased: res.data.page,
+          totalElements: res.data.totalElements,
+          pageSize: res.data.size
+        })
+        renderPagination(
+          res.data.page,
+          res.data.totalElements,
+          res.data.size,
+          performSearchCustomer
+        )
+      },
+      onError: () => errorToast("Không thể tải danh sách khách hàng.")
+    });
+  }
+
+  function renderCustomerItem(item, container) {
+    console.log("rendering..");
+    //TODO
+    const $item = $(`
+    <div class="row item border-bottom align-items-center" data-id=${item.facebookId}">
+        <div class="col selected d-flex justify-content-center align-items-center">
+            <input type="checkbox">
+        </div>
+        <div class="col facebookId">${item.facebookId}</div>
+        <div class="col facebookProfile">
+          <img class="avt" src="${item.facebookProfilePic}">
+          ${item.facebookName}</div>
+        <div class="col">${item.facebookName || "- -"}</div>
+        <div class="col">${item.phone || "- -"}</div>
+        <div class="col">${item.email || "- -"}</div>
+        <div class="col">${item.zalo || "- -"}</div>
+        <div class="col options overflow-visible">
+            <div class="customer-dropdown">
+                <i class="bi bi-three-dots-vertical"></i>
+                <ul class="dropdown-menu">
+                    <li><a class="customer-view-detail dropdown-item" href="#"><i class="bi bi-eye me-2"></i></i>Xem chi tiết</a></li>
+                    <li><a class="customer-edit dropdown-item" href="#"><i class="bi bi-pencil-square me-2"></i>Chỉnh sửa</a></li>
+                    <li><a class="customer-delete dropdown-item" href="#"><i class="bi bi-trash3 me-2"></i>Xóa</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+      `);
+    container.append($item);
+  }
+
+  function bindItemClickEvents() {
+    console.log("binding..");
+    $("#customer-list-body .item .dropdown-menu a").on("click", function (e) {
+      e.preventDefault();
+      const action = $(this).attr("class");
+      const id = $(this).closest(".item").data("id");
+      if (action.includes("customer-view-detail")) openCustomerViewDetailModal(id);
+      else if (action.includes("customer-edit")) openCustomerEditModal(id);
+      else if (action.includes("customer-delete")) openCustomerDeleteModal(id);
+      $(this).closest(".dropdown-menu").hide();
+    });
+
+    // TODO: Toggle dropdown (nên dùng event delegation hoặc Bootstrap dropdown JS)
+    $("#customer-list-body .item .options i").on("click", function () {
+      console.log("click");
+      $(this).siblings(".dropdown-menu").toggle();
+    });
+
+    const checkboxes = $("input[type=checkbox");
+    const searchCommon = $(".search-common");
+    const deleteButton = $(".delete-checkbox");
+    const btnGroup = $(".customer-search-btn-group");
+    checkboxes.on("change", function () {
+      const anyChecked = checkboxes.is(":checked");
+      if (anyChecked) {
+        $(".page-list-body .item input:checked").closest(".item").addClass("selected");
+        searchCommon.css("width", "0px"); // Show as flex
+        btnGroup.hide(); // Show as flex
+        deleteButton.show();
+      } else {
+        $(".page-list-body .item.selected").removeClass("selected");
+        searchCommon.css("width", "auto"); // Hides (display: none)
+        btnGroup.show(); // Hides (display: none)
+        deleteButton.hide();
+      }
+    });
+  }
+
+  function openCustomerViewDetailModal(id) {
+    //TODO:
+    console.log("customer view detail modal id", id);
+    window.customerViewDetailModal.show();
+  }
+  function openCustomerEditModal(id) {
+    //TODO:
+    openCustomerViewDetailModal(id)
+  }
+  function openCustomerDeleteModal(id = null) {
+    //TODO:
+    console.log("customer delete modal ", id);
+    window.customerDeleteModal.show();
+  }
+}
+
+function buildQueryParams(params) {
+  const searchParams = new URLSearchParams();
+  for (const key in params) {
+    if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+      searchParams.append(key, params[key]);
+    }
+  }
+
+  return searchParams.toString();
+}
+
+//get json helper
+function getAPI({ url, container, renderItem,
+  noResultNode, loadingNode,
+  onSuccess, onError }) {
+  loadingNode?.show();
+  console.log("calling api...", url);
+  $.getJSON(url)
+    .done(res => {
+      console.log(res);
+      const data = res.data.content;
+      console.log(container);
+      console.log(renderItem)
+      if (container && renderItem) {
+        console.log("ok...");
+        container.empty();
+        console.log(Array.isArray(data))
+        if (Array.isArray(data) && data.length > 0) {
+          data.forEach(item => renderItem(item, container));
+          noResultNode?.hide();
+        } else {
+          noResultNode?.show();
+        }
       }
 
-
-
-
-
-
-
-
-})
+      onSuccess?.(res);
+    })
+    .fail(err => onError?.(err))
+    .always(() => loadingNode?.hide());
+}
 
 //ticket.html
 function initTicket() {
   console.log("init ticket search ..");
-  window.fullModal = new bootstrap.Modal(document.getElementById("ticketFullDetailModal"));
-
   initTicketSearch();
   initTicketSortingByIndex();
   initTicketCreate();
+  initTicketDetailModal();
 }
 
 
@@ -220,6 +411,8 @@ function initHeader() {
 
 // Initialize dashboard
 function initDashboard() {
+  console.log("init dashboard");
+  initTicketDetailModal();
   //TODO:
   $("#refreshDashboardTicket").click(() => {
     refreshDashboardTicket()
@@ -244,28 +437,28 @@ function refreshDashboardTicket() {
 
 
   // Simulate refresh delay
-//  setTimeout(() => {
-//    // Update last updated time
-//    const now = new Date()
-//    $("#lastUpdated").text(formatTime(now))
-//
-//    // Reload data
-//    loadDashboardTickets()
-//
-//    // Restore refresh button
-//    refreshBtn.html(originalContent)
-//    refreshBtn.prop("disabled", false)
-//  }, 500)
-// Update last updated time
-    const now = new Date()
-    $("#lastUpdated").text(formatTime(now))
+  //  setTimeout(() => {
+  //    // Update last updated time
+  //    const now = new Date()
+  //    $("#lastUpdated").text(formatTime(now))
+  //
+  //    // Reload data
+  //    loadDashboardTickets()
+  //
+  //    // Restore refresh button
+  //    refreshBtn.html(originalContent)
+  //    refreshBtn.prop("disabled", false)
+  //  }, 500)
+  // Update last updated time
+  const now = new Date()
+  $("#lastUpdated").text(formatTime(now))
 
-    // Reload data
-    loadDashboardTickets()
+  // Reload data
+  loadDashboardTickets()
 
-    // Restore refresh button
-    refreshBtn.html(originalContent)
-    refreshBtn.prop("disabled", false)
+  // Restore refresh button
+  refreshBtn.html(originalContent)
+  refreshBtn.prop("disabled", false)
 
 
 
@@ -321,7 +514,7 @@ function loadDashboardEmployees(sortField = null) {
               <span class="status-indicator ${employee.statusLog[0].status}"></span>
               ${employee.statusLog[0].status}
             </td>
-            ${employee.statusLog[0].status == "offline" ?  "" : `<td class="time-elapse" data-timestamp="${employee.statusLog[0].from}">${startElapsedTimer(employee.statusLog[0].from)}</td>`}
+            ${employee.statusLog[0].status == "offline" ? "" : `<td class="time-elapse" data-timestamp="${employee.statusLog[0].from}">${startElapsedTimer(employee.statusLog[0].from)}</td>`}
 
           </tr>
         `;
@@ -357,14 +550,14 @@ function loadDashboardTickets() {
       console.log(res);
       //populateDashboard
       showTicketListLoading($("#ticketList"));
-//      setTimeout(function () {
-//        populateDashboardTicket(res.data);
-//        populateDashboardTicketMetrics(res.data);
-//        hideTicketListLoading($("#ticketList"));
-//      }, 500)
-        populateDashboardTicket(res.data);
-        populateDashboardTicketMetrics(res.data);
-        hideTicketListLoading($("#ticketList"));
+      //      setTimeout(function () {
+      //        populateDashboardTicket(res.data);
+      //        populateDashboardTicketMetrics(res.data);
+      //        hideTicketListLoading($("#ticketList"));
+      //      }, 500)
+      populateDashboardTicket(res.data);
+      populateDashboardTicketMetrics(res.data);
+      hideTicketListLoading($("#ticketList"));
     },
     error: function (res) {
       errorToast(res.responseJSON.message);
@@ -389,8 +582,8 @@ function populateDashboardTicket(tickets) {
                     </div>
                     <div class="user">
                         <span class="avatar me-2 text-center">
-                        <img src="${ticket.facebookUser.profile_pic}">
-                        </span><i class="bi bi-messenger me-2"></i>${ticket.facebookUser.first_name} ${ticket.facebookUser.last_name}</span>
+                        <img src="${ticket.facebookUser.facebookProfilePic}">
+                        </span><i class="bi bi-messenger me-2"></i>${ticket.facebookUser.facebookName || "- -"} </span>
 
                     </div>
                 </div>
@@ -511,15 +704,15 @@ function populateTicketDetail(ticket) {
   currentEditingTicketId = ticket.id;
 
   $("#editTicketId").val(ticket.id);
-  $("#editTitle").val(ticket.title || "Chưa có tiêu đề");
-  $("#editFacebookUser").val(`${ticket.facebookUser.id}`);
-  $("#editAssignee").val(ticket.assignee?.name || "-");
+  $("#editTitle").val(ticket.title || "");
+  $("#editFacebookUser").val(`${ticket.facebookUser.facebookId}`);
+  $("#editAssignee").val(ticket.assignee?.name || "- -");
   $("#editCreatedAt").val(formatEpochTimestamp(ticket.createdAt));
-  $("#editCategory").val(ticket.category?.name || "");
-  $("#editProgressStatus").val(ticket.progressStatus?.name || "");
-  $("#editEmotion").val(ticket.emotion?.name || "-");
-  $("#editSatisfaction").val(ticket.satisfaction?.name || "-");
-  $("#editNote").val(ticket.description || "");
+  $("#editCategory").val(ticket.category?.name || "- -");
+  $("#editProgressStatus").val(ticket.progressStatus?.name || "- -");
+  $("#editEmotion").val(ticket.emotion?.name || "- -");
+  $("#editSatisfaction").val(ticket.satisfaction?.name || "- -");
+  $("#editNote").val(ticket.description || "- -");
 
 
   $("#editCategory").attr("data-category-code", ticket.category?.code || null);
@@ -749,7 +942,8 @@ function initTicketCreate() {
 
 function initTicketDetailModal() {
   const i = $(".field-group i");
-
+  console.log("initTicketDetailModal");
+  window.fullModal = new bootstrap.Modal(document.getElementById("ticketFullDetailModal"));
 
   i.click(function () {
     const container = $(this).closest(".field-group"); //traverse up to get parent container
@@ -823,8 +1017,8 @@ function initTicketDetailModal() {
     $("#editCategory").val(originalTicketData.category);
     $("#editStatus").val(originalTicketData.status);
     $("#editProcessingStatus").val(originalTicketData.progressStatus);
-    $("#editAssignee").val(originalTicketData.employee?.name || "");
-    $("#editDescription").val(originalTicketData.description || "");
+    $("#editAssignee").val(originalTicketData.employee?.name || "- -");
+    $("#editDescription").val(originalTicketData.description || "- -");
 
     disableEditButtons();
   });
@@ -893,7 +1087,7 @@ function initTicketSearch() {
 function loadDatetimePickerField() {
   const now = new Date();
 
-  $("#ticket-search #dateRangeLabel-container").click(function (e) {
+  $("#dateRangeLabel-container").click(function (e) {
     console.log("clock");
     $(".fast-pick .dropdown-menu").toggleClass("show");
   });
@@ -1151,14 +1345,14 @@ function populateTicketSearchResult(data) {
     const html = `
       <div class="row border-bottom item"
            data-ticket-id="${ticket.id}"
-           data-facebookId="${ticket.facebookUser.id}">
+           data-facebookId="${ticket.facebookUser.facebookId}">
         <div class="col text-truncate" title="${ticket.id}">${ticket.id}</div>
-        <div class="col text-truncate" title="${ticket.title || ""}">${ticket.title || "Chưa có tiêu đề"}</div>
+        <div class="col text-truncate" title="${ticket.title || ""}">${ticket.title || "- -"}</div>
         <div class="col text-truncate" title="${ticket.assignee?.name || ticket.assignee?.username}">
-          ${ticket.assignee?.name || ticket.assignee?.username || "-"}
+          ${ticket.assignee?.name || ticket.assignee?.username || "- -"}
         </div>
-        <div class="col text-truncate" title="${ticket.facebookUser.id}">
-          ${ticket.facebookUser.id}
+        <div class="col text-truncate" title="${ticket.facebookUser.facebookId}">
+          ${ticket.facebookUser.facebookId}
         </div>
         <div class="col text-truncate progress-status-${ticket.progressStatus.code}"
              title="${ticket.progressStatus.name}">
@@ -1169,7 +1363,7 @@ function populateTicketSearchResult(data) {
           ${ticket.category?.name || ''}
         </div>
         <div class="col text-truncate" title="${formatEpochTimestamp(ticket.createdAt)}">
-          ${ticket.progressStatus.code == "resolved" ? "-" : formatEpochTimestamp(ticket.createdAt)}
+          ${ticket.progressStatus.code == "resolved" ? "- -" : formatEpochTimestamp(ticket.createdAt)}
         </div>
         <div class="col text-truncate emotion-${ticket.emotion?.code || ''}"
              title="${ticket.emotion?.name || ''}">
@@ -1209,7 +1403,7 @@ function loadTicketDetail(ticketId) {
     success: function (response) {
       populateTicketDetail(response.data);
       loadTicketMessages(response.data.id);
-      loadTicketHistory(response.data.facebookUser.id);
+      loadTicketHistory(response.data.facebookUser.facebookId);
     },
     error: function (res) {
       errorToast(rres.responseJSON.message);
@@ -1225,7 +1419,7 @@ function loadTicketSearch(page = null, pageSize = null) {
   //get ticketDetailDTO data
   const ticketSearchCriteria = {
     assignee: $("#ticket-search #assignee").attr("data-username") || null,          // assignee
-    facebookUserId: $("#ticket-search #facebookuser").val() || null,
+    facebookId: $("#ticket-search #facebookuser").val() || null,
     title: $("#ticket-search #title").val() || null,
     progressStatus: $("#ticket-search #progress-status").attr("data-progress-status-code") || null,
     fromDate: toTimestamp($("#fromDate").val()),
@@ -1254,7 +1448,8 @@ function loadTicketSearch(page = null, pageSize = null) {
         populateTicketSearchResult(res.data)
         renderPagination(res.data.page,
           res.data.totalElements,
-          res.data.size);
+          res.data.size,
+          performTicketSearch);
       }, 300);
       // populateTicketSearchResult(res.data);
     },
@@ -1349,9 +1544,13 @@ function initColumnResizeHandles() {
 }
 
 
-function renderPagination(currentPageZeroBased, totalElements, pageSize) {
+function renderPagination(currentPageZeroBased, totalElements, pageSize, callback) {
+  console.log("rendering pagination...");
+  console.log("currentPageZeroBased...", currentPageZeroBased);
+  console.log("totalElements...", totalElements);
+  console.log("pageSize...", pageSize);
   const totalPages = Math.ceil(totalElements / pageSize);
-  const $pagination = $("#ticket-pagination");
+  const $pagination = $("#pagination-menu");
   $pagination.empty();
 
   if (totalPages <= 1) return; // Không cần hiển thị nếu chỉ có 1 trang
@@ -1367,7 +1566,7 @@ function renderPagination(currentPageZeroBased, totalElements, pageSize) {
     if (!disabled && !active) {
       li.click(function (e) {
         e.preventDefault();
-        loadTicketSearch(page - 1, pageSize); // Truyền page 0-based
+        callback(page - 1, pageSize); // Truyền page 0-based
       });
     }
     return li;
@@ -1492,7 +1691,7 @@ function initDataExport() {
   $("#form-export-excel").click(function () {
     const data = {
       assignee: $("#ticket-search #assignee").attr("data-username") || null,          // assignee
-      facebookUserId: $("#ticket-search #facebookuser").val() || null,
+      facebookId: $("#ticket-search #facebookuser").val() || null,
       title: $("#ticket-search #title").val() || null,
       progressStatus: $("#ticket-search #progress-status").attr("data-progress-status-code") || null,
       fromDate: toTimestamp($("#fromDate").val()),
@@ -1626,13 +1825,13 @@ function scrollToBottomMessageList() {
 
 
 // Load ticket history
-function loadTicketHistory(facebookUserId) {
+function loadTicketHistory(facebookId) {
   $("#historyList").empty();
 
   $.ajax({
     url: `${API_TICKET}/get-by-facebook-id`,
     method: 'GET',
-    data: { id: facebookUserId },
+    data: { id: facebookId },
     beforeSend: function () {
       console.log("loading screen.show")
       // $('#loadingScreen').show();
