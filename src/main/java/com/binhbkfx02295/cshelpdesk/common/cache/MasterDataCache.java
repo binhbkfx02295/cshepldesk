@@ -30,6 +30,7 @@ import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -55,69 +56,6 @@ public class MasterDataCache {
     private Map<String, Emotion> emotionMap;
     private Map<String, Satisfaction> satisfactionMap;
     private Map<String, Category> categoryMap;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private Map<String, Status> statusMap;
     private Map<String, Employee> employeeMap;
     private Map<Integer, UserGroup> groupMap;
@@ -266,5 +204,13 @@ public class MasterDataCache {
 
     public Tag getTag(String tag) {
         return tagMap.getOrDefault(tag, null);
+    }
+
+    public void addTicket(Ticket saved) {
+        try {
+            this.openingTickets.put(saved.getId(), saved);
+        } catch (Exception e) {
+            log.error(Arrays.toString(e.getStackTrace()));
+        }
     }
 }
