@@ -1,23 +1,19 @@
 package com.binhbkfx02295.cshelpdesk.facebookuser.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.sql.Timestamp;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class FacebookUserDetailDTO {
+public class FacebookUserSearchCriteria {
     private String facebookId;
     private String facebookName;
-    private String facebookProfilePic;
     private String realName;
     private String email;
     private String phone;
     private String zalo;
-    private Instant createdAt;
 }

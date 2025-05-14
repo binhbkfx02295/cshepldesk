@@ -1,14 +1,18 @@
 package com.binhbkfx02295.cshelpdesk.facebookuser.repository;
 
+import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserSearchCriteria;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.facebookuser.repository.dao.FacebookUserDAO;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 @Transactional
@@ -56,6 +60,81 @@ public class FacebookUserRepository implements FacebookUserDAO {
             throw new RuntimeException("Failed to search FacebookUsers", e);
         }
     }
+    @Override
+    public Map<String, Object> search(FacebookUserSearchCriteria criteria, Pageable pageable) {
+        try {
+            //TODO: create query that use LIMIT ?, ?
+            //TODO: set ? ? with pageable
+            //TODO: for every field in criteria, set typed parameter to WHERE condition
+            StringBuilder queryBuilder = new StringBuilder("SELECT f FROM FacebookUser f WHERE 1=1");
+            StringBuilder countQueryBuilder = new StringBuilder("SELECT COUNT(f) FROM FacebookUser f WHERE 1=1");
+
+            if (criteria.getFacebookId() != null && !criteria.getFacebookId().isBlank()) {
+                countQueryBuilder.append(" AND f.facebookId LIKE :facebookId");
+                queryBuilder.append(" AND f.facebookId LIKE :facebookId");
+            }
+            if (criteria.getFacebookName() != null && !criteria.getFacebookName().isBlank()) {
+                countQueryBuilder.append(" AND LOWER(f.facebookName) LIKE LOWER(:facebookName)");
+                queryBuilder.append(" AND LOWER(f.facebookName) LIKE LOWER(:facebookName)");
+            }
+            if (criteria.getRealName() != null && !criteria.getRealName().isBlank()) {
+                countQueryBuilder.append(" AND LOWER(f.realName) LIKE LOWER(:realName)");
+                queryBuilder.append(" AND LOWER(f.realName) LIKE LOWER(:realName)");
+            }
+            if (criteria.getEmail() != null && !criteria.getEmail().isBlank()) {
+                countQueryBuilder.append(" AND LOWER(f.email) LIKE LOWER(:email)");
+                queryBuilder.append(" AND LOWER(f.email) LIKE LOWER(:email)");
+            }
+            if (criteria.getPhone() != null && !criteria.getPhone().isBlank()) {
+                countQueryBuilder.append(" AND f.phone LIKE :phone");
+                queryBuilder.append(" AND f.phone LIKE :phone");
+            }
+            if (criteria.getZalo() != null && !criteria.getZalo().isBlank()) {
+                countQueryBuilder.append(" AND f.zalo LIKE :zalo");
+                queryBuilder.append(" AND f.zalo LIKE :zalo");
+            }
+
+            var query = entityManager.createQuery(queryBuilder.toString(), FacebookUser.class);
+            var countQuery = entityManager.createQuery(countQueryBuilder.toString(), Long.class);
+            if (criteria.getFacebookId() != null && !criteria.getFacebookId().isBlank()) {
+                countQuery.setParameter("facebookId", "%" + criteria.getFacebookId() + "%");
+                query.setParameter("facebookId", "%" + criteria.getFacebookId() + "%");
+            }
+            if (criteria.getFacebookName() != null && !criteria.getFacebookName().isBlank()) {
+                countQuery.setParameter("facebookName", "%" + criteria.getFacebookName() + "%");
+                query.setParameter("facebookName", "%" + criteria.getFacebookName() + "%");
+            }
+            if (criteria.getRealName() != null && !criteria.getRealName().isBlank()) {
+                countQuery.setParameter("realName", "%" + criteria.getRealName() + "%");
+                query.setParameter("realName", "%" + criteria.getRealName() + "%");
+            }
+            if (criteria.getEmail() != null && !criteria.getEmail().isBlank()) {
+                countQuery.setParameter("email", "%" + criteria.getEmail() + "%");
+                query.setParameter("email", "%" + criteria.getEmail() + "%");
+            }
+            if (criteria.getPhone() != null && !criteria.getPhone().isBlank()) {
+                countQuery.setParameter("phone", "%" + criteria.getPhone() + "%");
+                query.setParameter("phone", "%" + criteria.getPhone() + "%");
+            }
+            if (criteria.getZalo() != null && !criteria.getZalo().isBlank()) {
+                countQuery.setParameter("zalo", "%" + criteria.getZalo() + "%");
+                query.setParameter("zalo", "%" + criteria.getZalo() + "%");
+            }
+
+            query.setFirstResult((int) pageable.getOffset()); // offset từ Pageable
+            query.setMaxResults(pageable.getPageSize());      // limit = page size
+            List<FacebookUser> resultList = query.getResultList(); // ✅ sửa lại, bạn đang gọi .getSingleResult() sai
+            Long totalElements = countQuery.getSingleResult();     // ✅ đếm số lượng
+
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put("content", resultList);
+            resultMap.put("totalElements", totalElements);
+            return resultMap;
+        } catch (Exception e) {
+            log.error("Error searching FacebookUser", e);
+            throw new RuntimeException("Failed to search FacebookUsers", e);
+        }
+    }
 
     @Override
     public List<FacebookUser> getAll() {
@@ -73,9 +152,7 @@ public class FacebookUserRepository implements FacebookUserDAO {
         try {
             FacebookUser existing = entityManager.find(FacebookUser.class, updatedUser.getFacebookId());
             if (existing == null) return null;
-
-            if (updatedUser.getFacebookFirstName() != null) existing.setFacebookFirstName(updatedUser.getFacebookFirstName());
-            if (updatedUser.getFacebookLastName() != null) existing.setFacebookLastName(updatedUser.getFacebookLastName());
+            if (updatedUser.getFacebookName() != null) existing.setFacebookName(updatedUser.getFacebookName());
             if (updatedUser.getFacebookProfilePic() != null) existing.setFacebookProfilePic(updatedUser.getFacebookProfilePic());
             if (updatedUser.getEmail() != null) existing.setEmail(updatedUser.getEmail());
             if (updatedUser.getPhone() != null) existing.setPhone(updatedUser.getPhone());

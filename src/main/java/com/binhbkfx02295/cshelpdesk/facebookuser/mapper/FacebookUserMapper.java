@@ -1,9 +1,9 @@
 package com.binhbkfx02295.cshelpdesk.facebookuser.mapper;
 
-import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDTO;
+import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserListDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDetailDTO;
+import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserFetchDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -12,58 +12,59 @@ import org.springframework.stereotype.Component;
 @Data
 @NoArgsConstructor
 public class FacebookUserMapper {
-    public FacebookUserDTO toListDTO(FacebookUser entity) {
-        FacebookUserDTO dto = new FacebookUserDTO();
+    public FacebookUserListDTO toListDTO(FacebookUser entity) {
+        FacebookUserListDTO dto = new FacebookUserListDTO();
         dto.setFacebookId(entity.getFacebookId());
-        dto.setFacebookLastName(entity.getFacebookLastName());
-        dto.setFacebookFirstName(entity.getFacebookFirstName());
+        dto.setFacebookName(entity.getFacebookName());
         dto.setFacebookProfilePic(entity.getFacebookProfilePic());
         return dto;
     };
     public FacebookUserDetailDTO toDetailDTO(FacebookUser entity) {
         FacebookUserDetailDTO dto = new FacebookUserDetailDTO();
         dto.setFacebookId(entity.getFacebookId());
+        dto.setFacebookName(entity.getFacebookName());
+        dto.setFacebookProfilePic(entity.getFacebookProfilePic());
+        dto.setRealName(entity.getRealName());
         dto.setEmail(entity.getEmail());
         dto.setZalo(entity.getZalo());
         dto.setPhone(entity.getPhone());
-        dto.setFacebookLastName(entity.getFacebookLastName());
-        dto.setFacebookFirstName(entity.getFacebookFirstName());
-        dto.setPhone(entity.getPhone());
-        dto.setEmail(entity.getEmail());
-        dto.setFacebookProfilePic(entity.getFacebookProfilePic());
+        dto.setCreatedAt(entity.getCreatedAt());
         return dto;
     };
     public FacebookUser toEntity(FacebookUserDetailDTO dto) {
         FacebookUser entity = new FacebookUser();
         entity.setFacebookId(dto.getFacebookId());
+        entity.setFacebookName(dto.getFacebookName());
+        entity.setFacebookProfilePic(dto.getFacebookProfilePic());
+        entity.setRealName(dto.getRealName());
         entity.setEmail(dto.getEmail());
         entity.setZalo(dto.getZalo());
         entity.setPhone(dto.getPhone());
-        entity.setFacebookLastName(dto.getFacebookLastName());
-        entity.setFacebookFirstName(dto.getFacebookFirstName());
-        entity.setPhone(dto.getPhone());
-        entity.setEmail(dto.getEmail());
-        entity.setFacebookProfilePic(dto.getFacebookProfilePic());
+        entity.setCreatedAt(dto.getCreatedAt());
         return entity;
     }
 
-    public FacebookUser toEntity(FacebookUserDTO dto) {
+    public FacebookUser toEntity(FacebookUserListDTO dto) {
         FacebookUser entity = new FacebookUser();
         entity.setFacebookId(dto.getFacebookId());
-        entity.setFacebookLastName(dto.getFacebookLastName());
-        entity.setFacebookFirstName(dto.getFacebookFirstName());
+        entity.setFacebookName(dto.getFacebookName());
         entity.setFacebookProfilePic(dto.getFacebookProfilePic());
         return entity;
     }
 
-
-    public FacebookUserDTO toDTO(FacebookUser dto) {
-        FacebookUserDTO entity = new FacebookUserDTO();
+    public FacebookUser toEntity(FacebookUserFetchDTO dto) {
+        FacebookUser entity = new FacebookUser();
         entity.setFacebookId(dto.getFacebookId());
-        entity.setFacebookLastName(dto.getFacebookLastName());
-        entity.setFacebookFirstName(dto.getFacebookFirstName());
+        entity.setFacebookName(String.format("%s %s", dto.getFacebookFirstName(), dto.getFacebookLastName()));
         entity.setFacebookProfilePic(dto.getFacebookProfilePic());
         return entity;
     }
 
+    public FacebookUserListDTO toDTO(FacebookUserDetailDTO facebookUser) {
+        FacebookUserListDTO dto = new FacebookUserListDTO();
+        dto.setFacebookId(facebookUser.getFacebookId());
+        dto.setFacebookName(facebookUser.getFacebookName());
+        dto.setFacebookProfilePic(facebookUser.getFacebookProfilePic());
+        return dto;
+    }
 }
