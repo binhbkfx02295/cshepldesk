@@ -920,16 +920,16 @@ a {
   display: block;
 }
 .field-group input {
-  border-radius: 3px;
+  border-radius: 4px;
   border: 1px solid #ced4da;
   padding: 4px 8px;
   font-size: 13px;
   transition: border 0.3s;
   width: 100%;
+  transition: all 0.3s ease;
 }
 .field-group input:hover, .field-group input:focus {
-  border: 1px solid #2196f3 !important;
-  outline: 2px solid #2196f3;
+  outline: 1px solid #0c1d2e;
 }
 .field-group input::-moz-placeholder {
   color: #adb5bd;
@@ -1060,4 +1060,65 @@ a {
 }
 .customer-content .customer-list .page-list-footer {
   font-size: 15px;
+}
+
+#customerDeleteModal .modal-header {
+  background-color: #0c1d2e;
+  color: #dee2e6;
+}
+
+#customerEditModal .modal-body #facebook-profile {
+  margin-bottom: 15px;
+}
+#customerEditModal .modal-body #facebook-profile span {
+  margin-bottom: 6px;
+}
+#customerEditModal .modal-body #facebook-profile #edit-img {
+  margin-right: 20px;
+}
+#customerEditModal .modal-body #facebook-profile #edit-img img {
+  display: block;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+}
+#customerEditModal .modal-body #facebook-profile .join-date {
+  font-size: 13px;
+}
+#customerEditModal .modal-body #facebook-profile .facebookName {
+  font-size: 18px;
+  font-weight: 800;
+}
+#customerEditModal .modal-body #facebook-profile .facebookId {
+  font-size: 13px;
+}
+#customerEditModal .modal-body .field-group {
+  max-width: 100%;
+  margin-bottom: 18px;
+  margin-right: 0;
+}
+#customerEditModal .modal-body .field-group label {
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: #495057;
+}
+#customerEditModal .modal-body .field-group input {
+  padding: 7px 10px;
+  font-size: 13px;
+  color: #343a40;
+  width: 90%;
+}
+#customerEditModal .modal-body .field-group i {
+  color: #adb5bd;
+  margin-left: 15px;
+  padding: 5px;
+  background-color: #dee2e6;
+  border-radius: 4px;
+  border: 1px solid #adb5bd;
+  transition: all 0.3s ease;
+}
+#customerEditModal .modal-body .field-group i:hover {
+  color: #6c757d;
+  background-color: #ced4da;
+  border-color: #6c757d;
 }/*# sourceMappingURL=style.css.map */
