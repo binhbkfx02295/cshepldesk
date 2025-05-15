@@ -1,9 +1,6 @@
 package com.binhbkfx02295.cshelpdesk.facebookuser.service;
 
-import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserListDTO;
-import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDetailDTO;
-import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserFetchDTO;
-import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserSearchCriteria;
+import com.binhbkfx02295.cshelpdesk.facebookuser.dto.*;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.facebookuser.mapper.FacebookUserMapper;
 import com.binhbkfx02295.cshelpdesk.facebookuser.repository.FacebookUserRepository;
@@ -55,25 +52,18 @@ public class FacebookUserServiceImpl implements FacebookUserService {
     @Override
     public APIResultSet<FacebookUserDetailDTO> update(FacebookUserDetailDTO updatedUserDTO) {
         try {
+            FacebookUser entity = facebookUserRepository.get(updatedUserDTO.getFacebookId());
             return Optional.ofNullable(facebookUserRepository.update(mapper.toEntity(updatedUserDTO)))
                     .map(user -> {
-                        APIResultSet<FacebookUserDetailDTO> result = APIResultSet.ok(MSG_SUCCESS, mapper.toDetailDTO(user));
+                        APIResultSet<FacebookUserDetailDTO> result = APIResultSet.ok(String.format("Cập nhật khách hàng ID: %s thành công.", updatedUserDTO.getFacebookId()), mapper.toDetailDTO(user));
                         log.info(result.getMessage());
                         return result;
                     })
                     .orElseGet(() -> APIResultSet.notFound(MSG_ERROR_USER_NOT_FOUND));
         } catch (Exception e) {
+            e.printStackTrace();
+            log.info(String.valueOf(e));
             return APIResultSet.internalError(MSG_ERROR_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
-    public APIResultSet<List<FacebookUserListDTO>> search(String name) {
-        try {
-            return APIResultSet.ok(MSG_SUCCESS, facebookUserRepository.search(name).stream().map(mapper::toListDTO).toList());
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return APIResultSet.internalError(e.getMessage());
         }
     }
 
@@ -122,9 +112,16 @@ public class FacebookUserServiceImpl implements FacebookUserService {
     @Override
     public APIResultSet<Void> deleteById(String s) {
         try {
+            if (s == null || s.isEmpty() || s.isBlank()) {
+                return APIResultSet.badRequest("Facebook ID bị thiếu");
+            }
+
+            if (!facebookUserRepository.existsById(s)) {
+                return APIResultSet.badRequest(("Facebook ID không tồn tại"));
+            }
             facebookUserRepository.deleteById(s);
-            log.info("Delete facebookuser {} OK", s);
-            return APIResultSet.ok();
+            log.info("Xóa Khách hàng ID: {} thành công.", s);
+            return APIResultSet.ok(String.format("Xóa Khách hàng ID: %s thành công.", s), null);
         } catch (Exception e) {
             log.error(e.getMessage());
             return APIResultSet.internalError();
@@ -146,6 +143,17 @@ public class FacebookUserServiceImpl implements FacebookUserService {
         } catch (Exception e) {
             log.info(Arrays.toString(e.getStackTrace()));
             return APIResultSet.internalError();
+        }
+    }
+
+    public List<FacebookUserExportDTO> exportSearchUsers(FacebookUserSearchCriteria criteria, Pageable pageable) {
+        try {
+            Map<String, Object> queryResult = facebookUserRepository.search(criteria, pageable);
+            List<FacebookUserExportDTO> content = ((List<FacebookUser>)queryResult.get("content")).stream().map(mapper::toExportDTO).toList();
+            return content;
+        } catch (Exception e) {
+            log.info(Arrays.toString(e.getStackTrace()));
+            return null;
         }
     }
 

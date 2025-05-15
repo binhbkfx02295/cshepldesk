@@ -31,8 +31,6 @@ public interface FacebookUserService {
 
     APIResultSet<FacebookUserDetailDTO> update(FacebookUserDetailDTO updatedUser);
 
-    APIResultSet<List<FacebookUserListDTO>> search(String name);
-
     APIResultSet<FacebookUserDetailDTO> get(String id);
 
     APIResultSet<List<FacebookUserListDTO>> getAll();

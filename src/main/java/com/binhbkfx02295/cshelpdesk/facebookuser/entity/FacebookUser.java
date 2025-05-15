@@ -18,6 +18,7 @@ import java.util.List;
 @Table(name = "facebook_user")
 public class FacebookUser {
     @Id
+    @Column(nullable = false)
     private String facebookId;
 
     @Column(nullable = false)

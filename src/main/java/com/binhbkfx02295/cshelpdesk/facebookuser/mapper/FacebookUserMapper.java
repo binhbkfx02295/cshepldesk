@@ -1,5 +1,6 @@
 package com.binhbkfx02295.cshelpdesk.facebookuser.mapper;
 
+import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserExportDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserListDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDetailDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserFetchDTO;
@@ -65,6 +66,18 @@ public class FacebookUserMapper {
         dto.setFacebookId(facebookUser.getFacebookId());
         dto.setFacebookName(facebookUser.getFacebookName());
         dto.setFacebookProfilePic(facebookUser.getFacebookProfilePic());
+        return dto;
+    }
+
+    public FacebookUserExportDTO toExportDTO(FacebookUser entity) {
+        FacebookUserExportDTO dto = new FacebookUserExportDTO();
+        dto.setFacebookId(entity.getFacebookId());
+        dto.setFacebookName(entity.getFacebookName());
+        dto.setRealName(entity.getRealName());
+        dto.setEmail(entity.getEmail());
+        dto.setZalo(entity.getZalo());
+        dto.setPhone(entity.getPhone());
+        dto.setCreatedAt(entity.getCreatedAt());
         return dto;
     }
 }

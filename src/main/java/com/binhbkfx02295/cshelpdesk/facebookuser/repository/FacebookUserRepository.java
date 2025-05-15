@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Repository
 @Transactional
@@ -121,8 +122,10 @@ public class FacebookUserRepository implements FacebookUserDAO {
                 query.setParameter("zalo", "%" + criteria.getZalo() + "%");
             }
 
-            query.setFirstResult((int) pageable.getOffset()); // offset từ Pageable
-            query.setMaxResults(pageable.getPageSize());      // limit = page size
+            if (pageable.isPaged()) {
+                query.setFirstResult((int) pageable.getOffset()); // offset từ Pageable
+                query.setMaxResults(pageable.getPageSize());      // limit = page size
+            }
             List<FacebookUser> resultList = query.getResultList(); // ✅ sửa lại, bạn đang gọi .getSingleResult() sai
             Long totalElements = countQuery.getSingleResult();     // ✅ đếm số lượng
 
@@ -152,13 +155,23 @@ public class FacebookUserRepository implements FacebookUserDAO {
         try {
             FacebookUser existing = entityManager.find(FacebookUser.class, updatedUser.getFacebookId());
             if (existing == null) return null;
-            if (updatedUser.getFacebookName() != null) existing.setFacebookName(updatedUser.getFacebookName());
-            if (updatedUser.getFacebookProfilePic() != null) existing.setFacebookProfilePic(updatedUser.getFacebookProfilePic());
-            if (updatedUser.getEmail() != null) existing.setEmail(updatedUser.getEmail());
-            if (updatedUser.getPhone() != null) existing.setPhone(updatedUser.getPhone());
-            if (updatedUser.getZalo() != null) existing.setZalo(updatedUser.getZalo());
+            if (updatedUser.getFacebookName() != null && !Objects.equals(existing.getFacebookName(), updatedUser.getFacebookName())) {
+                existing.setFacebookName(updatedUser.getFacebookName());
+            }
+            if (updatedUser.getRealName() != null && !Objects.equals(existing.getRealName(), updatedUser.getRealName())) {
+                existing.setRealName(updatedUser.getRealName());
+            }
+            if (updatedUser.getEmail() != null && !Objects.equals(existing.getEmail(), updatedUser.getEmail())) {
+                existing.setEmail(updatedUser.getEmail());
+            }
+            if (updatedUser.getPhone() != null && !Objects.equals(existing.getPhone(), updatedUser.getPhone())) {
+                existing.setPhone(updatedUser.getPhone());
+            }
+            if (updatedUser.getZalo() != null && !Objects.equals(existing.getZalo(), updatedUser.getZalo())) {
+                existing.setZalo(updatedUser.getZalo());
+            }
 
-            return entityManager.merge(existing);
+            return existing;
         } catch (Exception e) {
             log.error("Error updating FacebookUser: {}", updatedUser, e);
             throw new RuntimeException("Failed to update FacebookUser", e);
