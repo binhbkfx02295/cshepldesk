@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.binhbkfx02295</groupId>
 	<artifactId>cshelpdesk</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<name>cshelpdesk</name>
 	<description>Customer Help Desk system</description>
 	<url/>
@@ -95,6 +95,12 @@
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
 			<version>5.2.5</version>
+		</dependency>
+
+		<!-- Jackson for JSON -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
 		</dependency>
 
 

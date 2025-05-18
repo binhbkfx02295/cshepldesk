@@ -38,7 +38,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/login", "/css/**", "/js/**", "/img/**", "/webhook/**", "/api/**").permitAll()
+                        .requestMatchers("/login", "/css/**", "/js/**", "/img/**", "/webhook/**", "/api/**", "/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -78,13 +78,13 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // NẾU dùng session hoặc cookie (đăng nhập):
-//         config.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
-//         config.setAllowCredentials(true);
+         config.setAllowedOrigins(Arrays.asList("http://localhost:63342"));
+         config.setAllowCredentials(true);
 
         config.setAllowedOriginPatterns(Collections.singletonList("*")); // mới từ Spring Security 6+
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
         config.setAllowedHeaders(Collections.singletonList("*"));
-        config.setAllowCredentials(false); // true nếu dùng cookie
+        //config.setAllowCredentials(false); // true nếu dùng cookie
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
