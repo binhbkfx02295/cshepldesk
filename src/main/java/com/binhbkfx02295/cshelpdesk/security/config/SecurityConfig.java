@@ -6,6 +6,7 @@ import com.binhbkfx02295.cshelpdesk.security.auth.CustomAuthenticationProvider;
 import com.binhbkfx02295.cshelpdesk.security.auth.LogoutSuccessHandlerImpl;
 import com.binhbkfx02295.cshelpdesk.security.filter.AlreadyAuthenticatedFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,6 +22,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -31,6 +33,15 @@ public class SecurityConfig {
     private final AuthenticationFailureHandlerImpl failureHandler;
     private final AuthenticationSuccessHandlerImpl successHandler;
     private final LogoutSuccessHandlerImpl logoutHandler;
+
+    @Value("${security.cors-allowed-origins}")
+    private List<String> allowedOrigins;
+
+    @Value("${security.cors-allowed-headers}")
+    private List<String> allowedHeaders;
+
+    @Value("${security.cors-allowed-methods}")
+    private List<String> allowedMethods;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -78,12 +89,12 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // NẾU dùng session hoặc cookie (đăng nhập):
-         config.setAllowedOrigins(Arrays.asList("http://localhost:63342"));
+         config.setAllowedOrigins(allowedOrigins);
          config.setAllowCredentials(true);
 
         config.setAllowedOriginPatterns(Collections.singletonList("*")); // mới từ Spring Security 6+
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
-        config.setAllowedHeaders(Collections.singletonList("*"));
+        config.setAllowedMethods(allowedMethods);
+        config.setAllowedHeaders(allowedHeaders);
         //config.setAllowCredentials(false); // true nếu dùng cookie
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
