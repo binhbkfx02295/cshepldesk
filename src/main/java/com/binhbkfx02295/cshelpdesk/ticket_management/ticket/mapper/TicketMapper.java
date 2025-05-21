@@ -1,34 +1,26 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.mapper;
 
 import com.binhbkfx02295.cshelpdesk.common.cache.MasterDataCache;
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeMapper;
-import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.facebookuser.mapper.FacebookUserMapper;
-import com.binhbkfx02295.cshelpdesk.ticket_management.category.dto.CategoryDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.mapper.CategoryMapper;
-import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.dto.EmotionDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.mapper.EmotionMapper;
-import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.dto.ProgressStatusDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.entity.ProgressStatus;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.mapper.ProgressStatusMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisfaction;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.mapper.SatisfactionMapper;
-import com.binhbkfx02295.cshelpdesk.ticket_management.tag.dto.TagDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.mapper.TagMapper;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDTO;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketListDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDetailDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
-import com.binhbkfx02295.cshelpdesk.ticket_management.tag.entity.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
@@ -45,9 +37,9 @@ public class TicketMapper {
     private final EmotionMapper emotionMapper;
     private final SatisfactionMapper satisfactionMapper;
 
-    public TicketDTO toListDTO(Ticket ticket) {
+    public TicketListDTO toListDTO(Ticket ticket) {
         if (ticket == null) return null;
-        TicketDTO dto = new TicketDTO();
+        TicketListDTO dto = new TicketListDTO();
 
         dto.setId(ticket.getId());
         dto.setTitle(ticket.getTitle());
@@ -59,6 +51,8 @@ public class TicketMapper {
         dto.setFacebookUser(ticket.getFacebookUser() != null ? facebookUserMapper.toListDTO(ticket.getFacebookUser()) : null);
         dto.setProgressStatus(progressStatusMapper.toDTO(ticket.getProgressStatus()));
         dto.setCategory(ticket.getCategory() != null ? categoryMapper.toDTO(ticket.getCategory()) : null);
+        dto.setEmotion(ticket.getEmotion() != null ? emotionMapper.toDTO(ticket.getEmotion()) : null);
+        dto.setSatisfaction(ticket.getSatisfaction() != null ? satisfactionMapper.toDTO(ticket.getSatisfaction()) : null);
 
         return dto;
     }

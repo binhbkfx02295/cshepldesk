@@ -12,69 +12,484 @@ const API_PROGRESS_STATUS = `${BASE}/api/progress-status`;
 const API_EMOTION = `${BASE}/api/emotion`;
 const API_SATISFACTION = `${BASE}/api/satisfaction`;
 const API_MESSAGE = `${BASE}/api/message`;
+const API_FACEBOOK_USER = `${BASE}/api/facebookuser`
 const USERS = []
 const CATEGORIES = []
 const PROGRESS_STATUS = [];
 const EMOTIONS = [];
 const SATISFACTIONS = [];
-window.USERS
-
-
-
+const GLOBAL_API_HEADERS = {
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+}
+const HTTP_GET_METHOD = "GET";
+const HTTP_POST_METHOD = "POST";
+const HTTP_PUT_METHOD = "PUT";
+const HTTP_DELETE_METHOD = "DELETE";
+var refreshHandler = null;
+var submitHandler = null;
+var keyupHandler = null;
+var debounceKeyup = null;
+var deleteCustomerHandler = null;
 $(document).ready(() => {
   // Simulate loading time
-//  setTimeout(() => {
-//    // Hide loading overlay
-//    $("#loadingOverlay").fadeOut()
-//    initHeader()
-//    initDashboard()
-//    initTicket()
-//    initTicketDetailModal();
-//
-//  }, 500)
-    $("#loadingOverlay").fadeOut()
-    initHeader()
-    initDashboard()
-    initTicket()
-    initTicketDetailModal();
+  //  setTimeout(() => {
+  //    // Hide loading overlay
+  //    $("#loadingOverlay").fadeOut()
+  //    initHeader()
+  //    initDashboard()
+  //    initTicket()
+  //    initTicketDetailModal();
+  //
+  //  }, 500)
+  $("#loadingOverlay").fadeOut()
+  initHeader();
 
-  if (window.location.href.endsWith("dashboard")) {
-        $(".sidebar-menu li").removeClass("active");
-        $(".sidebar-menu li").get(0).addClass("active");
-      } else if (window.location.href.endsWith("ticket")) {
-        $(".sidebar-menu li").removeClass("active");
-        $(".sidebar-menu li").get(1).addClass("active");
-      } else if (window.location.href.endsWith("customer")) {
-        $(".sidebar-menu li").removeClass("active");
-        $(".sidebar-menu li").get(2).addClass("active");
-      } else if (window.location.href.endsWith("performance")) {
-        $(".sidebar-menu li").removeClass("active");
-        $(".sidebar-menu li").get(3).addClass("active");
-      } else if (window.location.href.endsWith("report")) {
-        $(".sidebar-menu li").removeClass("active");
-        $(".sidebar-menu li").get(4).addClass("active");
-      } else if (window.location.href.endsWith("setting")) {
-        $(".sidebar-menu li").removeClass("active");
-        $(".sidebar-menu li").get(5).addClass("active");
+  if (window.location.href.includes("dashboard") || window.location.href.includes("index")
+  ) {
+    initDashboard();
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(0).classList.add("active");
+  } else if (window.location.href.includes("ticket")) {
+
+    initTicket()
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(1).classList.add("active");
+  } else if (window.location.href.includes("customer")) {
+    initCustomer();
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(2).classList.add("active");
+
+  } else if (window.location.href.includes("performance")) {
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(3).classList.add("active");
+  } else if (window.location.href.includes("report")) {
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(4).classList.add("active");
+  } else if (window.location.href.includes("setting")) {
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(5).classList.add("active");
+  }
+})
+
+//customer/html
+function initCustomer() {
+  console.log("init customer page");
+  initCustomerDeleteModal();
+  initCustomerExport();
+  initCustomerEditModal();
+  bindItemClickEvents(); //TODO: delete after testing
+
+
+
+  $(".select-all input[type=checkbox]").click(function (e) {
+    $("#customer-list-body .item input[type=checkbox]").prop("checked", $(this).prop("checked"));
+  });
+
+  $(".search-common i").click(function (e) {
+    performSearchCustomer(page = 0, size = $("#pageSize").val());
+  });
+
+  function initCustomerDeleteModal() {
+    let button = document.getElementById("delete-checkbox");
+    window.customerDeleteModal = new bootstrap.Modal(document.getElementById("customerDeleteModal"));
+    //bind click open modal
+    button.addEventListener("click", function () {
+      window.customerDeleteModal.show();
+    })
+  }
+
+  function initCustomerEditModal() {
+    window.customerEditModal = new bootstrap.Modal(document.getElementById("customerEditModal"));
+    const i = document.querySelectorAll("#customerEditModal .field-group i");
+    i.forEach((item) => {
+      item.addEventListener("click", function () {
+        //get sibling ad set to 0;
+        console.log(item.previousElementSibling);
+        item.previousElementSibling.value = "";
+      })
+    })
+  }
+
+  function initCustomerExport() {
+    $("#customer-export-excel").click(function (e) {
+      console.log("click");
+      const data = getCustomerSearchData();
+      const url = `${API_FACEBOOK_USER}/export-excel?${buildQueryParam(data)}`;
+      console.log(url);
+      xhr = createXHR();
+       xhr.responseType = "blob";
+      handleResponse(xhr, function (blob) {
+        successToast("Tải xuống thành công");
+        const link = document.createElement("a");
+        link.href = window.URL.createObjectURL(blob);
+        link.download = "Khách hàng.xlsx";
+        link.click();
+      })
+      xhr.open(HTTP_GET_METHOD, url)
+      xhr.send();
+    });
+  }
+
+
+  function sendExportData() {
+    data = getCustomerSearchData();
+    xhr = createXHR();
+
+
+  }
+
+  function performSearchCustomer(page = 0, size = 10) {
+    data = getCustomerSearchData();
+    data.page = page;
+    data.size = size;
+    console.log(data)
+    const container = document.getElementById("customer-list-body");
+    const loading = $($("#loading-result"));
+    const url = `${API_FACEBOOK_USER}/search?${buildQueryParam(data)}`;
+    console.log(url)
+    loading.show();
+
+    xhr = createXHR();
+    handleResponse(xhr, function (response) {
+      response = JSON.parse(response);
+      loading.hide();
+      successToast(response.message);
+      container.innerHTML = "";
+      let data = response.data
+      if (data.content != 0) {
+        renderCustomerDetail(data.content, container)
+        bindItemClickEvents()
+        renderPagination(
+          data.page,
+          data.totalElements,
+          data.size,
+          performSearchCustomer
+        )
+
+      } else {
+        let item = document.createElement("div");
+        item.innerHTML = `
+          <div id="no-ticket-result" class="text-center text-muted py-3" style="display: block;">
+        <i class="bi bi-inbox me-1"></i> Không có kết quả phù hợp.
+      </div>
+          `;
+        console.log(item);
+        container.innerHTML = item.getHTML();
+      }
+    })
+    xhr.open(HTTP_GET_METHOD, url)
+    xhr.send();
+  }
+
+  function getCustomerSearchData() {
+    const fieldName = $("#search-field").val();
+    const keyword = $("#search-keyword").val() || null;
+    return {
+      facebookId: fieldName.includes("facebookId") ? keyword : null,
+      facebookName: fieldName.includes("facebookName") ? keyword : null,
+      realName: fieldName.includes("realName") ? keyword : null,
+      phone: fieldName.includes("phone") ? keyword : null,
+      email: fieldName.includes("email") ? keyword : null,
+      zalo: fieldName.includes("zalo") ? keyword : null,
+    }
+  }
+
+  function renderCustomerDetail(data, container) {
+    const fragment = document.createDocumentFragment();
+    data.forEach((customer) => {
+      let item = document.createElement("div");
+      item.className = "row item border-bottom align-items-center";
+      item.setAttribute("data-id", customer.facebookId);
+      item.innerHTML = `
+      <div class="col selected d-flex justify-content-center align-items-center">
+          <input type="checkbox">
+      </div>
+      <div class="col facebookId">${customer.facebookId || "- -"}</div>
+      <div class="col facebookProfile">
+        <img class="avt" src="${customer.facebookProfilePic || "- -"}">
+        ${customer.facebookName || "- -"}</div>
+      <div class="col">${sanitizeText(customer.facebookName) || "- -"}</div>
+      <div class="col">${sanitizeText(customer.phone) || "- -"}</div>
+      <div class="col">${sanitizeText(customer.email) || "- -"}</div>
+      <div class="col">${sanitizeText(customer.zalo) || "- -"}</div>
+      <div class="col options overflow-visible">
+          <div class="customer-dropdown">
+              <i class="bi bi-three-dots-vertical"></i>
+              <ul class="dropdown-menu">
+                  <li><a class="customer-view-detail dropdown-item" href="#"><i class="bi bi-eye me-2"></i></i>Xem chi tiết</a></li>
+                  <li><a class="customer-edit dropdown-item" href="#"><i class="bi bi-pencil-square me-2"></i>Chỉnh sửa</a></li>
+                  <li><a class="customer-delete dropdown-item" href="#"><i class="bi bi-trash3 me-2"></i>Xóa</a></li>
+              </ul>
+          </div>
+      </div>
+      `
+      fragment.appendChild(item);
+    })
+    container.appendChild(fragment)
+  }
+
+  function renderCustomerItem(item, container) {
+    console.log("rendering..");
+    //TODO
+    const $item = $(`
+    <div class="row item border-bottom align-items-center" data-id="${item.facebookId || "- -"}">
+        <div class="col selected d-flex justify-content-center align-items-center">
+            <input type="checkbox">
+        </div>
+        <div class="col facebookId">${item.facebookId || "- -"}</div>
+        <div class="col facebookProfile">
+          <img class="avt" src="${item.facebookProfilePic || "- -"}">
+          ${item.facebookName || "- -"}</div>
+        <div class="col">${sanitizeText(item.facebookName) || "- -"}</div>
+        <div class="col">${sanitizeText(item.phone) || "- -"}</div>
+        <div class="col">${sanitizeText(item.email) || "- -"}</div>
+        <div class="col">${sanitizeText(item.zalo) || "- -"}</div>
+        <div class="col options overflow-visible">
+            <div class="customer-dropdown">
+                <i class="bi bi-three-dots-vertical"></i>
+                <ul class="dropdown-menu">
+                    <li><a class="customer-view-detail dropdown-item" href="#"><i class="bi bi-eye me-2"></i></i>Xem chi tiết</a></li>
+                    <li><a class="customer-edit dropdown-item" href="#"><i class="bi bi-pencil-square me-2"></i>Chỉnh sửa</a></li>
+                    <li><a class="customer-delete dropdown-item" href="#"><i class="bi bi-trash3 me-2"></i>Xóa</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+      `);
+    container.append($item);
+  }
+
+  function bindItemClickEvents() {
+    const facebookProfileCol = document.querySelectorAll("#customer-list-body .facebookProfile");
+    console.log("binding..");
+
+    facebookProfileCol.forEach((item) => {
+      item.addEventListener("click", function () {
+        const id = $(this).closest(".item").data("id");
+        open(openCustomerViewDetailModal(id))
+      });
+    })
+    $("#customer-list-body .item .dropdown-menu a").on("click", function (e) {
+      e.preventDefault();
+      const action = $(this).attr("class");
+      const id = $(this).closest(".item").data("id");
+      if (action.includes("customer-view-detail")) openCustomerViewDetailModal(id);
+      else if (action.includes("customer-edit")) openCustomerEditModal(id);
+      else if (action.includes("customer-delete")) openCustomerDeleteModal(id);
+      $(this).closest(".dropdown-menu").hide();
+    });
+
+    // TODO: Toggle dropdown (nên dùng event delegation hoặc Bootstrap dropdown JS)
+    $("#customer-list-body .item .options i").on("click", function () {
+      console.log("click");
+      $(this).siblings(".dropdown-menu").toggle();
+    });
+
+    const checkboxes = $("input[type=checkbox");
+    const searchCommon = $(".search-common");
+    const deleteButton = $(".delete-checkbox");
+    const btnGroup = $(".customer-search-btn-group");
+    checkboxes.on("change", function () {
+      const anyChecked = checkboxes.is(":checked");
+      if (anyChecked) {
+        $(".page-list-body .item input:checked").closest(".item").addClass("selected");
+        searchCommon.css("width", "0px"); // Show as flex
+        btnGroup.hide(); // Show as flex
+        deleteButton.show();
+      } else {
+        $(".page-list-body .item.selected").removeClass("selected");
+        searchCommon.css("width", "auto"); // Hides (display: none)
+        btnGroup.show(); // Hides (display: none)
+        deleteButton.hide();
+      }
+    });
+  }
+  function openCustomerViewDetailModal(id) {
+    //TODO
+    console.log("pending..");
+  }
+
+  function openCustomerEditModal(id) {
+    //TODO:
+    window.customerEditModal.show();
+    const modal = document.getElementById("customerEditModal");
+    const submitBtn = document.getElementById("submit-edit");
+    modal.setAttribute("data-facebookId", id);
+    submitBtn.disabled = true;
+    fetchCustomerDetail(id);
+  }
+
+  function fetchCustomerDetail(id) {
+    let xhr = createXHR();
+    console.log(id);
+    handleResponse(xhr, function (response) {
+      response = JSON.parse(response);
+      populateCustomerEditModal(response);
+    });
+    xhr.open(HTTP_GET_METHOD, `${API_FACEBOOK_USER}?id=${id}`);
+    xhr.send();
+  }
+
+  function populateCustomerEditModal(response) {
+    let customer = response.data;
+    if (window.customerEditModal == null) {
+      return;
+    }
+    console.log(customer);
+    window.customer = customer;
+    const submitBtn = document.getElementById("submit-edit");
+    const realName = document.getElementById("realName");
+    const phone = document.getElementById("phone");
+    const email = document.getElementById("email")
+    const zalo = document.getElementById("zalo");
+    let img = document.querySelector("#facebook-profile img");
+    document.querySelector("#facebook-profile .facebookName").textContent = customer.facebookName;
+    document.querySelector("#facebook-profile .facebookId").textContent = customer.facebookId;
+    document.querySelector("#facebook-profile .createdAt").textContent = formatEpochTimestamp(customer.createdAt) || "- -";
+    realName.value = customer.realName || "";
+    phone.value = customer.phone || "";
+    email.value = customer.email || "";
+    zalo.value = customer.zalo || "";
+    //add original data
+    realName.setAttribute("data-original", customer.realName);
+    phone.setAttribute("data-original", customer.phone);
+    email.setAttribute("data-original", customer.email);
+    zalo.setAttribute("data-original", customer.zalo);
+
+    img.setAttribute("src", customer.facebookProfilePic);
+
+    //bind refresh button
+    const refreshBtn = document.getElementById("refresh-edit");
+    refreshBtn.removeEventListener("click", refreshHandler)
+    refreshHandler = function () {
+      document.getElementById("realName").value = customer.facebookId || "";
+      document.getElementById("phone").value = customer.phone || "";
+      document.getElementById("email").value = customer.email || "";
+      document.getElementById("zalo").value = customer.zalo || "";
+    }
+    refreshBtn.addEventListener("click", refreshHandler)
+
+    //bind input button
+    const inputList = document.querySelectorAll("#customerEditModal input");
+    inputList.forEach(function (input) {
+      input.removeEventListener("keyup", keyupHandler);
+      keyupHandler = function () {
+
+        //TODO: check if input changed
+        clearTimeout(debounceKeyup);
+        debounceKeyup = setTimeout(function () {
+          console.log(input.value);
+          originalValue = input.getAttribute("data-original").trim();
+          if (input.value != "" && input.value != originalValue) {
+            submitBtn.disabled = false;
+          } else {
+            submitBtn.disabled = true;
+          }
+
+        }, 500)
+      }
+      input.addEventListener("keyup", keyupHandler);
+    })
+
+    //bind submit button
+    submitBtn.removeEventListener("click", sendEditCustomer)
+    submitBtn.addEventListener("click", sendEditCustomer);
+  }
+
+  function sendEditCustomer() {
+    let data = {
+      facebookId: document.getElementById("customerEditModal").getAttribute("data-facebookId") || null,
+      facebookName: document.getElementById("facebookName").value || null,
+      realName: document.getElementById("realName").value || null,
+      phone: document.getElementById("phone").value || null,
+      email: document.getElementById("email").value || null,
+      zalo: document.getElementById("zalo").value || null
+    }
+    console.log(data);
+    let xhr = createXHR();
+    handleResponse(xhr, function (response) {
+      response = JSON.parse(response);
+      let data = response.data;
+      window.customerEditModal.hide();
+      successToast(response.message);
+      setTimeout(function () {
+        openCustomerEditModal(data.facebookId);
+      }, 300)
+    })
+    xhr.open(HTTP_PUT_METHOD, `${API_FACEBOOK_USER}`)
+    xhr.setRequestHeader(
+      "Content-type", "application/json"
+    )
+    xhr.send(JSON.stringify(data));
+  }
+
+  function openCustomerDeleteModal(id = null) {
+    window.customerDeleteModal.show();
+    const confirm = document.getElementById("confirmDeleteCustomerBtn");
+    confirm.removeEventListener("click", deleteCustomerHandler);
+    deleteCustomerHandler = function () {
+      xhr = createXHR();
+      handleResponse(xhr, function (response) {
+        response = JSON.parse(response);
+        successToast(response.message);
+        window.customerDeleteModal.hide();
+      })
+      xhr.open(HTTP_DELETE_METHOD, `${API_FACEBOOK_USER}?id=${id}`)
+      xhr.send();
+    }
+    confirm.addEventListener("click", deleteCustomerHandler)
+
+  }
+
+  function buildQueryParam(params) {
+    const parts = [];
+    for (let k in params) {
+      if (params[k] != null && params[k] !== "") {
+        parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`);
+      }
+    }
+    return parts.length > 0 ? `${parts.join("&")}` : "";
+  }
+}
+
+//get json helper
+function getAPI({ url, container, renderItem,
+  noResultNode, loadingNode,
+  onSuccess, onError }) {
+  loadingNode?.show();
+  console.log("calling api...", url);
+  $.getJSON(url)
+    .done(res => {
+      console.log(res);
+      const data = res.data.content;
+      console.log(container);
+      console.log(renderItem)
+      if (container && renderItem) {
+        console.log("ok...");
+        container.empty();
+        console.log(Array.isArray(data))
+        if (Array.isArray(data) && data.length > 0) {
+          data.forEach(item => renderItem(item, container));
+          noResultNode?.hide();
+        } else {
+          noResultNode?.show();
+        }
       }
 
-
-
-
-
-
-
-
-})
+      onSuccess?.(res);
+    })
+    .fail(err => onError?.(err))
+    .always(() => loadingNode?.hide());
+}
 
 //ticket.html
 function initTicket() {
   console.log("init ticket search ..");
-  window.fullModal = new bootstrap.Modal(document.getElementById("ticketFullDetailModal"));
-
   initTicketSearch();
   initTicketSortingByIndex();
   initTicketCreate();
+  initTicketDetailModal();
 }
 
 
@@ -220,6 +635,8 @@ function initHeader() {
 
 // Initialize dashboard
 function initDashboard() {
+  console.log("init dashboard");
+  initTicketDetailModal();
   //TODO:
   $("#refreshDashboardTicket").click(() => {
     refreshDashboardTicket()
@@ -244,28 +661,28 @@ function refreshDashboardTicket() {
 
 
   // Simulate refresh delay
-//  setTimeout(() => {
-//    // Update last updated time
-//    const now = new Date()
-//    $("#lastUpdated").text(formatTime(now))
-//
-//    // Reload data
-//    loadDashboardTickets()
-//
-//    // Restore refresh button
-//    refreshBtn.html(originalContent)
-//    refreshBtn.prop("disabled", false)
-//  }, 500)
-// Update last updated time
-    const now = new Date()
-    $("#lastUpdated").text(formatTime(now))
+  //  setTimeout(() => {
+  //    // Update last updated time
+  //    const now = new Date()
+  //    $("#lastUpdated").text(formatTime(now))
+  //
+  //    // Reload data
+  //    loadDashboardTickets()
+  //
+  //    // Restore refresh button
+  //    refreshBtn.html(originalContent)
+  //    refreshBtn.prop("disabled", false)
+  //  }, 500)
+  // Update last updated time
+  const now = new Date()
+  $("#lastUpdated").text(formatTime(now))
 
-    // Reload data
-    loadDashboardTickets()
+  // Reload data
+  loadDashboardTickets()
 
-    // Restore refresh button
-    refreshBtn.html(originalContent)
-    refreshBtn.prop("disabled", false)
+  // Restore refresh button
+  refreshBtn.html(originalContent)
+  refreshBtn.prop("disabled", false)
 
 
 
@@ -321,7 +738,7 @@ function loadDashboardEmployees(sortField = null) {
               <span class="status-indicator ${employee.statusLog[0].status}"></span>
               ${employee.statusLog[0].status}
             </td>
-            ${employee.statusLog[0].status == "offline" ?  "" : `<td class="time-elapse" data-timestamp="${employee.statusLog[0].from}">${startElapsedTimer(employee.statusLog[0].from)}</td>`}
+            ${employee.statusLog[0].status == "offline" ? "" : `<td class="time-elapse" data-timestamp="${employee.statusLog[0].from}">${startElapsedTimer(employee.statusLog[0].from)}</td>`}
 
           </tr>
         `;
@@ -357,14 +774,14 @@ function loadDashboardTickets() {
       console.log(res);
       //populateDashboard
       showTicketListLoading($("#ticketList"));
-//      setTimeout(function () {
-//        populateDashboardTicket(res.data);
-//        populateDashboardTicketMetrics(res.data);
-//        hideTicketListLoading($("#ticketList"));
-//      }, 500)
-        populateDashboardTicket(res.data);
-        populateDashboardTicketMetrics(res.data);
-        hideTicketListLoading($("#ticketList"));
+      //      setTimeout(function () {
+      //        populateDashboardTicket(res.data);
+      //        populateDashboardTicketMetrics(res.data);
+      //        hideTicketListLoading($("#ticketList"));
+      //      }, 500)
+      populateDashboardTicket(res.data);
+      populateDashboardTicketMetrics(res.data);
+      hideTicketListLoading($("#ticketList"));
     },
     error: function (res) {
       errorToast(res.responseJSON.message);
@@ -389,8 +806,8 @@ function populateDashboardTicket(tickets) {
                     </div>
                     <div class="user">
                         <span class="avatar me-2 text-center">
-                        <img src="${ticket.facebookUser.profile_pic}">
-                        </span><i class="bi bi-messenger me-2"></i>${ticket.facebookUser.first_name} ${ticket.facebookUser.last_name}</span>
+                        <img src="${ticket.facebookUser.facebookProfilePic}">
+                        </span><i class="bi bi-messenger me-2"></i>${ticket.facebookUser.facebookName || "- -"} </span>
 
                     </div>
                 </div>
@@ -429,7 +846,7 @@ function populateDashboardTicket(tickets) {
     loadTicketDetail($(this).data("ticket-id"));
   });
 
-  $("input#ticketSearch").on("keydown", function (e) {
+  $("input#ticketSearch").on("keyup", function (e) {
     if (window.searchTimeout) clearTimeout(window.searchTimeout);
 
     window.searchTimeout = setTimeout(() => {
@@ -511,15 +928,15 @@ function populateTicketDetail(ticket) {
   currentEditingTicketId = ticket.id;
 
   $("#editTicketId").val(ticket.id);
-  $("#editTitle").val(ticket.title || "Chưa có tiêu đề");
-  $("#editFacebookUser").val(`${ticket.facebookUser.id}`);
-  $("#editAssignee").val(ticket.assignee?.name || "-");
+  $("#editTitle").val(ticket.title || "");
+  $("#editFacebookUser").val(`${ticket.facebookUser.facebookId}`);
+  $("#editAssignee").val(ticket.assignee?.name || "- -");
   $("#editCreatedAt").val(formatEpochTimestamp(ticket.createdAt));
-  $("#editCategory").val(ticket.category?.name || "");
-  $("#editProgressStatus").val(ticket.progressStatus?.name || "");
-  $("#editEmotion").val(ticket.emotion?.name || "-");
-  $("#editSatisfaction").val(ticket.satisfaction?.name || "-");
-  $("#editNote").val(ticket.description || "");
+  $("#editCategory").val(ticket.category?.name || "- -");
+  $("#editProgressStatus").val(ticket.progressStatus?.name || "- -");
+  $("#editEmotion").val(ticket.emotion?.name || "- -");
+  $("#editSatisfaction").val(ticket.satisfaction?.name || "- -");
+  $("#editNote").val(ticket.description || "- -");
 
 
   $("#editCategory").attr("data-category-code", ticket.category?.code || null);
@@ -749,7 +1166,8 @@ function initTicketCreate() {
 
 function initTicketDetailModal() {
   const i = $(".field-group i");
-
+  console.log("initTicketDetailModal");
+  window.fullModal = new bootstrap.Modal(document.getElementById("ticketFullDetailModal"));
 
   i.click(function () {
     const container = $(this).closest(".field-group"); //traverse up to get parent container
@@ -823,8 +1241,8 @@ function initTicketDetailModal() {
     $("#editCategory").val(originalTicketData.category);
     $("#editStatus").val(originalTicketData.status);
     $("#editProcessingStatus").val(originalTicketData.progressStatus);
-    $("#editAssignee").val(originalTicketData.employee?.name || "");
-    $("#editDescription").val(originalTicketData.description || "");
+    $("#editAssignee").val(originalTicketData.employee?.name || "- -");
+    $("#editDescription").val(originalTicketData.description || "- -");
 
     disableEditButtons();
   });
@@ -893,7 +1311,7 @@ function initTicketSearch() {
 function loadDatetimePickerField() {
   const now = new Date();
 
-  $("#ticket-search #dateRangeLabel-container").click(function (e) {
+  $("#dateRangeLabel-container").click(function (e) {
     console.log("clock");
     $(".fast-pick .dropdown-menu").toggleClass("show");
   });
@@ -1151,14 +1569,14 @@ function populateTicketSearchResult(data) {
     const html = `
       <div class="row border-bottom item"
            data-ticket-id="${ticket.id}"
-           data-facebookId="${ticket.facebookUser.id}">
+           data-facebookId="${ticket.facebookUser.facebookId}">
         <div class="col text-truncate" title="${ticket.id}">${ticket.id}</div>
-        <div class="col text-truncate" title="${ticket.title || ""}">${ticket.title || "Chưa có tiêu đề"}</div>
+        <div class="col text-truncate" title="${ticket.title || ""}">${ticket.title || "- -"}</div>
         <div class="col text-truncate" title="${ticket.assignee?.name || ticket.assignee?.username}">
-          ${ticket.assignee?.name || ticket.assignee?.username || "-"}
+          ${ticket.assignee?.name || ticket.assignee?.username || "- -"}
         </div>
-        <div class="col text-truncate" title="${ticket.facebookUser.id}">
-          ${ticket.facebookUser.id}
+        <div class="col text-truncate" title="${ticket.facebookUser.facebookId}">
+          ${ticket.facebookUser.facebookId}
         </div>
         <div class="col text-truncate progress-status-${ticket.progressStatus.code}"
              title="${ticket.progressStatus.name}">
@@ -1169,7 +1587,7 @@ function populateTicketSearchResult(data) {
           ${ticket.category?.name || ''}
         </div>
         <div class="col text-truncate" title="${formatEpochTimestamp(ticket.createdAt)}">
-          ${ticket.progressStatus.code == "resolved" ? "-" : formatEpochTimestamp(ticket.createdAt)}
+          ${ticket.progressStatus.code == "resolved" ? "- -" : formatEpochTimestamp(ticket.createdAt)}
         </div>
         <div class="col text-truncate emotion-${ticket.emotion?.code || ''}"
              title="${ticket.emotion?.name || ''}">
@@ -1209,7 +1627,7 @@ function loadTicketDetail(ticketId) {
     success: function (response) {
       populateTicketDetail(response.data);
       loadTicketMessages(response.data.id);
-      loadTicketHistory(response.data.facebookUser.id);
+      loadTicketHistory(response.data.facebookUser.facebookId);
     },
     error: function (res) {
       errorToast(rres.responseJSON.message);
@@ -1225,7 +1643,7 @@ function loadTicketSearch(page = null, pageSize = null) {
   //get ticketDetailDTO data
   const ticketSearchCriteria = {
     assignee: $("#ticket-search #assignee").attr("data-username") || null,          // assignee
-    facebookUserId: $("#ticket-search #facebookuser").val() || null,
+    facebookId: $("#ticket-search #facebookuser").val() || null,
     title: $("#ticket-search #title").val() || null,
     progressStatus: $("#ticket-search #progress-status").attr("data-progress-status-code") || null,
     fromDate: toTimestamp($("#fromDate").val()),
@@ -1254,7 +1672,8 @@ function loadTicketSearch(page = null, pageSize = null) {
         populateTicketSearchResult(res.data)
         renderPagination(res.data.page,
           res.data.totalElements,
-          res.data.size);
+          res.data.size,
+          performTicketSearch);
       }, 300);
       // populateTicketSearchResult(res.data);
     },
@@ -1349,9 +1768,13 @@ function initColumnResizeHandles() {
 }
 
 
-function renderPagination(currentPageZeroBased, totalElements, pageSize) {
+function renderPagination(currentPageZeroBased, totalElements, pageSize, callback) {
+  console.log("rendering pagination...");
+  console.log("currentPageZeroBased...", currentPageZeroBased);
+  console.log("totalElements...", totalElements);
+  console.log("pageSize...", pageSize);
   const totalPages = Math.ceil(totalElements / pageSize);
-  const $pagination = $("#ticket-pagination");
+  const $pagination = $("#pagination-menu");
   $pagination.empty();
 
   if (totalPages <= 1) return; // Không cần hiển thị nếu chỉ có 1 trang
@@ -1367,7 +1790,7 @@ function renderPagination(currentPageZeroBased, totalElements, pageSize) {
     if (!disabled && !active) {
       li.click(function (e) {
         e.preventDefault();
-        loadTicketSearch(page - 1, pageSize); // Truyền page 0-based
+        callback(page - 1, pageSize); // Truyền page 0-based
       });
     }
     return li;
@@ -1492,7 +1915,7 @@ function initDataExport() {
   $("#form-export-excel").click(function () {
     const data = {
       assignee: $("#ticket-search #assignee").attr("data-username") || null,          // assignee
-      facebookUserId: $("#ticket-search #facebookuser").val() || null,
+      facebookId: $("#ticket-search #facebookuser").val() || null,
       title: $("#ticket-search #title").val() || null,
       progressStatus: $("#ticket-search #progress-status").attr("data-progress-status-code") || null,
       fromDate: toTimestamp($("#fromDate").val()),
@@ -1560,6 +1983,7 @@ function showToast(type, message) {
 
   const $container = $("#toastContainer");
   $container.append(toastHtml);
+  console.log($container)
 
   const toast = new bootstrap.Toast(document.getElementById(toastId));
   toast.show();
@@ -1626,13 +2050,13 @@ function scrollToBottomMessageList() {
 
 
 // Load ticket history
-function loadTicketHistory(facebookUserId) {
+function loadTicketHistory(facebookId) {
   $("#historyList").empty();
 
   $.ajax({
     url: `${API_TICKET}/get-by-facebook-id`,
     method: 'GET',
-    data: { id: facebookUserId },
+    data: { id: facebookId },
     beforeSend: function () {
       console.log("loading screen.show")
       // $('#loadingScreen').show();
@@ -1678,4 +2102,34 @@ function validateChangePassword() {
   if (result == false) {
     $("#confirmResetBtn").prop("disabled", result);
   }
+}
+
+
+
+
+function createXHR() {
+  return new XMLHttpRequest();
+}
+
+function handleResponse(xhr, callback, errorCallback = null) {
+  xhr.onreadystatechange = function () {
+    if (this.readyState == 4) {
+      let response = this.response;
+      if (this.status == 200) {
+        callback(response);
+      } else {
+        if (errorCallback) {
+          errorCallback(response);
+        } else {
+          errorToast(response.message);
+        }
+      }
+    }
+  }
+}
+
+function sanitizeText(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
 }

@@ -1,8 +1,7 @@
 package com.binhbkfx02295.cshelpdesk.facebookgraphapi.service;
 
-import com.binhbkfx02295.cshelpdesk.facebookgraphapi.dto.FacebookUserProfileDTO;
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.entity.FacebookToken;
-import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDTO;
+import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserFetchDTO;
 
 public interface FacebookGraphAPIService {
 
@@ -23,5 +22,5 @@ public interface FacebookGraphAPIService {
      * @param userId the Facebook user ID
      * @return user profile data DTO
      */
-    FacebookUserDTO getUserProfile(String userId);
+    FacebookUserFetchDTO getUserProfile(String userId);
 }

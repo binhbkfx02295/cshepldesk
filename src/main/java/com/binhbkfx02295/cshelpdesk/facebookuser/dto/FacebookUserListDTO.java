@@ -5,19 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
-
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class FacebookUserDetailDTO {
+
+public class FacebookUserListDTO {
     private String facebookId;
     private String facebookName;
     private String facebookProfilePic;
-    private String realName;
-    private String email;
-    private String phone;
-    private String zalo;
-    private Instant createdAt;
 }

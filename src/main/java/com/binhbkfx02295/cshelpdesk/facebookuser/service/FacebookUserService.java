@@ -1,10 +1,13 @@
 package com.binhbkfx02295.cshelpdesk.facebookuser.service;
 
 
-import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDTO;
+import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserListDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDetailDTO;
-import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
+import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserFetchDTO;
+import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserSearchCriteria;
 import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.util.PaginationResponse;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -22,17 +25,19 @@ public interface FacebookUserService {
 
     static final String MSG_ERROR_NOT_ALLOWED = "MSG_ERROR_NOT_ALLOWED";
 
-    APIResultSet<FacebookUserDTO> save(FacebookUserDTO user);
+    APIResultSet<FacebookUserDetailDTO> save(FacebookUserDetailDTO save);
+
+    APIResultSet<FacebookUserDetailDTO> save(FacebookUserFetchDTO save);
 
     APIResultSet<FacebookUserDetailDTO> update(FacebookUserDetailDTO updatedUser);
 
-    APIResultSet<List<FacebookUserDTO>> search(String name);
+    APIResultSet<FacebookUserDetailDTO> get(String id);
 
-    APIResultSet<FacebookUserDTO> get(String id);
-
-    APIResultSet<List<FacebookUserDTO>> getAll();
+    APIResultSet<List<FacebookUserListDTO>> getAll();
 
     APIResultSet<Void> existsById(String facebookId);
 
     APIResultSet<Void> deleteById(String s);
+
+    APIResultSet<PaginationResponse<FacebookUserDetailDTO>> searchUsers(FacebookUserSearchCriteria criteria, Pageable pageable);
 }

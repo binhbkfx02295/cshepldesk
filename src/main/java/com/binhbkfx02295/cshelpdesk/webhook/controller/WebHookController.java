@@ -3,6 +3,7 @@ package com.binhbkfx02295.cshelpdesk.webhook.controller;
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.service.FacebookGraphAPIService;
 import com.binhbkfx02295.cshelpdesk.webhook.dto.WebHookEventDTO;
 import com.binhbkfx02295.cshelpdesk.webhook.service.WebHookService;
+import com.binhbkfx02295.cshelpdesk.webhook.service.WebHookServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class WebHookController {
 
-    private final WebHookService webhookService;
+    private final WebHookServiceImpl webhookService;
 
     // Facebook webhook verify (GET)
     @GetMapping

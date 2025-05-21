@@ -11,7 +11,6 @@ import com.binhbkfx02295.cshelpdesk.employee_management.permission.Permission;
 import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionRepository;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroup;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupRepository;
-import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.facebookuser.repository.FacebookUserRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
@@ -23,16 +22,21 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.repository.Emotion
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.repository.SatisfactionRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.repository.ProgressStatusRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.*;
+
+import com.github.javafaker.Faker;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Component
 @RequiredArgsConstructor
@@ -51,6 +55,7 @@ public class MasterDataSeeder implements CommandLineRunner {
     private final CategoryRepository categoryRepository;
     private final MasterDataCache cache;
     private final FacebookUserRepository facebookUserRepository;
+    private final TicketRepository ticketRepository;
 
 
     @Override
@@ -64,7 +69,8 @@ public class MasterDataSeeder implements CommandLineRunner {
         seedCustomerSatisfactions();
         seedCategory();
         seedFacebookUsers();
-        seedTickets();
+        seedFacebookUsers(50);
+        seedTickets(50);
 
         log.info("seeding done");
         cache.refresh();
@@ -76,8 +82,7 @@ public class MasterDataSeeder implements CommandLineRunner {
     private void seedFacebookUsers() {
         FacebookUser user = new FacebookUser();
         user.setFacebookId("9788775675676567");
-        user.setFacebookFirstName("Minh Duc");
-        user.setFacebookLastName("Le");
+        user.setFacebookName("Le Nguyen Minh Huy");
         user.setFacebookProfilePic("/img/placeholder-facebook-1.jpg");
         if (!facebookUserRepository.existsById("9788775675676567")) {
             facebookUserRepository.save(user);
@@ -85,8 +90,7 @@ public class MasterDataSeeder implements CommandLineRunner {
 
         FacebookUser u = new FacebookUser();
         u.setFacebookId("9788775675676565");
-        u.setFacebookFirstName("Duc Vy");
-        u.setFacebookLastName("Le Minh");
+        u.setFacebookName("Le Minh Duc Vt");
         u.setFacebookProfilePic("/img/placeholder-facebook-2.jpg");
         if (!facebookUserRepository.existsById("9788775675676565")) {
             facebookUserRepository.save(u);
@@ -94,8 +98,7 @@ public class MasterDataSeeder implements CommandLineRunner {
 
         FacebookUser u3 = new FacebookUser();
         u3.setFacebookId("9788775642676567");
-        u3.setFacebookFirstName("Hoa Dong");
-        u3.setFacebookLastName("Tan");
+        u3.setFacebookName("Anh Hoa Dong");
         u3.setFacebookProfilePic("/img/placeholder-facebook-3.jpg");
         if (!facebookUserRepository.existsById("9788775642676567")) {
             facebookUserRepository.save(u3);
@@ -103,8 +106,7 @@ public class MasterDataSeeder implements CommandLineRunner {
 
         FacebookUser u4 = new FacebookUser();
         u4.setFacebookId("9788775615676567");
-        u4.setFacebookFirstName("Elise");
-        u4.setFacebookLastName("Nguyen");
+        u4.setFacebookName("Elise Nguyen");
         u4.setFacebookProfilePic("/img/placeholder-facebook-4.jpg");
         if (!facebookUserRepository.existsById("9788775615676567")) {
             facebookUserRepository.save(u4);
@@ -112,8 +114,7 @@ public class MasterDataSeeder implements CommandLineRunner {
 
         FacebookUser u5 = new FacebookUser();
         u5.setFacebookId("9788555675676567");
-        u5.setFacebookFirstName("Tran Nam");
-        u5.setFacebookLastName("Dinh");
+        u5.setFacebookName("Tran Nam Huy");
         u5.setFacebookProfilePic("/img/placeholder-facebook-5.jpg");
         if (!facebookUserRepository.existsById("9788555675676567")) {
             facebookUserRepository.save(u5);
@@ -281,4 +282,75 @@ public class MasterDataSeeder implements CommandLineRunner {
             userGroupRepository.saveAndFlush(new UserGroup(0, name, "test", null, permissions));
         }
     }
+
+    public void seedFacebookUsers(int num) {
+        Faker faker = new Faker(new Locale("vi")); // Vietnamese locale
+        Random random = new Random();
+
+        for (int i = 0; i < num; i++) {
+            FacebookUser user = new FacebookUser();
+
+            String facebookId = String.format(String.format("1234567890123%d", i));
+            String realName = faker.name().fullName(); // e.g. "Khắc Bình"
+            String facebookName = "FbUser " + faker.name().lastName(); // e.g. "FbUser Bùi"
+            String email = faker.internet().emailAddress();
+            String phone = String.format("0%09d", random.nextInt(1_0000_0000)); // e.g. 0987654321
+            String zalo = String.format("0%09d", random.nextInt(1_0000_0000));
+            Instant createdAt = faker.date()
+                    .between(Date.from(Instant.now().minusSeconds(3600 * 24 * 365)), Date.from(Instant.now()))
+                    .toInstant();
+
+            user.setFacebookId(facebookId);
+            user.setFacebookName(facebookName);
+            user.setRealName(realName);
+            user.setEmail(email);
+            user.setPhone(phone);
+            user.setZalo(zalo);
+            user.setCreatedAt(createdAt);
+            user.setFacebookProfilePic(String.format("img/placeholder-facebook-%d.jpg",  (i % 5)+1 ));
+
+
+            boolean result = facebookUserRepository.existsById(user.getFacebookId());
+            log.info("seeding user {}", result);
+            if (!facebookUserRepository.existsById(user.getFacebookId())) {
+                facebookUserRepository.save(user);
+            }
+        }
+    }
+
+    public void seedTickets(int num) {
+        List<Ticket> ticketList = ticketRepository.findAll();
+        if (!ticketList.isEmpty()) {
+            return;
+        }
+        List<FacebookUser> facebookUsers = facebookUserRepository.getAll();
+        List<Employee> employeeList = cache.getAllEmployees() == null ? employeeRepository.findAll() :
+                cache.getAllEmployees().values().stream().toList();
+        List<Category> categoryList = cache.getAllCategories() == null ? categoryRepository.findAll() :
+                cache.getAllCategories().values().stream().toList();
+        List<ProgressStatus> progressStatusList = cache.getAllProgress() == null ? progressStatusRepository.findAll() :
+                cache.getAllProgress().values().stream().toList();
+
+        for (int i = 0; i < num; i++) {
+            Faker faker = new Faker(new Locale("vi")); // Vietnamese locale
+            Ticket ticket = new Ticket();
+            ticket.setTitle(null); // random string
+            ticket.setAssignee(employeeList.get(i % 2)); //get random from employeeList
+            ticket.setFacebookUser(facebookUsers.get( i % facebookUsers.size()));
+            ticket.setCategory(categoryList.get(i % 5));
+            ticket.setProgressStatus(progressStatusList.get(i % 3));
+
+            Instant createdAt = faker.date()
+                    .between(Date.from(Instant.now().minusSeconds(3600 * 24 * 365)), Date.from(Instant.now()))
+                    .toInstant();
+
+            ticket.setCreatedAt(Timestamp.from(createdAt));
+
+            if (!ticketRepository.existsById(ticket.getId())) {
+                ticketRepository.save(ticket);
+            }
+        }
+    }
+
+
 }

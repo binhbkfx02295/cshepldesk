@@ -87,16 +87,16 @@
                     <div class="d-flex gap-2">
                         <div>
                             <label for="fromDate">Từ </label>
-                            <input type="date" id="fromDate" name="fromDate" class="form-control" required>
+                            <input type="date" id="fromDate" name="fromDate" class="form-control" required="">
                         </div>
                         <div>
                             <label for="toDate">Đến </label>
-                            <input type="date" id="toDate" name="toDate" class="form-control" required>
+                            <input type="date" id="toDate" name="toDate" class="form-control" required="">
                         </div>
                         <div class="dropdown-input mb-1 fast-pick">
                             <label for="dateRangeLabel">Chọn nhanh</label>
                             <div id="dateRangeLabel-container">
-                                <input type="text" id="dateRangeLabel" readonly value="Thời gian" class="">
+                                <input type="text" id="dateRangeLabel" readonly="" value="Thời gian" class="">
                                 <i class="bi bi-chevron-down dropdown-button"></i>
                             </div>
                             <ul class="dropdown-menu">
@@ -136,7 +136,7 @@
 
         <div id="ticket-list" class="page-list flex-grow-1">
             <!-- Header -->
-            <div class="page-list-header container-fluid fw-bold border-bottom text-center">
+            <div class="page-list-header container-fluid fw-bold border-bottom">
                 <div class="row">
                     <div class="col resizable" data-sort="id" data-sort-direction="none">#ID</div>
                     <div class="col resizable" data-sort="title" data-sort-direction="none">Tiêu đề</div>
@@ -153,30 +153,48 @@
                 </div>
             </div>
 
-            <div class="page-list-body container-fluid" id="ticket-list-body">
+            <div class="page-list-body container-fluid" id="ticket-list-body"></div>
 
+            <div id="ticket-pagination-bar"
+                 class="page-list-footer page-pagination bg-white p-2 border-top d-flex justify-content-between align-items-center">
+                <div class="form-group d-flex align-items-center">
+                    <label for="pageSize" class="me-2 mb-0">Hiển thị:</label>
+                    <select id="pageSize" class="form-select form-select-sm" style="width: auto;">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span class="ms-2">mỗi trang</span>
+                </div>
+                <nav>
+                    <ul id="pagination-menu" class="pagination pagination-sm mb-0">
+                        <li class="page-item  disabled">
+                            <a class="page-link" href="#">Prev</a>
+                        </li>
+                        <li class="page-item active ">
+                            <a class="page-link" href="#">1</a>
+                        </li>
+                        <li class="page-item  ">
+                            <a class="page-link" href="#">2</a>
+                        </li>
+                        <li class="page-item  ">
+                            <a class="page-link" href="#">3</a>
+                        </li>
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                        <li class="page-item  ">
+                            <a class="page-link" href="#">7</a>
+                        </li>
+                        <li class="page-item  ">
+                            <a class="page-link" href="#">Next</a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
 
         </div>
 
-        <div id="ticket-pagination-bar"
-             class="page-pagination bg-white p-2 border-top d-flex justify-content-between align-items-center">
-            <div class="form-group d-flex align-items-center">
-                <label for="pageSize" class="me-2 mb-0">Hiển thị:</label>
-                <select id="pageSize" class="form-select form-select-sm" style="width: auto;">
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                </select>
-                <span class="ms-2">mỗi trang</span>
-            </div>
-            <nav>
-                <ul id="ticket-pagination" class="pagination pagination-sm mb-0">
-                    <!-- Các nút phân trang sẽ được thêm bằng JS -->
-                </ul>
-            </nav>
-        </div>
+
         <!-- Ticket Creation -->
         <div id="createTicketModal" class="modal fade" tabindex="-1">
             <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -291,34 +309,37 @@
                                     <h6 class="mb-3">Thông tin Ticket</h6>
                                     <div class="field-group ticketId mb-2">
                                         <label for="editTicketId">#ID</label>
-                                        <input type="text" id="editTicketId" name="ticketId" disabled>
+                                        <input type="text" id="editTicketId" name="ticketId" disabled="">
                                     </div>
 
                                     <div class="field-group editTitle mb-2">
                                         <label for="editTitle">Tiêu Đề</label>
-                                        <input type="text" id="editTitle" name="title" placeholder="Nhập tiêu đề...">
+                                        <input type="text" id="editTitle" name="title"
+                                               placeholder="Nhập tiêu đề...">
                                     </div>
                                     <div class="field-group facebookuser mb-2">
                                         <label for="editFacebookUser">Facebook User</label>
-                                        <input type="text" id="editFacebookUser" name="facebookuser" disabled>
+                                        <input type="text" id="editFacebookUser" name="facebookuser"
+                                               disabled="">
                                     </div>
 
                                     <div class="field-group assignee mb-2">
                                         <label for="editAssignee">Nhân viên</label>
-                                        <input type="text" id="editAssignee" name="assignee" disabled>
+                                        <input type="text" id="editAssignee" name="assignee" disabled="">
                                     </div>
 
                                     <div class="field-group createdAt mb-2">
                                         <label for="editCreatedAt">Ngày tạo</label>
                                         <div class="dropdown-input">
-                                            <input type="text" id="editCreatedAt" name="assignee" disabled>
+                                            <input type="text" id="editCreatedAt" name="assignee" disabled="">
                                         </div>
                                     </div>
 
                                     <div class="field-group category mb-2">
                                         <label for="editCategory">Phân loại</label>
                                         <div class="dropdown-input">
-                                            <input type="text" id="editCategory" name="category" placeholder="Chọn danh mục...">
+                                            <input type="text" id="editCategory" name="category"
+                                                   placeholder="Chọn danh mục...">
                                             <i class="bi bi-chevron-down dropdown-button"></i>
                                             <ul class="dropdown-menu">
                                             </ul>
@@ -328,7 +349,8 @@
                                     <div class="field-group progress-status mb-2">
                                         <label for="editProgressStatus">Tình trạng xử lý</label>
                                         <div class="dropdown-input">
-                                            <input type="text" id="editProgressStatus" name="progress-status" placeholder="Chọn trạng thái...">
+                                            <input type="text" id="editProgressStatus" name="progress-status"
+                                                   placeholder="Chọn trạng thái...">
                                             <i class="bi bi-chevron-down dropdown-button"></i>
                                             <ul class="dropdown-menu">
                                             </ul>
@@ -338,17 +360,18 @@
 
                                     <div class="field-group emotion mb-2">
                                         <label for="editEmotion">Cảm xúc</label>
-                                        <input type="text" id="editEmotion" name="emotion" disabled>
+                                        <input type="text" id="editEmotion" name="emotion" disabled="">
                                     </div>
 
                                     <div class="field-group satisfaction mb-2">
-                                        <label for="editSatisfaction">Mức hài lòng</label>
-                                        <input type="text" id="editSatisfaction" name="satisfaction" disabled>
+                                        <label for="satisfaction">Mức hài lòng</label>
+                                        <input type="text" id="editSatisfaction" name="satisfaction"
+                                               disabled="">
                                     </div>
 
                                     <div class="field-group tag mb-2">
                                         <label class="form-label">Tag</label>
-                                        <select class="form-select" id="editTags" multiple></select>
+                                        <select class="form-select" id="editTags" multiple=""></select>
                                     </div>
 
                                     <div class="field-group note mb-2">
@@ -358,9 +381,9 @@
 
                                     <div class="mt-3 d-flex justify-content-end gap-2" id="ticketEditFooter">
                                         <button type="button" class="btn btn-secondary btn-sm" id="cancelEdit"
-                                                disabled>Hủy</button>
+                                                disabled="">Hủy</button>
                                         <button type="button" class="btn btn-primary btn-sm" id="saveEdit"
-                                                disabled>Cập
+                                                disabled="">Cập
                                             nhật</button>
                                     </div>
                                 </div>

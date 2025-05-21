@@ -1,7 +1,6 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.service;
 
 import com.binhbkfx02295.cshelpdesk.common.cache.MasterDataCache;
-import com.binhbkfx02295.cshelpdesk.facebookuser.service.FacebookUserService;
 import com.binhbkfx02295.cshelpdesk.facebookuser.service.FacebookUserServiceImpl;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.CategoryRepository;
@@ -9,7 +8,7 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.note.entity.Note;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.dto.NoteDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.repository.NoteRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.dto.TagDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDTO;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketListDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDetailDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketSearchCriteria;
@@ -18,7 +17,6 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.repository.TagRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.repository.TicketRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.mapper.TicketMapper;
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.service.EmployeeService;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.spec.TicketSpecification;
 import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
 import com.binhbkfx02295.cshelpdesk.util.PaginationResponse;
@@ -28,9 +26,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -69,7 +64,7 @@ public class TicketServiceImpl implements TicketService {
 
             Ticket saved = ticketRepository.save(mapper.toEntity(dto));
             APIResultSet<TicketDetailDTO> result = APIResultSet.ok("Created successfully", mapper.toDetailDTO(saved));
-            cache.updateOpeningTickets();
+            cache.addTicket(saved);
             log.info(result.getMessage());
             return result;
 
@@ -187,10 +182,10 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public APIResultSet<List<TicketDTO>> findAllByFacebookUserId(String facebookId) {
+    public APIResultSet<List<TicketListDTO>> findAllByFacebookUserId(String facebookId) {
         try {
             List<Ticket> tickets = ticketRepository.findAllByFacebookUser_FacebookId(facebookId);
-            APIResultSet<List<TicketDTO>> result = APIResultSet.ok("OK", tickets.stream().map(mapper::toListDTO).toList());
+            APIResultSet<List<TicketListDTO>> result = APIResultSet.ok("OK", tickets.stream().map(mapper::toListDTO).toList());
             log.info(result.getMessage());
             return result;
         } catch (Exception e) {
@@ -261,22 +256,22 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public APIResultSet<PaginationResponse<TicketDetailDTO>> searchTickets(TicketSearchCriteria criteria, Pageable pageable) {
+    public APIResultSet<PaginationResponse<TicketListDTO>> searchTickets(TicketSearchCriteria criteria, Pageable pageable) {
         try {
             log.info(criteria.toString());
             var spec = TicketSpecification.build(criteria);
             var page = ticketRepository.findAll(spec, pageable);
-            List<TicketDetailDTO> dtoList = page.getContent().stream()
-                    .map(mapper::toDetailDTO)
+            List<TicketListDTO> dtoList = page.getContent().stream()
+                    .map(mapper::toListDTO)
                     .collect(Collectors.toList());
-            PaginationResponse<TicketDetailDTO> pagination = new PaginationResponse<>(
+            PaginationResponse<TicketListDTO> pagination = new PaginationResponse<>(
                     dtoList,
                     page.getNumber(),
                     page.getSize(),
                     page.getTotalElements(),
                     page.getTotalPages()
             );
-            APIResultSet<PaginationResponse<TicketDetailDTO>> result = APIResultSet.ok("Tim ticket ok", pagination);
+            APIResultSet<PaginationResponse<TicketListDTO>> result = APIResultSet.ok("Tim ticket ok", pagination);
             log.info(result.getMessage());
             return result;
         } catch (Exception e) {

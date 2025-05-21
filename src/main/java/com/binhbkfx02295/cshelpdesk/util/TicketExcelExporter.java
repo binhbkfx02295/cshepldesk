@@ -1,6 +1,7 @@
 package com.binhbkfx02295.cshelpdesk.util;
 
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDetailDTO;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketListDTO;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -11,7 +12,7 @@ import java.util.List;
 
 public class TicketExcelExporter {
 
-    public static ByteArrayInputStream exportToExcel(List<TicketDetailDTO> tickets) throws IOException {
+    public static ByteArrayInputStream exportToExcel(List<TicketListDTO> tickets) throws IOException {
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Tickets");
 
@@ -26,7 +27,7 @@ public class TicketExcelExporter {
 
             // Data
             for (int i = 0; i < tickets.size(); i++) {
-                TicketDetailDTO ticket = tickets.get(i);
+                TicketListDTO ticket = tickets.get(i);
                 Row row = sheet.createRow(i + 1);
                 row.createCell(0).setCellValue(ticket.getId());
                 row.createCell(1).setCellValue(ticket.getTitle());

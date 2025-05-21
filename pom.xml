@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.binhbkfx02295</groupId>
 	<artifactId>cshelpdesk</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.0.1-SNAPSHOT</version>
 	<name>cshelpdesk</name>
 	<description>Customer Help Desk system</description>
 	<url/>
@@ -97,12 +97,12 @@
 			<version>5.2.5</version>
 		</dependency>
 
-		<!-- Jackson for JSON -->
+<!--		seed random data-->
 		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
+			<groupId>com.github.javafaker</groupId>
+			<artifactId>javafaker</artifactId>
+			<version>1.0.2</version>
 		</dependency>
-
 
 
 	</dependencies>

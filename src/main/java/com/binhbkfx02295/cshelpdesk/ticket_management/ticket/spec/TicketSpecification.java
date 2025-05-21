@@ -18,8 +18,8 @@ public class TicketSpecification  {
             if (criteria.getAssignee() != null) {
                 predicates.add(cb.equal(root.get("assignee").get("username"), criteria.getAssignee()));
             }
-            if (criteria.getFacebookUserId() != null) {
-                predicates.add(cb.equal(root.get("facebookUser").get("facebookId"), criteria.getFacebookUserId()));
+            if (criteria.getFacebookId() != null) {
+                predicates.add(cb.equal(root.get("facebookUser").get("facebookId"), criteria.getFacebookId()));
             }
             if (criteria.getTitle() != null) {
                 predicates.add(cb.like(cb.lower(root.get("title")), "%" + criteria.getTitle().toLowerCase() + "%"));
