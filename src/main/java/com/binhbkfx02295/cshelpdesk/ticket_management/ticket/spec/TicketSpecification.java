@@ -27,11 +27,11 @@ public class TicketSpecification  {
             if (criteria.getProgressStatus() != null) {
                 predicates.add(cb.equal(root.get("progressStatus").get("code"), criteria.getProgressStatus()));
             }
-            if (criteria.getFromDate() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), criteria.getFromDate()));
+            if (criteria.getFromTime() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), criteria.getFromTime()));
             }
-            if (criteria.getToDate() != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), criteria.getToDate()));
+            if (criteria.getToTime() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), criteria.getToTime()));
             }
             if (criteria.getCategory() != null) {
                 predicates.add(cb.equal(root.get("category").get("code"), criteria.getCategory()));

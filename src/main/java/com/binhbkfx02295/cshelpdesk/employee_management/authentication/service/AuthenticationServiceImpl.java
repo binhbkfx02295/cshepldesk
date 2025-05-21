@@ -123,8 +123,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 Status status = cache.getStatus("online");
                 log.info("status: {}", status.getName());
                 newLog.setStatus(status);
-                ArrayList<StatusLog> logs = new ArrayList<>();
-                logs.add(newLog);
                 newLog.setEmployee(employee);
                 employee.getStatusLogs().add(newLog);
             }

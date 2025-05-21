@@ -280,6 +280,8 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
+
+
     private APIResultSet<TicketDetailDTO> validateTicketDTO(TicketDetailDTO dto) {
         if (dto.getAssignee() != null &&
                 cache.getEmployee(dto.getAssignee().getUsername()) == null) {
@@ -365,14 +367,6 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public APIResultSet<List<TicketDashboardDTO>> getForDashboard() {
         try {
-//            LocalDate today = LocalDate.now();
-//            LocalDateTime startDateTime = today.atStartOfDay();
-//            LocalDateTime endDateTime = today.plusDays(1).atStartOfDay().minusNanos(1);
-//            Timestamp startOfDay = Timestamp.valueOf(startDateTime);
-//            Timestamp endOfDay = Timestamp.valueOf(endDateTime);
-//            log.info("From {} to {}", startOfDay, endOfDay);
-//            APIResultSet<List<TicketDashboardDTO>> result = APIResultSet.ok("Lay ticket cho dashboard thanh cong",
-//                    ticketRepository.findOpeningOrToday(startOfDay, endOfDay).stream().map(mapper::toDashboardDTO).toList());
             APIResultSet<List<TicketDashboardDTO>> result = APIResultSet.ok("Lay ticket cho dashboard thanh cong",
                     cache.getALlTickets().values().stream().map(mapper::toDashboardDTO).toList());
             log.info(result.getMessage());

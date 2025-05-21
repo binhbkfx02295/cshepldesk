@@ -8,13 +8,13 @@ import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
 import com.binhbkfx02295.cshelpdesk.util.PaginationResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.Response;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -113,11 +113,15 @@ public class FacebookUserServiceImpl implements FacebookUserService {
     public APIResultSet<Void> deleteById(String s) {
         try {
             if (s == null || s.isEmpty() || s.isBlank()) {
-                return APIResultSet.badRequest("Facebook ID bị thiếu");
+                APIResultSet<Void> result = APIResultSet.badRequest("Facebook ID bị thiếu");
+                log.info(result.getMessage());
+                return result;
             }
 
             if (!facebookUserRepository.existsById(s)) {
-                return APIResultSet.badRequest(("Facebook ID không tồn tại"));
+                APIResultSet<Void> result = APIResultSet.badRequest(("Facebook ID không tồn tại"));
+                log.info(result.getMessage());
+                return result;
             }
             facebookUserRepository.deleteById(s);
             log.info("Xóa Khách hàng ID: {} thành công.", s);
@@ -146,6 +150,19 @@ public class FacebookUserServiceImpl implements FacebookUserService {
         }
     }
 
+    @Override
+    public APIResultSet<Void> deleteAll(ArrayList<String> ids) {
+        try {
+            facebookUserRepository.deleteAll(ids);
+            APIResultSet<Void> result = APIResultSet.ok("Xoa nhom id thanh cong", null);
+            log.info(result.getMessage());
+            return result;
+        } catch (Exception e) {
+            log.info(Arrays.toString(e.getStackTrace()));
+            return APIResultSet.internalError("Loi Xoa nhom id");
+        }
+    }
+
     public List<FacebookUserExportDTO> exportSearchUsers(FacebookUserSearchCriteria criteria, Pageable pageable) {
         try {
             Map<String, Object> queryResult = facebookUserRepository.search(criteria, pageable);
@@ -156,5 +173,6 @@ public class FacebookUserServiceImpl implements FacebookUserService {
             return null;
         }
     }
+
 
 }

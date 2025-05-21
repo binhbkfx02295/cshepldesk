@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -78,7 +79,6 @@ public class FacebookUserController {
             @ModelAttribute FacebookUserSearchCriteria criteria,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info(criteria.toString());
-        log.info(pageable.toString());
         APIResultSet<PaginationResponse<FacebookUserDetailDTO>> resultSet = facebookUserService.searchUsers(criteria, pageable);
         return APIResponseEntityHelper.from(resultSet);
     }
@@ -106,6 +106,14 @@ public class FacebookUserController {
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .body(new InputStreamResource(in));
     }
+
+    @DeleteMapping("/delete-all")
+    public ResponseEntity<APIResultSet<Void>> deleteAll(
+            @RequestBody ArrayList<String> ids
+            ) {
+        return APIResponseEntityHelper.from(facebookUserService.deleteAll(ids));
+    }
+
 
 
 }
