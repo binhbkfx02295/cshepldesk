@@ -8,13 +8,41 @@
     <!-- Bootstrap 5.3 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Google font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <style>
+        html {
+            font-family: "Quicksand", sans-serif;
+            font-optical-sizing: auto;
+        }
+
         body {
-            background: url('/img/login-background.jpg') no-repeat center center fixed;
+            background: url('img/img-auth-bg.jpg') no-repeat center center fixed;
             background-size: cover;
+            color: #3c3f45a8;
+
+            font-family: "Quicksand", sans-serif;
+            font-optical-sizing: auto;
+        }
+
+        body::after {
+            position: absolute;
+            top: 0;
+            left: 0;
+            content: "";
+            display: table;
+            width: 100%;
+            height: 100%;
+            z-index: -5;
+            background-color: #1c1c1cd4;
         }
 
         .overlay {
@@ -27,6 +55,7 @@
 
         .login-box {
             width: 400px;
+            height: 600px;
             background: white;
             padding: 30px;
             border-radius: 12px;
@@ -39,7 +68,7 @@
 
         .logo {
             font-weight: 600;
-            font-size: 1.4rem;
+            font-size: 1.8rem;
             color: #2c3e50;
         }
 
@@ -51,7 +80,8 @@
             border-color: #dc3545 !important;
         }
 
-        #show-password, #hide-password {
+        #show-password,
+        #hide-password {
             display: none;
             position: absolute;
             top: 50%;
@@ -63,43 +93,129 @@
         #show-password {
             display: block;
         }
+
+        input[type=text],
+        input[type=password] {
+            font-size: 15px;
+            color: #494949;
+            border: 1px solid #dbe0e5;
+            padding: 10px 15px;
+            width: 100%;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        input::placeholder {
+            color: #c4cacf
+        }
+
+        input:focus,
+        input:hover {
+            border: 1px solid #6c7a88;
+            outline: none;
+        }
+
+        i#show-password,
+        i#hide-password {
+            font-size: 18px;
+            transition: all 0.5s;
+        }
+
+        i#show-password:hover,
+        i#hide-password:hover {
+            color: #343434;
+        }
+
+        .documentation {
+            font-size: 16px;
+        }
+
+         a {
+            text-decoration: none !important;
+        }
+
+        svg {
+            width: 85px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #98a5c3
+        }
     </style>
 </head>
 <body>
-<div class="overlay"></div>
 
-<div class="login-box">
-    <div class="text-center mb-4">
-        <div class="logo">Thiên An Phú Co., Ltd</div>
-        <div class="text-muted">Hệ thống Chăm sóc Khách hàng</div>
+<div class="login-box d-flex align-items-center justify-content-center">
+    <div class="wrapper w-100">
+        <div class="text-center mb-4">
+            <svg class="mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+                <path fill="#6446fe"
+                      d="M59,8H5A1,1,0,0,0,4,9V55a1,1,0,0,0,1,1H59a1,1,0,0,0,1-1V9A1,1,0,0,0,59,8ZM58,54H6V10H58Z"
+                      class="color1d1f47 svgShape"></path>
+                <path fill="#6446fe"
+                      d="M36,35H28a3,3,0,0,1-3-3V27a3,3,0,0,1,3-3h8a3,3,0,0,1,3,3v5A3,3,0,0,1,36,35Zm-8-9a1,1,0,0,0-1,1v5a1,1,0,0,0,1,1h8a1,1,0,0,0,1-1V27a1,1,0,0,0-1-1Z"
+                      class="color0055ff svgShape"></path>
+                <path fill="#6446fe"
+                      d="M36 26H28a1 1 0 0 1-1-1V24a5 5 0 0 1 10 0v1A1 1 0 0 1 36 26zm-7-2h6a3 3 0 0 0-6 0zM32 31a1 1 0 0 1-1-1V29a1 1 0 0 1 2 0v1A1 1 0 0 1 32 31z"
+                      class="color0055ff svgShape"></path>
+                <path fill="#6446fe"
+                      d="M59 8H5A1 1 0 0 0 4 9v8a1 1 0 0 0 1 1H20.08a1 1 0 0 0 .63-.22L25.36 14H59a1 1 0 0 0 1-1V9A1 1 0 0 0 59 8zm-1 4H25l-.21 0a1.09 1.09 0 0 0-.42.2L19.73 16H6V10H58zM50 49H14a1 1 0 0 1-1-1V39a1 1 0 0 1 1-1H50a1 1 0 0 1 1 1v9A1 1 0 0 1 50 49zM15 47H49V40H15z"
+                      class="color1d1f47 svgShape"></path>
+                <circle cx="19.5" cy="43.5" r="1.5" fill="#6446fe" class="color0055ff svgShape"></circle>
+                <circle cx="24.5" cy="43.5" r="1.5" fill="#6446fe" class="color0055ff svgShape"></circle>
+                <circle cx="29.5" cy="43.5" r="1.5" fill="#6446fe" class="color0055ff svgShape"></circle>
+                <circle cx="34.5" cy="43.5" r="1.5" fill="#6446fe" class="color0055ff svgShape"></circle>
+                <circle cx="39.5" cy="43.5" r="1.5" fill="#6446fe" class="color0055ff svgShape"></circle>
+                <circle cx="44.5" cy="43.5" r="1.5" fill="#6446fe" class="color0055ff svgShape"></circle>
+                <path fill="#6446fe"
+                      d="M60 9a1 1 0 0 0-1-1H28.81l2.37-2.37A19.22 19.22 0 0 1 60 31zM35.19 56l-2.37 2.37A19.22 19.22 0 0 1 4 33V55a1 1 0 0 0 1 1z"
+                      opacity=".3" class="color0055ff svgShape"></path>
+            </svg>
+            <div class="logo mb-2">Thiên An Phú</div>
+            <div class="subtitle mb-2">Chào mừng quay trở lại</div>
+        </div>
+
+        <div th:if="${param.logout}" class="alert alert-success">Đăng xuất thành công.</div>
+        <div th:if="${param.timeout}" class="alert alert-warning">Phiên đăng nhập đã hết hạn.</div>
+        <div th:if="${param.expired}" class="alert alert-warning">Tài khoản đã đăng nhập ở nơi khác.</div>
+        <div th:if="${session.loginError}" class="alert alert-danger" th:text="${session.loginError}"></div>
+
+
+        <form th:action="@{/process-login}" method="post" id="loginForm">
+            <div class="mb-4">
+                <input type="text" class="" id="username" name="username" placeholder="Tên đăng nhập"
+                       data-bs-toggle="popover" data-bs-trigger="manual" data-bs-placement="right">
+            </div>
+
+            <div class="mb-4 position-relative">
+                <div class="position-relative">
+                    <input type="password" class="" id="password" name="password" placeholder="Mật khẩu"
+                           data-bs-toggle="popover" data-bs-trigger="manual" data-bs-placement="right">
+                    <i id="show-password" class="bi bi-eye" onclick="showPassword()"></i>
+                    <i id="hide-password" class="bi bi-eye-slash" onclick="hidePassword()"></i>
+                </div>
+            </div>
+
+            <div class="d-flex flex-row mb-4 justify-content-between">
+                <div class="remember-me">
+                    <input type="checkbox" name="" id="" class="me-2">
+                    <span>Ghi nhớ</span>
+                </div>
+                <div class="forgot-password">
+                    <a href="">Quên mật khẩu?</a>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
+        </form>
     </div>
 
-    <div th:if="${param.logout}" class="alert alert-success">Đăng xuất thành công.</div>
-    <div th:if="${param.timeout}" class="alert alert-warning">Phiên đăng nhập đã hết hạn.</div>
-    <div th:if="${param.expired}" class="alert alert-warning">Tài khoản đã đăng nhập ở nơi khác.</div>
-    <div th:if="${session.loginError}" class="alert alert-danger" th:text="${session.loginError}"></div>
-
-    <form th:action="@{/process-login}" method="post" id="loginForm">
-        <div class="mb-3">
-            <label for="username" class="form-label">Tên đăng nhập</label>
-            <input type="text" class="form-control" id="username" name="username" placeholder="Nhập username"
-                   data-bs-toggle="popover" data-bs-trigger="manual" data-bs-placement="right">
-        </div>
-
-        <div class="mb-3 position-relative">
-            <label for="password" class="form-label">Mật khẩu</label>
-            <div class="position-relative">
-                <input type="password" class="form-control" id="password" name="password" placeholder="Nhập mật khẩu"
-                       data-bs-toggle="popover" data-bs-trigger="manual" data-bs-placement="right">
-                <i id="show-password" class="bi bi-eye" onclick="showPassword()"></i>
-                <i id="hide-password" class="bi bi-eye-slash" onclick="hidePassword()"></i>
-            </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
-    </form>
+    <div class="d-flex flex-row justify-content-center documentation position-absolute bottom-0 mb-3">
+        <a href="" class="text-muted me-2"><span class="">Điều khoản</span></a>
+        <a href="" class="text-muted"><span class="">Tài liệu</span></a>
+    </div>
 </div>
-
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -140,7 +256,8 @@
 
             clearPopover(usernameEl);
             clearPopover(passwordEl);
-
+            console.log(username);
+            console.log(password);
             if (!usernameRegex.test(username)) {
                 showPopover(usernameEl, "Tên đăng nhập phải từ 4-8 ký tự, chỉ gồm chữ cái và số.");
                 isValid = false;
@@ -164,6 +281,7 @@
 
     function showPassword() {
         const input = document.getElementById('password');
+        console.log("show password", input)
         input.type = 'text';
         $("#hide-password").css({"display": "block"});
         $("#show-password").css({"display": "none"});
@@ -173,6 +291,7 @@
 
     function hidePassword() {
         const input = document.getElementById('password');
+        console.log("hide password", input)
         input.type = 'password';
         $("#show-password").css({"display": "block"});
         $("#hide-password").css({"display": "none"});

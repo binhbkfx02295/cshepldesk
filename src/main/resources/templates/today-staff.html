@@ -1,0 +1,52 @@
+<!DOCTYPE html >
+<html lang="en" th:replace="~{layout:: layout(~{::title}, ~{::link}, ~{::div.page-content})}" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <link rel="shortcut icon" th:href="@{/img/favicon.ico}" type="image/x-icon">
+    <title>CSHelpDesk | Dashboard</title>
+</head>
+<body>
+<h2 class="page-title">Bảng Điều Khiển | Nhân viên</h2>
+
+<div class="page-content">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div th:replace="~{fragments/header:: header(~{::h2.page-title})}"></div>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard-content page-main-content d-flex flex-column">
+        <!-- Employee List Section -->
+        <div class="mb-4" id="employeeSection">
+            <div class="card employee-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-people-fill"></i>
+                        Danh Sách Nhân Viên
+                    </h3>
+                    <span class="badge bg-primary employee-count">0</span>
+                </div>
+                <table id="employeeTable" class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th data-sort="name">Tên nhân viên</th>
+                        <th data-sort="userGroup">Vai trò</th>
+                        <th data-sort="ticketCount">Số lượng ticket</th>
+                        <th data-sort="status">Trạng thái</th>
+                        <th data-sort="statusTime">Thời gian trạng thái</th>
+                    </tr>
+                    </thead>
+
+
+
+                    <tbody id="employeeList2" class="position-relative">
+                    <!-- employee rows will be loaded here -->
+                    </tbody>
+
+                </table>
+
+            </div>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</div>
+
+</body>
+</html>

@@ -7,7 +7,6 @@ const API_USERGROUP = `${BASE}/api/employee-management/user-group`;
 const API_TICKET = `${BASE}/api/ticket`;
 const API_CATEGORY = `${BASE}/api/category`;
 const API_TAG = `${BASE}/api/tag`;
-const API_ONLINE_STATUS = `${BASE}/api/employee-management/online-status`;
 const API_PROGRESS_STATUS = `${BASE}/api/progress-status`;
 const API_EMOTION = `${BASE}/api/emotion`;
 const API_SATISFACTION = `${BASE}/api/satisfaction`;
@@ -31,58 +30,162 @@ var submitHandler = null;
 var keyupHandler = null;
 var debounceKeyup = null;
 var deleteCustomerHandler = null;
+window.customerViewDetailModal = null;
 $(document).ready(() => {
-  // Simulate loading time
-  //  setTimeout(() => {
-  //    // Hide loading overlay
-  //    $("#loadingOverlay").fadeOut()
-  //    initHeader()
-  //    initDashboard()
-  //    initTicket()
-  //    initTicketDetailModal();
-  //
-  //  }, 500)
   $("#loadingOverlay").fadeOut()
   initHeader();
 
-  if (window.location.href.includes("dashboard") || window.location.href.includes("index")
+  if (window.location.href.includes("today-staff") || window.location.href.includes("index")
   ) {
-    initDashboard();
+    initTodayStaff();
     $(".sidebar-menu li").removeClass("active");
     $(".sidebar-menu li").get(0).classList.add("active");
+  } else if (window.location.href.includes("today-ticket")) {
+    initTodayTicket()
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(1).classList.add("active");
   } else if (window.location.href.includes("ticket")) {
 
     initTicket()
     $(".sidebar-menu li").removeClass("active");
-    $(".sidebar-menu li").get(1).classList.add("active");
+    $(".sidebar-menu li").get(2).classList.add("active");
   } else if (window.location.href.includes("customer")) {
     initCustomer();
     $(".sidebar-menu li").removeClass("active");
-    $(".sidebar-menu li").get(2).classList.add("active");
+    $(".sidebar-menu li").get(3).classList.add("active");
 
   } else if (window.location.href.includes("performance")) {
     $(".sidebar-menu li").removeClass("active");
-    $(".sidebar-menu li").get(3).classList.add("active");
-  } else if (window.location.href.includes("report")) {
-    $(".sidebar-menu li").removeClass("active");
     $(".sidebar-menu li").get(4).classList.add("active");
-  } else if (window.location.href.includes("setting")) {
+  } else if (window.location.href.includes("report")) {
+    initReport();
     $(".sidebar-menu li").removeClass("active");
     $(".sidebar-menu li").get(5).classList.add("active");
+  } else if (window.location.href.includes("setting")) {
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(6).classList.add("active");
   }
 })
 
+// today-staff.html
+function initTodayStaff() {
+  loadDashboardEmployees()
+
+  //Load employee2 list
+  function loadDashboardEmployees(sortField = null) {
+    const employeeList = $("#employeeList2");
+    employeeList.empty();
+
+    //fetch employees;
+    $.ajax({
+      url: `${API_EMPLOYEE}/dashboard`,
+      type: 'GET',
+      dataType: 'json',
+      success: function (data) {
+        console.log(data);
+        employees = data.data;
+        // Update employee count
+        $(".employee-count").text(employees.length);
+
+        // Sort nếu cần
+        if (sortField) {
+          if (currentSort.field === sortField) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+          } else {
+            currentSort.field = sortField;
+            currentSort.direction = 'asc';
+          }
+
+          employees.sort((a, b) => {
+            let valA = a[sortField];
+            let valB = b[sortField];
+
+            if (typeof valA === "string") valA = valA.toLowerCase();
+            if (typeof valB === "string") valB = valB.toLowerCase();
+
+            if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+            return 0;
+          });
+        }
+
+        // Render
+        employees.forEach((employee) => {
+
+          const employeeRow = `
+          <tr class="show">
+            <td>${employee.name}</td>
+            <td>${employee.userGroup.name}</td>
+            <td>${employee.ticketCount || 0}/6</td>
+            <td style="text-transform: capitalize;">
+              <span class="status-indicator ${employee.statusLog[0].status}"></span>
+              ${employee.statusLog[0].status}
+            </td>
+            ${employee.statusLog[0].status == "offline" ? "" : `<td class="time-elapse" data-timestamp="${employee.statusLog[0].from}">${startElapsedTimer(employee.statusLog[0].from)}</td>`}
+
+          </tr>
+        `;
+
+          employeeList.append(employeeRow);
+        });
+
+        if (window.startElapsedTimerInterval) {
+          clearInterval(window.startElapsedTimerInterval);
+          console.log("cleared window.startElapsedTimerInterval");
+        }
+        window.startElapsedTimerInterval = setInterval(function () {
+          $(".time-elapse").each(function () {
+            const timestamp = $(this).attr("data-timestamp");
+            $(this).text(startElapsedTimer(timestamp));
+          })
+        })
+      },
+      error: function (xhr, status, error) {
+        console.error('Lỗi:', error);
+      }
+    })
+
+  }
+}
+
+// today-ticket.html
+function initTodayTicket() {
+  initTicketDetailModal();
+  refreshDashboardTicket();
+  //TODO:
+  $("#refreshDashboardTicket").click(() => {
+    refreshDashboardTicket();
+  })
+
+  // Search tickets
+  //TODO:
+  bounded = null
+  $("#ticketSearch").on("keyup", function () {
+    clearTimeout(bounded);
+    bounded = setTimeout(() => {
+      const searchTerm = $(this).val().toLowerCase();
+      console.log("...filtering search team: ", searchTerm);
+      filterTickets(searchTerm)
+    }, 500);
+  })
+
+
+
+}
+
+function refreshTodayTicketMetrics() {
+  console.log("init ticket metrics")
+}
 //customer/html
 function initCustomer() {
   console.log("init customer page");
   initCustomerDeleteModal();
   initCustomerExport();
-  initCustomerEditModal();
+  initCustomerViewModal();
   bindItemClickEvents(); //TODO: delete after testing
+  window.customerViewDetailModal = new bootstrap.Modal(document.getElementById("customerDetailModal"));
 
-
-
-  $(".select-all input[type=checkbox]").click(function (e) {
+  document.querySelector(".select-all input[type=checkbox]").addEventListener("click", function (e) {
     $("#customer-list-body .item input[type=checkbox]").prop("checked", $(this).prop("checked"));
   });
 
@@ -91,23 +194,45 @@ function initCustomer() {
   });
 
   function initCustomerDeleteModal() {
-    let button = document.getElementById("delete-checkbox");
+    const button = document.getElementById("delete-checkbox");
+    const selectBtn = document.querySelector(".select-all input[type=checkbox");
+    const confirmBtn = document.getElementById("confirmDeleteCustomerBtn");
     window.customerDeleteModal = new bootstrap.Modal(document.getElementById("customerDeleteModal"));
     //bind click open modal
     button.addEventListener("click", function () {
       window.customerDeleteModal.show();
-    })
-  }
-
-  function initCustomerEditModal() {
-    window.customerEditModal = new bootstrap.Modal(document.getElementById("customerEditModal"));
-    const i = document.querySelectorAll("#customerEditModal .field-group i");
-    i.forEach((item) => {
-      item.addEventListener("click", function () {
-        //get sibling ad set to 0;
-        console.log(item.previousElementSibling);
-        item.previousElementSibling.value = "";
-      })
+      confirmBtn.removeEventListener("click", deleteCustomerHandler);
+      deleteCustomerHandler = function () {
+        console.log("hehe");
+        //get array of ids
+        const checkboxes = document.querySelectorAll("input[type=checkbox]");
+        arr = []
+        checkboxes.forEach(checkbox => {
+          if (checkbox != confirmBtn) {
+            console.log(checkbox);
+            console.log(checkbox.closest(".row[data-id]"))
+            console.log("============")
+            value = checkbox.closest(".row[data-id]")?.getAttribute("data-id");
+            if (checkbox.checked == true && value != "" && value != null) {
+              arr.push(value);
+            }
+          }
+        })
+        console.log("arr ", arr);
+        openAPIxhr(HTTP_DELETE_METHOD, `${API_FACEBOOK_USER}/delete-all`, function () {
+          console.log("clean up");
+          window.customerDeleteModal.hide();
+          setTimeout(function () {
+            checkboxes.forEach(checkbox => {
+              checkbox.checked=false;
+              checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+            })
+            performSearchCustomer();
+          }, 500)
+        }
+          , null, arr);
+      }
+      confirmBtn.addEventListener("click", deleteCustomerHandler);
     })
   }
 
@@ -118,7 +243,7 @@ function initCustomer() {
       const url = `${API_FACEBOOK_USER}/export-excel?${buildQueryParam(data)}`;
       console.log(url);
       xhr = createXHR();
-       xhr.responseType = "blob";
+      xhr.responseType = "blob";
       handleResponse(xhr, function (blob) {
         successToast("Tải xuống thành công");
         const link = document.createElement("a");
@@ -146,40 +271,39 @@ function initCustomer() {
     console.log(data)
     const container = document.getElementById("customer-list-body");
     const loading = $($("#loading-result"));
-    const url = `${API_FACEBOOK_USER}/search?${buildQueryParam(data)}`;
-    console.log(url)
+    const _url = `${API_FACEBOOK_USER}/search?${buildQueryParam(data)}`;
+    console.log(_url)
     loading.show();
+    openAPIxhr(HTTP_GET_METHOD, _url, function (response) {
+      parseCustomerSearchResult(response, loading, container)
+    });
+  }
 
-    xhr = createXHR();
-    handleResponse(xhr, function (response) {
-      response = JSON.parse(response);
-      loading.hide();
-      successToast(response.message);
-      container.innerHTML = "";
-      let data = response.data
-      if (data.content != 0) {
-        renderCustomerDetail(data.content, container)
-        bindItemClickEvents()
-        renderPagination(
-          data.page,
-          data.totalElements,
-          data.size,
-          performSearchCustomer
-        )
+  function parseCustomerSearchResult(response, loading, container) {
+    loading.hide();
+    successToast(response.message);
+    container.innerHTML = "";
+    let data = response.data
+    if (data.content != 0) {
+      renderCustomerDetail(data.content, container)
+      bindItemClickEvents()
+      renderPagination(
+        data.page,
+        data.totalElements,
+        data.size,
+        performSearchCustomer
+      )
 
-      } else {
-        let item = document.createElement("div");
-        item.innerHTML = `
-          <div id="no-ticket-result" class="text-center text-muted py-3" style="display: block;">
-        <i class="bi bi-inbox me-1"></i> Không có kết quả phù hợp.
-      </div>
-          `;
-        console.log(item);
-        container.innerHTML = item.getHTML();
-      }
-    })
-    xhr.open(HTTP_GET_METHOD, url)
-    xhr.send();
+    } else {
+      let item = document.createElement("div");
+      item.innerHTML = `
+        <div id="no-ticket-result" class="text-center text-muted py-3" style="display: block;">
+      <i class="bi bi-inbox me-1"></i> Không có kết quả phù hợp.
+    </div>
+        `;
+      console.log(item);
+      container.innerHTML = item.getHTML();
+    }
   }
 
   function getCustomerSearchData() {
@@ -229,6 +353,95 @@ function initCustomer() {
     container.appendChild(fragment)
   }
 
+  function initCustomerViewModal() {
+    const editBtn = document.getElementById("edit");
+    const editedBtn = document.getElementById("edited");
+    const cancelBtn = document.getElementById("cancel-edit");
+    const submitBtn = document.getElementById("submit-edited");
+    const inputList = document.querySelectorAll(".detail-info input");
+    editBtn.addEventListener("click", function () {
+      editedBtn.classList.remove("d-none");
+      this.classList.add("d-none");
+      const fieldNameList = document.querySelectorAll(".field-value");
+      fieldNameList.forEach(item => {
+        item.classList.add("d-none");
+        console.log(item);
+        input = item.nextElementSibling;
+        input.classList.remove("d-none");
+        input.value = item.textContent;
+      })
+    })
+
+    cancelBtn.addEventListener("click", function () {
+      editBtn.classList.remove("d-none");
+      editedBtn.classList.add("d-none");
+      const fieldNameList = document.querySelectorAll(".field-value");
+      fieldNameList.forEach(item => {
+        item.classList.remove("d-none");
+        item.nextElementSibling.classList.add("d-none");
+      })
+
+    })
+
+    submitBtn.addEventListener("click", function () {
+      //get data
+      data = {
+        facebookId: document.getElementById("facebookId").innerText,
+        realName: document.getElementById("realName").value,
+        phone: document.getElementById("phone").value,
+        email: document.getElementById("email").value,
+        zalo: document.getElementById("zalo").value
+      }
+      openAPIxhr(HTTP_PUT_METHOD, `${API_FACEBOOK_USER}`, function (response) {
+        window.customerViewDetailModal.hide();
+        setTimeout(function () {
+          openCustomerViewDetailModal(data.facebookId);
+          cancelBtn.click();
+        }, 500);
+      }, null, data);
+    })
+
+    inputList.forEach(item => {
+      item.addEventListener("keyup", function () {
+        let original = item.getAttribute("data-original");
+        console.log(original, item.value, item.value != "" && item.value != original);
+        if (item.value != "" && item.value != original) {
+          submitBtn.disabled = false;
+        } else {
+          submitBtn.disabled = true;
+        }
+      })
+    })
+
+  }
+
+  function createTicketHistoryItem(ticket) {
+    const div = document.createElement("div");
+    div.innerHTML = `
+    <div class="item">
+        <div class="d-flex flex-row">
+            <div class="i-badge me-3">
+                <i class="bi bi-ticket-perforated"></i>
+            </div>
+            <div class="">
+                <div>
+                    <div class="title mb-2">${sanitizeText(ticket.title) || "Chưa có tiêu đề"}<span class="ticketId"> -
+                            #ID: <span
+                                id="ticketId">${ticket.id}</span></span></div>
+                    <div class="assignee mb-1">Admin - <span class="category">${sanitizeText(ticket.category?.name) || "Chưa phân loại"}</span></div>
+                    <div class="createdAt mb-1">${formatEpochTimestamp(ticket.createdAt)}</div>
+                </div>
+            </div>
+            <div class="ms-auto text-start d-flex flex-column justify-content-evenly">
+                <div class=""><i class="bi bi-activity me-3"></i><span class="progressStatus ${ticket.progressStatus.code}">${sanitizeText(ticket.progressStatus.name)}</span></div>
+                <div class="emotion"><i class="bi bi-emoji-smile me-3"></i>${sanitizeText(ticket.emotion?.name) || "- -"}</div>
+                <div class="satisfaction"><i class="bi bi-stars me-3"></i>${sanitizeText(ticket.satisfaction?.name) || "- -"}</div>
+            </div>
+        </div>
+    </div>
+    `
+    return div.firstElementChild;
+  }
   function renderCustomerItem(item, container) {
     console.log("rendering..");
     //TODO
@@ -267,7 +480,7 @@ function initCustomer() {
     facebookProfileCol.forEach((item) => {
       item.addEventListener("click", function () {
         const id = $(this).closest(".item").data("id");
-        open(openCustomerViewDetailModal(id))
+        openCustomerViewDetailModal(id);
       });
     })
     $("#customer-list-body .item .dropdown-menu a").on("click", function (e) {
@@ -306,8 +519,61 @@ function initCustomer() {
     });
   }
   function openCustomerViewDetailModal(id) {
-    //TODO
-    console.log("pending..");
+    window.customerViewDetailModal.show();
+    //fetch customer ticket history
+    fetchCustomerTicketHistory(id)
+    fetchCustomerDetail(id)
+
+  }
+
+  function fetchCustomerTicketHistory(id) {
+    const container = document.querySelector("#customerDetailModal .data-table");
+    container.innerHTML = `
+      <div id="loading-result" class="fs-5 loading-row justify-content-center text-muted py-3 text-center"
+          style="display: block">
+          <div class="col-auto">
+              <div class="spinner-border spinner-border-sm me-2 text-primary" role="status"></div>
+              Đang tải dữ liệu...
+          </div>
+      </div>
+    `;
+    //fetch
+    container.getAttribute("data-page");
+    data = {
+      facebookId: id,
+      page: container.getAttribute("data-page") || 0,
+      size: 10
+    }
+    url = `${API_TICKET}/search?${buildQueryParam(data)}`;
+    setTimeout(function () {
+      openAPIxhr(HTTP_GET_METHOD, url, function (response) {
+        parseCustomerTicketHistoryResult(response, container)
+      })
+    }, 1000);
+
+  }
+  function parseCustomerTicketHistoryResult(res, container) {
+    console.log(res);
+    console.log(container);
+    if (res.data.totalElements != 0) {
+      const fragment = document.createDocumentFragment();
+      res.data.content.forEach(ticket => {
+        fragment.appendChild(createTicketHistoryItem(ticket));
+
+      })
+      container.innerHTML = ``;
+      container.appendChild(fragment);
+    } else {
+      showNoTicketHistory(container);
+    }
+  }
+  function showNoTicketHistory(container) {
+    container.innerHTML = `
+    <div class="text-center">
+      <img src="/img/no-ticket-yet.svg" width="130" height="130">
+      <div class="text-muted">Hiện chưa có ticket.</div>
+    </div>
+    `
   }
 
   function openCustomerEditModal(id) {
@@ -321,80 +587,47 @@ function initCustomer() {
   }
 
   function fetchCustomerDetail(id) {
-    let xhr = createXHR();
     console.log(id);
-    handleResponse(xhr, function (response) {
-      response = JSON.parse(response);
-      populateCustomerEditModal(response);
-    });
-    xhr.open(HTTP_GET_METHOD, `${API_FACEBOOK_USER}?id=${id}`);
-    xhr.send();
+    const container = document.querySelector("#customerDetailModal .detail-info");
+    setTimeout(function () {
+      openAPIxhr(HTTP_GET_METHOD, `${API_FACEBOOK_USER}?id=${id}`, function (response) {
+        console.log("ok..");
+        populateCustomerEditModal(response, container);
+      })
+    }, 700)
+
   }
 
-  function populateCustomerEditModal(response) {
-    let customer = response.data;
-    if (window.customerEditModal == null) {
-      return;
-    }
-    console.log(customer);
+  function populateCustomerEditModal(response, container) {
+
+    console.log("Hey", response);
+    customer = response.data;
     window.customer = customer;
-    const submitBtn = document.getElementById("submit-edit");
     const realName = document.getElementById("realName");
     const phone = document.getElementById("phone");
     const email = document.getElementById("email")
     const zalo = document.getElementById("zalo");
-    let img = document.querySelector("#facebook-profile img");
-    document.querySelector("#facebook-profile .facebookName").textContent = customer.facebookName;
-    document.querySelector("#facebook-profile .facebookId").textContent = customer.facebookId;
-    document.querySelector("#facebook-profile .createdAt").textContent = formatEpochTimestamp(customer.createdAt) || "- -";
+    document.querySelector("#facebookName").textContent = customer.facebookName || "- -";
+    document.querySelector("#facebookId").textContent = customer.facebookId || "- -";
+    document.querySelector("#facebookProfilePic").src = customer.facebookProfilePic || "/img/facebookuser-profile-placeholder.jpg";
     realName.value = customer.realName || "";
+    realName.previousElementSibling.textContent = customer.realName || "- -";
     phone.value = customer.phone || "";
+    phone.previousElementSibling.textContent = customer.phone || "- -";
     email.value = customer.email || "";
+    email.previousElementSibling.textContent = customer.email || "- -";
     zalo.value = customer.zalo || "";
+    zalo.previousElementSibling.textContent = customer.zalo || "- -";
     //add original data
     realName.setAttribute("data-original", customer.realName);
     phone.setAttribute("data-original", customer.phone);
     email.setAttribute("data-original", customer.email);
     zalo.setAttribute("data-original", customer.zalo);
 
-    img.setAttribute("src", customer.facebookProfilePic);
 
-    //bind refresh button
-    const refreshBtn = document.getElementById("refresh-edit");
-    refreshBtn.removeEventListener("click", refreshHandler)
-    refreshHandler = function () {
-      document.getElementById("realName").value = customer.facebookId || "";
-      document.getElementById("phone").value = customer.phone || "";
-      document.getElementById("email").value = customer.email || "";
-      document.getElementById("zalo").value = customer.zalo || "";
-    }
-    refreshBtn.addEventListener("click", refreshHandler)
-
-    //bind input button
-    const inputList = document.querySelectorAll("#customerEditModal input");
-    inputList.forEach(function (input) {
-      input.removeEventListener("keyup", keyupHandler);
-      keyupHandler = function () {
-
-        //TODO: check if input changed
-        clearTimeout(debounceKeyup);
-        debounceKeyup = setTimeout(function () {
-          console.log(input.value);
-          originalValue = input.getAttribute("data-original").trim();
-          if (input.value != "" && input.value != originalValue) {
-            submitBtn.disabled = false;
-          } else {
-            submitBtn.disabled = true;
-          }
-
-        }, 500)
-      }
-      input.addEventListener("keyup", keyupHandler);
-    })
-
-    //bind submit button
-    submitBtn.removeEventListener("click", sendEditCustomer)
-    submitBtn.addEventListener("click", sendEditCustomer);
+    container.parentElement.previousElementSibling.classList.add("d-none");
+    container.parentElement.classList.remove("d-none");
+    console.log(container);
   }
 
   function sendEditCustomer() {
@@ -431,7 +664,6 @@ function initCustomer() {
     deleteCustomerHandler = function () {
       xhr = createXHR();
       handleResponse(xhr, function (response) {
-        response = JSON.parse(response);
         successToast(response.message);
         window.customerDeleteModal.hide();
       })
@@ -442,15 +674,17 @@ function initCustomer() {
 
   }
 
-  function buildQueryParam(params) {
-    const parts = [];
-    for (let k in params) {
-      if (params[k] != null && params[k] !== "") {
-        parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`);
-      }
+
+}
+
+function buildQueryParam(params) {
+  const parts = [];
+  for (let k in params) {
+    if (params[k] != null && params[k] !== "") {
+      parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`);
     }
-    return parts.length > 0 ? `${parts.join("&")}` : "";
   }
+  return parts.length > 0 ? `${parts.join("&")}` : "";
 }
 
 //get json helper
@@ -498,48 +732,9 @@ function initHeader() {
   const now = new Date()
   $("#currentDate").text(formatDate(now))
   $("#lastUpdated").text(formatTime(now))
-  loadDashboardEmployees()
 
-  $('#btnEmployees').click(function () {
-    $('#employeeSection').removeClass('d-none');
-    $('#ticketSection').addClass('d-none');
-    $(this).addClass('active');
-    $('#btnTickets').removeClass('active');
-    loadDashboardEmployees()
-  });
 
-  $('#btnTickets').click(function () {
-    $('#ticketSection').removeClass('d-none');
-    $('#employeeSection').addClass('d-none');
-    $(this).addClass('active');
-    $('#btnEmployees').removeClass('active');
-    loadDashboardTickets()
-  });
-
-  //get API to get online status
-  const statusText = $(this).text().trim();
-  const statusValue = statusText.toLowerCase();
-  var $indicator = $('.status-dropdown .status-indicator');
-  var $statusText = $('.status-dropdown #currentStatusText');
-
-  $.ajax({
-    url: `${API_EMPLOYEE}/online-status`,
-    method: 'GET',
-    contentType: 'application/json',
-    success: function (res) {
-      // Cập nhật UI nếu thành công
-      console.log(res);
-      const statusValue = res.status;
-      const statusText = toCapital(statusValue);
-      $indicator.addClass(statusValue);
-
-      $statusText.text(statusText);
-    },
-    error: function (res) {
-      console.log(res.message);
-      console.log();
-    }
-  })
+  // fetch_online_status()
 
   const userProfileModal = new bootstrap.Modal(document.getElementById("userProfileModal"));
   const settingModal = new bootstrap.Modal(document.getElementById("settingModal"));
@@ -633,22 +828,6 @@ function initHeader() {
   });
 }
 
-// Initialize dashboard
-function initDashboard() {
-  console.log("init dashboard");
-  initTicketDetailModal();
-  //TODO:
-  $("#refreshDashboardTicket").click(() => {
-    refreshDashboardTicket()
-  })
-
-  // Search tickets
-  //TODO:
-  $("#ticketSearch").on("keyup", function () {
-    const searchTerm = $(this).val().toLowerCase()
-    filterTickets(searchTerm)
-  })
-}
 
 // Refresh dashboard
 function refreshDashboardTicket() {
@@ -659,134 +838,74 @@ function refreshDashboardTicket() {
   refreshBtn.prop("disabled", true)
 
 
-
-  // Simulate refresh delay
-  //  setTimeout(() => {
-  //    // Update last updated time
-  //    const now = new Date()
-  //    $("#lastUpdated").text(formatTime(now))
-  //
-  //    // Reload data
-  //    loadDashboardTickets()
-  //
-  //    // Restore refresh button
-  //    refreshBtn.html(originalContent)
-  //    refreshBtn.prop("disabled", false)
-  //  }, 500)
   // Update last updated time
   const now = new Date()
   $("#lastUpdated").text(formatTime(now))
 
   // Reload data
-  loadDashboardTickets()
+  // loadDashboardTickets()
+  xhr = createXHR();
+  xhr.open(HTTP_GET_METHOD, `${API_TICKET}/dashboard`);
+  handleResponse(xhr, function (res) {
+    // get data
+    console.log(res.data);
+    //refresh ticket list
+    showTicketListLoading($("#ticketList"));
+    populateDashboardTicket(res.data.sort((a,b) => {
+    const isA3 = a.progressStatus.id === 3;
+      const isB3 = b.progressStatus.id === 3;
+
+      // Nếu chỉ A là 3 → A xuống dưới
+      if (isA3 && !isB3) return 1;
+
+      // Nếu chỉ B là 3 → B xuống dưới
+      if (!isA3 && isB3) return -1;
+
+      // Nếu cả hai đều != 3 → sort theo createdAt DESC
+      return new Date(b.createdAt) - new Date(a.createdAt);
+
+
+    }));
+    populateDashboardTicketMetrics(res.data);
+    hideTicketListLoading($("#ticketList"));
+
+    //refresh ticket metrics
+    console.log("..refreshing ticket metrics");
+    const totalElem = document.getElementById("totalTickets");
+    const inprogressElem = document.getElementById("inProgressTickets");
+    const onHoldElem = document.getElementById("onHoldTickets");
+    const resolvedElem = document.getElementById("resolvedTickets");
+
+    //resolving data
+    total = 0;
+    inprogress = 0;
+    onhold = 0;
+    resolved = 0;
+    res.data.map(ticket => {
+      //get status
+      let code = ticket.progressStatus.code;
+      total += 1;
+      if (code == "pending") {
+        inprogress += 1;
+      } else if (code == "on-hold") {
+        onhold += 1;
+      } else {
+        resolved += 1;
+      }
+    })
+
+    console.log(total, inprogress, onhold, resolved);
+    totalElem.innerHTML = total || "- -";
+    inprogressElem.innerHTML = inprogress || "- -";
+    onHoldElem.innerHTML = onhold || "- -";
+    resolvedElem.innerHTML = resolved || "- -";
+
+  })
+  xhr.send();
 
   // Restore refresh button
   refreshBtn.html(originalContent)
   refreshBtn.prop("disabled", false)
-
-
-
-}
-
-//Load employee2 list
-function loadDashboardEmployees(sortField = null) {
-  const employeeList = $("#employeeList2");
-  employeeList.empty();
-
-  //fetch employees;
-  $.ajax({
-    url: `${API_EMPLOYEE}/dashboard`,
-    type: 'GET',
-    dataType: 'json',
-    success: function (data) {
-      console.log(data);
-      employees = data.data;
-      // Update employee count
-      $(".employee-count").text(employees.length);
-
-      // Sort nếu cần
-      if (sortField) {
-        if (currentSort.field === sortField) {
-          currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-        } else {
-          currentSort.field = sortField;
-          currentSort.direction = 'asc';
-        }
-
-        employees.sort((a, b) => {
-          let valA = a[sortField];
-          let valB = b[sortField];
-
-          if (typeof valA === "string") valA = valA.toLowerCase();
-          if (typeof valB === "string") valB = valB.toLowerCase();
-
-          if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
-          if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
-          return 0;
-        });
-      }
-
-      // Render
-      employees.forEach((employee) => {
-
-        const employeeRow = `
-          <tr class="show">
-            <td>${employee.name}</td>
-            <td>${employee.userGroup.name}</td>
-            <td>${employee.ticketCount || 0}/6</td>
-            <td style="text-transform: capitalize;">
-              <span class="status-indicator ${employee.statusLog[0].status}"></span>
-              ${employee.statusLog[0].status}
-            </td>
-            ${employee.statusLog[0].status == "offline" ? "" : `<td class="time-elapse" data-timestamp="${employee.statusLog[0].from}">${startElapsedTimer(employee.statusLog[0].from)}</td>`}
-
-          </tr>
-        `;
-
-        employeeList.append(employeeRow);
-      });
-
-      if (window.startElapsedTimerInterval) {
-        clearInterval(window.startElapsedTimerInterval);
-        console.log("cleared window.startElapsedTimerInterval");
-      }
-      window.startElapsedTimerInterval = setInterval(function () {
-        $(".time-elapse").each(function () {
-          const timestamp = $(this).attr("data-timestamp");
-          $(this).text(startElapsedTimer(timestamp));
-        })
-      })
-    },
-    error: function (xhr, status, error) {
-      console.error('Lỗi:', error);
-    }
-  })
-
-}
-
-
-// Load ticket list
-function loadDashboardTickets() {
-  $.ajax({
-    url: `${API_TICKET}/dashboard`,
-    method: "GET",
-    success: function (res) {
-      console.log(res);
-      //populateDashboard
-      showTicketListLoading($("#ticketList"));
-      //      setTimeout(function () {
-      //        populateDashboardTicket(res.data);
-      //        populateDashboardTicketMetrics(res.data);
-      //        hideTicketListLoading($("#ticketList"));
-      //      }, 500)
-      populateDashboardTicket(res.data);
-      populateDashboardTicketMetrics(res.data);
-      hideTicketListLoading($("#ticketList"));
-    },
-    error: function (res) {
-      errorToast(res.responseJSON.message);
-    }
-  })
 }
 
 
@@ -845,54 +964,7 @@ function populateDashboardTicket(tickets) {
   $("#ticketList .item").click(function () {
     loadTicketDetail($(this).data("ticket-id"));
   });
-
-  $("input#ticketSearch").on("keyup", function (e) {
-    if (window.searchTimeout) clearTimeout(window.searchTimeout);
-
-    window.searchTimeout = setTimeout(() => {
-      filterTickets();
-    }, 500);
-
-  });
 }
-
-//Dashboard
-function filterTickets() {
-  const keyword = $("#ticketSearch").val().toLowerCase().trim();
-  const field = $("#searchField").val();
-
-  $("#ticketList .item").each(function () {
-    const $item = $(this);
-    let text = "";
-
-    switch (field) {
-      case "title":
-        text = $item.find(".title").text();
-        break;
-      case "facebook":
-        text = $item.find(".user").text();
-        break;
-      case "assignee":
-        text = $item.find(".assignee").text();
-        break;
-      case "status":
-        text = $item.find(".progress-status").text();
-        break;
-      case "category":
-        text = $item.find(".category").text(); // nếu có
-        break;
-      default:
-        text = $item.text();
-    }
-
-    if (text.toLowerCase().includes(keyword)) {
-      $item.addClass("visible").show();
-    } else {
-      $item.removeClass("visible").hide();
-    }
-  });
-}
-
 
 // Dashboard Load ticket metrics
 function populateDashboardTicketMetrics(tickets) {
@@ -913,8 +985,9 @@ function populateDashboardTicketMetrics(tickets) {
 
 // Filter tickets
 function filterTickets(searchTerm) {
-  $("#ticketList tr").each(function () {
-    const rowText = $(this).text().toLowerCase()
+  console.log(searchTerm);
+  $("#ticketList .item").each(function () {
+    const rowText = $(this).text().toLowerCase();
     if (rowText.indexOf(searchTerm) > -1) {
       $(this).show()
     } else {
@@ -1025,19 +1098,23 @@ function toTime(epochMillis) {
 }
 
 function fetch_online_status() {
-  $.ajax({
-    url: API_ONLINE_STATUS,
-    type: 'GET',
-    dataType: 'json',
-    success: function (data) {
-      console.log(data);
-      employees = data.data;
-      ONLINE_STATUS = {}
-    },
-    error: function (xhr, status, error) {
-      console.error('Lỗi:', error);
-    }
+  //get API to get online status
+  const statusText = $(this).text().trim();
+  const statusValue = statusText.toLowerCase();
+  var $indicator = $('.status-dropdown .status-indicator');
+  var $statusText = $('.status-dropdown #currentStatusText');
+
+  const xhr = createXHR();
+  xhr.open(HTTP_GET_METHOD, `${API_EMPLOYEE}/me/online-status`);
+  handleResponse(xhr, function (response) {
+    res = JSON.parse(response);
+    console.log(res);
+    const statusValue = res.status;
+    const statusText = toCapital(statusValue);
+    $indicator.addClass(statusValue);
+    $statusText.text(statusText);
   })
+  xhr.send(JSON.stringify(null));
 }
 
 function startElapsedTimer(startTimestamp) {
@@ -1554,7 +1631,7 @@ function populateTicketSearchResult(data) {
   console.log(data)
   console.log(data.totalElements == 0)
   const container = $("#ticket-list-body");
-  container.html("");
+  container.innerHTML="";
 
   if (data.totalElements == 0) {
     container.append($(`
@@ -1646,23 +1723,21 @@ function loadTicketSearch(page = null, pageSize = null) {
     facebookId: $("#ticket-search #facebookuser").val() || null,
     title: $("#ticket-search #title").val() || null,
     progressStatus: $("#ticket-search #progress-status").attr("data-progress-status-code") || null,
-    fromDate: toTimestamp($("#fromDate").val()),
-    toDate: toTimestamp($("#toDate").val()),
+    fromTime: toTimestamp($("#fromDate").val()),
+    toTime: toTimestamp($("#toDate").val()),
     category: $("#ticket-search #category").attr("data-category-code") || null,
     emotion: $("#ticket-search #emotion").attr("data-emotion-code") || null,
     satisfaction: $("#ticket-search #satisfaction").attr("satisfaction") || null,
+    page: page,
+    size: pageSize,
+    sort: "createdAt,DESC"
   }
   console.log("ticketSearchCriteria ", ticketSearchCriteria);
 
   //TODO: call API search
   $.ajax({
-    url: `${API_TICKET}/search?page=${page}&size=${pageSize}&sort=createdAt,DESC`,
-    method: "POST",
-    contentType: "application/json",
-    data: JSON.stringify(ticketSearchCriteria),
-    beforeSend: function () {
-
-    },
+    url: `${API_TICKET}/search?${buildQueryParam(ticketSearchCriteria)}`,
+    method: "GET",
     success: function (res) {
       successToast(res.message);
       //TODO: populate list
@@ -1677,7 +1752,7 @@ function loadTicketSearch(page = null, pageSize = null) {
       }, 300);
       // populateTicketSearchResult(res.data);
     },
-    error: function (err) {
+    error: function (res) {
       errorToast(res.responseJSON.message);
     },
   })
@@ -1918,8 +1993,8 @@ function initDataExport() {
       facebookId: $("#ticket-search #facebookuser").val() || null,
       title: $("#ticket-search #title").val() || null,
       progressStatus: $("#ticket-search #progress-status").attr("data-progress-status-code") || null,
-      fromDate: toTimestamp($("#fromDate").val()),
-      toDate: toTimestamp($("#toDate").val()),
+      fromTime: toTimestamp($("#fromDate").val()),
+      toTime: toTimestamp($("#toDate").val()),
       category: $("#ticket-search #category").attr("data-category-code") || null,
       emotion: $("#ticket-search #emotion").attr("data-emotion-code") || null,
       satisfaction: $("#ticket-search #satisfaction").attr("satisfaction") || null,
@@ -1952,16 +2027,45 @@ function initDataExport() {
 function toTimestamp(dateString) {
   return new Date(dateString).getTime();
 }
+// Load ticket list
+function loadDashboardTickets() {
+  $.ajax({
+    url: `${API_TICKET}/dashboard`,
+    method: "GET",
+    success: function (res) {
+      console.log(res);
+      //populateDashboard
+      showTicketListLoading($("#ticketList"));
+      //      setTimeout(function () {
+      //        populateDashboardTicket(res.data);
+      //        populateDashboardTicketMetrics(res.data);
+      //        hideTicketListLoading($("#ticketList"));
+      //      }, 500)
+      populateDashboardTicket(res.data);
+      populateDashboardTicketMetrics(res.data);
+      hideTicketListLoading($("#ticketList"));
+    },
+    error: function (res) {
+      errorToast(res.responseJSON.message);
+    }
+  })
+}
 
 function showTicketListLoading(container) {
-  container.html(`
-    <div class="row loading-row justify-content-center text-muted py-3">
-      <div class="col-auto">
+  content = `
+    <div class="d-flex flex-row fs-5 loading-row justify-content-center text-muted py-3">
+      <div class="text-center">
         <div class="spinner-border spinner-border-sm me-2 text-primary" role="status"></div>
         Đang tải dữ liệu...
       </div>
     </div>
-  `);
+  `;
+  try {
+    container.html(content);
+  } catch (err) {
+    container.innerHTML = content;
+  }
+
 }
 
 function hideTicketListLoading(container) {
@@ -2107,18 +2211,447 @@ function validateChangePassword() {
 
 
 
+function sanitizeText(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function initReport() {
+  let ticketVolumeHourlyChart = null;
+  const CHART_CONFIG = {
+    padding: {
+      sm: 15,
+      md: 20,
+      lg: 25
+    },
+    title: "Ticket Distribution Hourly",
+    axisTitles: {
+      x: "Khung giờ",
+      y: "Số lượng ticket"
+    },
+    colors: {
+      font: '#6c757d',
+      bar: 'rgba(54, 162, 235, 0.6)',
+      hoverBar: 'rgba(54, 162, 235, 1)',
+      barSet: ['#4e73df77', '#1cc88a77', '#36b9cc', '#f6c23e'],
+      hoverBarSet: ['#2e59d9ffff', '#1cc88aff', '#2c9fafff', '#f4b619ff'],
+      lineSet: ['#e74a3b', '#fd7e14', '#20c997', '#6610f2'] // màu đường line
+    },
+    fontSize: {
+      axis: 14,
+      title: 18
+    },
+    barPercentage: 1,
+    MAX_DATASETS: 4
+  };
+
+  initWidgetCard();
+  initChart();
+  initAddDataset();
+
+  function initChart() {
+    const dataset = {
+      label: "Hôm nay",
+      data: [
+        { hour: 0, value: 10 },
+        { hour: 1, value: 20 },
+        { hour: 2, value: 15 },
+        { hour: 3, value: 25 },
+        { hour: 4, value: 22 },
+        { hour: 5, value: 30 },
+        { hour: 6, value: 28 },
+        { hour: 7, value: 28 },
+        { hour: 8, value: 20 },
+        { hour: 9, value: 15 },
+        { hour: 10, value: 25 },
+        { hour: 11, value: 22 },
+        { hour: 12, value: 30 },
+        { hour: 13, value: 0 },
+        { hour: 14, value: 0 },
+        { hour: 15, value: 0 },
+        { hour: 16, value: 0 },
+        { hour: 17, value: 0 },
+        { hour: 18, value: 0 },
+        { hour: 19, value: 0 },
+        { hour: 20, value: 0 },
+        { hour: 21, value: 0 },
+        { hour: 22, value: 0 },
+        { hour: 23, value: 0 },
+      ]
+
+    };
+
+    const newData = {
+      label: "3 Tháng",
+      type: "bar",
+      data: [
+        { hour: 0, value: 15 },
+        { hour: 1, value: 25 },
+        { hour: 2, value: 11 },
+        { hour: 3, value: 19 },
+        { hour: 4, value: 17 },
+        { hour: 5, value: 22 },
+        { hour: 6, value: 12 },
+        { hour: 7, value: 12 },
+        { hour: 8, value: 16 },
+        { hour: 9, value: 17 },
+        { hour: 10, value: 23 },
+        { hour: 11, value: 19 },
+        { hour: 12, value: 6 },
+        { hour: 13, value: 9 },
+        { hour: 14, value: 15 },
+        { hour: 15, value: 19 },
+        { hour: 16, value: 20 },
+        { hour: 17, value: 33 },
+        { hour: 18, value: 39 },
+        { hour: 19, value: 47 },
+        { hour: 20, value: 0 },
+        { hour: 21, value: 0 },
+        { hour: 22, value: 0 },
+        { hour: 23, value: 0 },
+      ]
+    };
+    // Initialize chart
+    const canvas = document.getElementById('my-chart-canvas').getContext('2d');
+    if (window.ticketVolumeHourlyChart == null) {
+      ticketVolumeHourlyChart = createChart('my-chart-canvas', dataset.data.map(row => row.hour), dataset);
+    }
+    addDataset(ticketVolumeHourlyChart, newData);
+  }
+  function initWidgetCard() {
+    // Định nghĩa giá trị theo tỷ lệ Max
+    const max = 56;
+    const avg = 24.5;
+    const min = 4;
+
+    const duration = 500; // 0.5s
+
+    // Tính phần trăm
+    const avgPercent = (avg / max * 100).toFixed(1);
+    const minPercent = (min / max * 100).toFixed(1);
+
+    // Lấy ra thanh progress
+    const widgets = document.querySelectorAll(".stat-value");
+
+    // Set width sau 100ms để trigger transition
+    setTimeout(() => {
+
+      animateCount(widgets[0], max, duration, 0);
+      animateCount(widgets[1], avg, duration, 1);
+      animateCount(widgets[2], min, duration, 0);
+    }, 100);
+  }
+  function animateCount(element, target, duration, decimals = 0) {
+    const start = performance.now();
+    function update(currentTime) {
+      const elapsed = currentTime - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const current = (target * progress).toFixed(decimals);
+      element.textContent = current;
+      if (progress < 1) {
+        requestAnimationFrame(update);
+      }
+    }
+    requestAnimationFrame(update);
+  }
+  function createChart(canvasId, labels, dataset) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    myChart = new Chart(ctx, {
+      data: {
+        labels: labels, // ['08h', '09h', '10h']
+        datasets: [{
+          label: dataset.label || "Không nhãn",
+          type: dataset.type || "line",
+          data: dataset.data.map(row => row.value),
+          borderColor: CHART_CONFIG.colors.lineSet[0],
+          barPercentage: CHART_CONFIG.barPercentage,
+          pointBackgroundColor: CHART_CONFIG.colors.lineSet[0]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: CHART_CONFIG.padding.lg
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: "bottom",
+            align: "center",
+            labels: {
+              padding: CHART_CONFIG.padding.lg,
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
+          },
+          tooltip: {
+            enabled: true
+          }
+        },
+        animations: {
+          duration: 1000,
+          easing: 'easeOutQuart',
+          delay: (ctx) => ctx.datasetIndex * 100 + ctx.dataIndex * 50
+        },
+        scales: {
+          x: {
+            grid: {
+              drawOnChartArea: false,
+              drawTicks: true,
+              drawBorder: true,
+              tickLength: 8
+            }
+          }
+        }
+      }
+    });
+    return myChart;
+  }
+  function initAddDataset() {
+    console.log("init adad dataset");
+    const btn = document.getElementById("add-dataset");
+    btn.addEventListener("click", function () {
+      const dateOption = document.querySelector(".date-range select").value;
+      const [fromDate, toDate] = getDateRangeFromOption(dateOption);
+      data = {
+        fromTime: toTimestamp(fromDate),
+        toTime: toTimestamp(toDate)
+      }
+      console.log(fromDate + "\n", toDate);
+      url = `${API_TICKET}/search-report?${buildQueryParam(data)}`;
+      console.log(data, url)
+      fetchDataset(url);
+    });
+  }
+  function getDateRangeFromOption(optionValue) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // reset về 00:00:00
+
+    let fromDate = new Date(today);
+    let toDate = new Date(today);
+
+    const setEndOfDay = (date) => {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+    };
+
+    const getMonday = (date) => {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - (day === 0 ? 6 : day - 1); // T2 = 1, CN = 0
+      return new Date(d.setDate(diff));
+    };
+
+    switch (parseInt(optionValue)) {
+      case 1: // Hôm nay
+        fromDate = new Date(today); // 00:00:00
+        toDate = setEndOfDay(today); // 23:59:59
+        break;
+
+      case 2: // Tuần này (T2 đến hôm nay)
+        fromDate = getMonday(today);
+        toDate = setEndOfDay(today);
+        break;
+
+      case 3: // Tuần trước (T2 đến CN tuần trước)
+        {
+          const lastWeekMonday = getMonday(today);
+          lastWeekMonday.setDate(lastWeekMonday.getDate() - 7);
+          fromDate = new Date(lastWeekMonday);
+          toDate = new Date(fromDate);
+          toDate.setDate(fromDate.getDate() + 6);
+          toDate = setEndOfDay(toDate);
+        }
+        break;
+
+      case 4: // 4 tuần trước (T2 cách đây 4 tuần đến CN tuần đó)
+        {
+          const monday = getMonday(today);
+          monday.setDate(monday.getDate() - 28);
+          fromDate = new Date(monday);
+          toDate = new Date(fromDate);
+          toDate.setDate(fromDate.getDate() + 27);
+          toDate = setEndOfDay(toDate);
+        }
+        break;
+
+      case 5: // Tháng này
+        fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        toDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        toDate = setEndOfDay(toDate);
+        break;
+
+      case 6: // 1 tháng gần nhất (dựa trên tháng hiện tại -1)
+        {
+          const prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+          fromDate = new Date(prevMonth);
+          toDate = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0);
+          toDate = setEndOfDay(toDate);
+        }
+        break;
+
+      case 7: // 3 tháng gần nhất
+        {
+          const from = new Date(today.getFullYear(), today.getMonth() - 3, 1);
+          fromDate = new Date(from);
+          toDate = new Date(today.getFullYear(), today.getMonth(), 0); // cuối tháng trước
+          toDate = setEndOfDay(toDate);
+        }
+        break;
+
+      default:
+        console.warn("Không xác định kỳ thời gian.");
+        fromDate = new Date(today);
+        toDate = setEndOfDay(today);
+        break;
+    }
+    return [fromDate, toDate];
+  }
+  function groupByHourMetric(dataList, metricType = 1) {
+    const counts = new Array(24).fill(0);
+
+    // Đếm số lượng theo giờ
+    dataList.forEach(item => {
+      const hour = new Date(item.createdAt).getHours(); // local time
+      counts[hour]++;
+    });
+
+    console.log("dataList total: ", dataList.length);
+
+    const total = counts.reduce((sum, val) => sum + val, 0);
+
+    // Tạo array kết quả
+    return counts.map((count, hour) => ({
+      hour: hour,
+      value: metricType === 2
+        ? total === 0 ? 0 : Math.round((count / total) * 10000) / 100 // phần trăm, làm tròn 2 chữ số
+        : count
+    }));
+  }
+  function fetchDataset(url) {
+    //fetch dataz1
+    xhr = createXHR();
+    xhr.open("GET", url)
+    handleResponse(xhr, function (response) {
+      //build data
+      const dataset = buildDataset(response.data.content, label = "", type = "line");
+      console.log("total data: ", response.data.content.length);
+      addDataset(ticketVolumeHourlyChart, dataset)
+
+      //refreshChartMetrics
+      const avgTickerPerHour = document.getElementById("avgTicketPerHour");
+      const maxTickerPerHour = document.getElementById("maxTicketPerHour");
+      const minTickerPerHour = document.getElementById("minTicketPerHour");
+
+      arr = new Array(24).fill(0);
+      response.data.content.map((ticket) => {
+        createdAt = new Date(ticket.createdAt);
+        index = createdAt.getHours();
+        arr[index] += 1;
+      })
+      avg = arr.reduce((a, b) => a + b) / 24
+      max = arr.reduce((a, b) => Math.max(a, b), arr[0])
+      min = arr.reduce((a, b) => Math.min(a, b), arr[0])
+      console.log("avg, max, min: ", avg, max, min);
+      console.log(arr);
+
+      animateCount(avgTickerPerHour, avg.toFixed(2), 500, 2);
+      animateCount(maxTickerPerHour, max, 500, 0);
+      animateCount(minTickerPerHour, min, 500, 0);
+
+
+    })
+    xhr.send();
+  }
+  function buildDataset(rawData, type = "line") {
+    const metricType = document.querySelector(".metric-type select").value;
+    const data = groupByHourMetric(rawData, parseInt(metricType));
+    const select = document.querySelector(".date-range select");
+    const label = select.options[select.selectedIndex].text;
+    dataset = {};
+    dataset.data = data
+    dataset.type = document.querySelector(".chart-type select").value
+    dataset.label = label
+    console.log(dataset);
+    return dataset;
+  }
+
+
+  function buildReportUrl(params) {
+    return `${API_TICKET}/search?${buildQueryParam(params)}`;
+  }
+  function addDataset(chart, dataset) {
+    if (chart.data.datasets.length >= CHART_CONFIG.MAX_DATASETS) {
+      errorToast("Chỉ được so sánh tối đa 4 kỳ!");
+      return;
+    }
+
+    //append to chart.js
+    const index = chart.data.datasets.length;
+    const isLine = dataset.line === 'line';
+    chart.data.datasets.push({
+      label: dataset.label,
+      type: dataset.type || "bar",
+      data: dataset.data.map(row => row.value),
+      backgroundColor: isLine ? 'transparent' : CHART_CONFIG.colors.barSet[index % CHART_CONFIG.colors.barSet.length],
+      hoverBackgroundColor: isLine ? 'transparent' : CHART_CONFIG.colors.hoverBarSet[index % CHART_CONFIG.colors.barSet.length],
+      borderColor: isLine ? CHART_CONFIG.colors.lineSet[index % CHART_CONFIG.colors.lineSet.length] : undefined,
+      borderWidth: isLine ? 2 : undefined,
+      fill: false,
+      tension: 0.3,
+      pointBackgroundColor: isLine ? CHART_CONFIG.colors.lineSet[index % CHART_CONFIG.colors.lineSet.length] : undefined,
+      barPercentage: isLine ? undefined : CHART_CONFIG.barPercentage,
+    });
+
+    chart.update();
+
+    //add remove button
+    const ul = document.querySelector("#datasets .dropdown-menu");
+    const li = document.createElement("li");
+    li.innerHTML = `
+                <a class="dropdown-item d-flex align-items-center" href="#">${dataset.label} <i class="ms-auto bi bi-trash3"></i> </a>
+            `
+    ul.appendChild(li)
+    li.querySelector("i").addEventListener("click", function () {
+      console.log("hello ", dataset.label)
+      removeDataset(dataset.label);
+      ul.removeChild(li);
+    });
+  }
+  function removeDataset(label) {
+    if (!myChart) return;
+
+    const index = myChart.data.datasets.findIndex(ds => ds.label === label);
+    if (index !== -1) {
+      myChart.data.datasets.splice(index, 1);
+      myChart.update();
+    }
+  }
+}
+
 function createXHR() {
   return new XMLHttpRequest();
 }
 
-function handleResponse(xhr, callback, errorCallback = null) {
+function handleResponse(xhr, callback, errorCallback) {
   xhr.onreadystatechange = function () {
     if (this.readyState == 4) {
-      let response = this.response;
+      const contentType = xhr.getResponseHeader("Content-Type");
+      const isJson = contentType && contentType.includes("application/json");
+
+      let response;
+      try {
+        response = isJson ? JSON.parse(xhr.responseText) : xhr.response;
+      } catch (err) {
+        if (errorCallback) return errorCallback({ message: "Lỗi phân tích JSON", error: err });
+        return errorToast("Lỗi phân tích phản hồi từ server");
+      }
+
       if (this.status == 200) {
         callback(response);
       } else {
-        if (errorCallback) {
+        if (errorCallback != null) {
           errorCallback(response);
         } else {
           errorToast(response.message);
@@ -2128,8 +2661,25 @@ function handleResponse(xhr, callback, errorCallback = null) {
   }
 }
 
-function sanitizeText(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
+function openAPIxhr(method, url, callback, errorCallback = null, data = null, headers = {}) {
+  xhr = createXHR();
+  xhr.open(method, url);
+  console.log(url);
+  console.log(data);
+  //merge GLOBAL_API_HEADERS and headers together
+  const allHeaders = { ...GLOBAL_API_HEADERS, ...headers };
+
+  for (const [key, value] of Object.entries(allHeaders)) {
+    xhr.setRequestHeader(key, value);
+  }
+
+  //add callback handler
+  handleResponse(xhr, callback, errorCallback);
+
+  //send request
+  if (data != null) {
+    xhr.send(JSON.stringify(data))
+  } else {
+    xhr.send();
+  }
 }
