@@ -37,8 +37,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer>, JpaSpe
 
     @Query("""
     SELECT t FROM Ticket t
-    WHERE t.progressStatus.id <> 3
-       OR t.createdAt BETWEEN :startOfDay AND :endOfDay
+    WHERE t.createdAt BETWEEN :startOfDay AND :endOfDay
+       OR t.progressStatus.id <> 3
 """)
     List<Ticket> findOpeningOrToday(@Param("startOfDay") Timestamp startOfDay,
                                     @Param("endOfDay") Timestamp endOfDay);

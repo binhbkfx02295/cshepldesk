@@ -2,23 +2,40 @@
 <div class="sidebar" id="sidebar" th:fragment="sidebar">
 
     <div class="sidebar-header">
-        <h1 class="logo">
-            <i class="bi bi-headset"></i>
+        <div class="logo">
+            <i class="bi bi-shield-plus"></i>
             <span>Help Desk</span>
-        </h1>
+        </div>
         <button class="btn-toggle-sidebar d-lg-none" id="toggleSidebar">
             <i class="bi bi-x-lg"></i>
         </button>
     </div>
 
     <ul class="sidebar-menu">
+        <div class="sidebar-heading" sec:authorize="hasAnyRole('STAFF', 'SUPERVISOR')">
+            <div class="title">BẢNG ĐIỀU KHIỂN </div>
+            <div class="label">Theo dõi thời gian thực</div>
+        </div>
         <li sec:authorize="hasAnyRole('STAFF', 'SUPERVISOR')" class="active">
-            <a th:href="@{/dashboard}">
+            <a th:href="@{/today-staff}">
                 <i class="bi bi-speedometer2"></i>
                 <span>Bảng Điều Khiển</span>
                 <i class="bi bi-arrow-right-short"></i>
             </a>
         </li>
+        <li sec:authorize="hasAnyRole('STAFF', 'SUPERVISOR')" class="">
+            <a th:href="@{/today-ticket}">
+                <i class="bi bi-ticket-perforated"></i>
+                <span>Ticket hôm nay</span>
+                <i class="bi bi-arrow-right-short"></i>
+            </a>
+        </li>
+
+        <div class="sidebar-heading" sec:authorize="hasAnyRole('STAFF', 'SUPERVISOR')">
+            <div class="title">DỮ LIỆU </div>
+            <div class="label">Quản lý & tra cứu dữ liệu</div>
+        </div>
+
         <li sec:authorize="hasAnyRole('STAFF', 'SUPERVISOR')">
             <a th:href="@{/ticket}">
                 <i class="bi bi-ticket-perforated"></i>
@@ -26,13 +43,17 @@
                 <i class="bi bi-arrow-right-short"></i>
             </a>
         </li>
-        <li  sec:authorize="hasRole('SUPERVISOR')">
+        <li  sec:authorize="hasAnyRole('STAFF', 'SUPERVISOR')">
             <a th:href="@{/customer}">
                 <i class="bi bi-people"></i>
                 <span>Người Dùng</span>
                 <i class="bi bi-arrow-right-short"></i>
             </a>
         </li>
+        <div class="sidebar-heading" sec:authorize="hasRole('SUPERVISOR')">
+            <div class="title">BÁO CÁO </div>
+            <div class="label">Phân tích xu hướng & dữ liệu</div>
+        </div>
         <li  sec:authorize="hasRole('SUPERVISOR')" >
             <a th:href="@{/performance}">
                 <i class="bi bi-graph-up"></i>
@@ -41,18 +62,120 @@
             </a>
         </li>
         <li  sec:authorize="hasRole('SUPERVISOR')" >
-            <a th:href="@{/reporting}">
+            <a th:href="@{/report}">
                 <i class="bi bi-bar-chart"></i>
                 <span>Báo Cáo</span>
                 <i class="bi bi-arrow-right-short"></i>
             </a>
         </li>
+
+        <div class="sidebar-heading" sec:authorize="hasRole('SUPERVISOR')">
+            <div class="title">CÀI ĐẶT</div>
+            <div class="label">Cấu hình hệ thống</div>
+        </div>
         <li  sec:authorize="hasRole('SUPERVISOR')" >
             <a th:href="@{/setting}">
-                <i class="bi bi-gear"></i>
-                <span>Cài Đặt</span>
+                <i class="bi bi-person-badge"></i>
+                <span>Nhân viên</span>
+                <i class="bi bi-arrow-right-short"></i>
+            </a>
+        </li>
+        <li sec:authorize="hasRole('SUPERVISOR')">
+            <a th:href="@{/user-group}">
+                <i class="bi bi-shield-lock"></i>
+                <span>Phân quyền</span>
                 <i class="bi bi-arrow-right-short"></i>
             </a>
         </li>
     </ul>
 </div>
+
+<!--<div class="sidebar" id="sidebar">-->
+<!--    <div class="sidebar-header mb-3">-->
+<!--        <h1 class="logo">-->
+<!--            <i class="bi bi-headset"></i>-->
+<!--            <span>Help Desk</span>-->
+<!--        </h1>-->
+<!--        <button class="btn-toggle-sidebar d-lg-none" id="toggleSidebar">-->
+<!--            <i class="bi bi-x-lg"></i>-->
+<!--        </button>-->
+<!--    </div>-->
+
+
+<!--    <ul class="sidebar-menu">-->
+<!--        <div class="sidebar-heading">-->
+<!--            <div class="title">BẢNG ĐIỀU KHIỂN </div>-->
+<!--            <div class="label">Theo dõi thời gian thực</div>-->
+<!--        </div>-->
+<!--        <li class="">-->
+<!--            <a href="#">-->
+<!--                <i class="bi bi-speedometer2"></i>-->
+<!--                <span>Nhân viên hôm nay</span>-->
+<!--                <i class="bi bi-arrow-right-short"></i>-->
+<!--            </a>-->
+<!--        </li>-->
+<!--        <li class="">-->
+<!--            <a href="#">-->
+<!--                <i class="bi bi-ticket-perforated"></i>-->
+<!--                <span>Ticket hôm nay</span>-->
+<!--                <i class="bi bi-arrow-right-short"></i>-->
+<!--            </a>-->
+<!--        </li>-->
+<!--        <div class="sidebar-heading">-->
+<!--            <div class="title">DỮ LIỆU </div>-->
+<!--            <div class="label">Quản lý & tra cứu dữ liệu</div>-->
+<!--        </div>-->
+<!--        <li class="">-->
+<!--            <a href="#">-->
+
+<!--                <i class="bi-file-earmark-text"></i>-->
+<!--                <span>Quản Lý Ticket</span>-->
+<!--                <i class="bi bi-arrow-right-short"></i>-->
+<!--            </a>-->
+<!--        </li>-->
+<!--        <li class="">-->
+<!--            <a href="#">-->
+<!--                <i class="bi bi-people"></i>-->
+<!--                <span>Khách Hàng</span>-->
+<!--                <i class="bi bi-arrow-right-short"></i>-->
+<!--            </a>-->
+<!--        </li>-->
+
+<!--        <div class="sidebar-heading">-->
+<!--            <div class="title">BÁO CÁO </div>-->
+<!--            <div class="label">Phân tích xu hướng & dữ liệu</div>-->
+<!--        </div>-->
+<!--        <li>-->
+<!--            <a href="#">-->
+<!--                <i class="bi bi-graph-up"></i>-->
+<!--                <span>Hiệu Suất</span>-->
+<!--                <i class="bi bi-arrow-right-short"></i>-->
+<!--            </a>-->
+<!--        </li>-->
+<!--        <li class="">-->
+<!--            <a href="#">-->
+<!--                <i class="bi bi-bar-chart"></i>-->
+<!--                <span>Báo Cáo</span>-->
+<!--                <i class="bi bi-arrow-right-short"></i>-->
+<!--            </a>-->
+<!--        </li>-->
+<!--        <div class="sidebar-heading">-->
+<!--            <div class="title">CÀI ĐẶT</div>-->
+<!--            <div class="label">Cấu hình hệ thống</div>-->
+<!--        </div>-->
+<!--        <li>-->
+<!--            <a href="#">-->
+<!--                <i class="bi bi-person-badge"></i>-->
+<!--                <span>Nhân viên</span>-->
+<!--                <i class="bi bi-arrow-right-short"></i>-->
+<!--            </a>-->
+<!--        </li>-->
+<!--        <li>-->
+<!--            <a href="#">-->
+<!--                <i class="bi bi-shield-lock"></i>-->
+<!--                <span>Phân quyền</span>-->
+<!--                <i class="bi bi-arrow-right-short"></i>-->
+<!--            </a>-->
+<!--        </li>-->
+<!--    </ul>-->
+<!--</div>-->

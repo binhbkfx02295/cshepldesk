@@ -15,12 +15,17 @@ public class MainController {
 
     @GetMapping("/")
     public void index(HttpServletResponse response) throws IOException {
-        response.sendRedirect("/dashboard");
+        response.sendRedirect("/today-staff");
     }
 
-    @GetMapping("/dashboard")
-    public String dashboard() {
-        return "dashboard";
+    @GetMapping("/today-staff")
+    public String todayStaff() {
+        return "today-staff";
+    }
+
+    @GetMapping("/today-ticket")
+    public String todayTicket() {
+        return "today-ticket";
     }
 
     @GetMapping("/login")
@@ -43,9 +48,9 @@ public class MainController {
         return "performance";
     }
 
-    @GetMapping("/reporting")
-    public String reporting() {
-        return "reporting"; // layout.html sẽ chèn fragment này
+    @GetMapping("/report")
+    public String report() {
+        return "report"; // layout.html sẽ chèn fragment này
     }
 
     @GetMapping("/setting")

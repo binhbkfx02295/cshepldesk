@@ -67,10 +67,17 @@ public class EmployeeController {
     }
 
     @PutMapping("/me")
-    public ResponseEntity<APIResultSet<EmployeeDTO>> updateUser(
+    public ResponseEntity<APIResultSet<EmployeeDTO>> updateProfile(
             @AuthenticationPrincipal UserPrincipal user,
             @RequestBody EmployeeDTO employeeDTO) {
         return APIResponseEntityHelper.from(employeeService.updateUser(user.getUsername(), employeeDTO));
+    }
+
+    @PutMapping
+    public ResponseEntity<APIResultSet<EmployeeDTO>> updateUser(
+            @RequestBody EmployeeDTO dto
+    ) {
+        return APIResponseEntityHelper.from(employeeService.updateUser(dto.getUsername(), dto));
     }
 
     @PutMapping("/me/password")

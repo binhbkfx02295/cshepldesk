@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.Set;
 import java.util.List;
 @RestController
@@ -37,18 +38,6 @@ public class TicketController {
     public ResponseEntity<APIResultSet<TicketDetailDTO>> getById(@RequestParam(value = "id") int id) {
         return APIResponseEntityHelper.from(ticketService.getTicketById(id));
     }
-
-//    @GetMapping
-//    public ResponseEntity<APIResultSet<PaginationResponse<TicketDTO>>> search(
-//            @RequestParam(required = false) String username,
-//            @RequestParam(required = false) Long facebookUserId,
-//            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
-//            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
-//            Pageable pageable
-//    ) {
-//        //TODO: search by criteria
-//        return APIResponseEntityHelper.from(APIResultSet.notAllowed("not yet implemented"));
-//    }
 
     @GetMapping("/get-by-facebook-id")
     public ResponseEntity<APIResultSet<List<TicketListDTO>>> getByFacebookId(@RequestParam(value = "id") String id) {
@@ -84,12 +73,19 @@ public class TicketController {
         return APIResponseEntityHelper.from(ticketService.getNotes(ticketId));
     }
 
-    @PostMapping("/search")
+    @GetMapping(value = "/search")
     public ResponseEntity<APIResultSet<PaginationResponse<TicketListDTO>>> search(
-            @RequestBody TicketSearchCriteria criteria,
+            @ModelAttribute TicketSearchCriteria criteria,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info(pageable.toString());
         return APIResponseEntityHelper.from(ticketService.searchTickets(criteria, pageable));
+    }
+
+    @GetMapping(value = "/search-report")
+    public ResponseEntity<APIResultSet<PaginationResponse<TicketListDTO>>> search(
+            @ModelAttribute TicketSearchCriteria criteria) {
+        log.info(criteria.toString());
+        return APIResponseEntityHelper.from(ticketService.searchTickets(criteria, Pageable.unpaged()));
     }
 
     @GetMapping("/dashboard")

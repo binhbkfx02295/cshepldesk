@@ -10,6 +10,319 @@
 <div class="page-content">
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
     <div th:replace="~{fragments/header:: header(~{::h2.page-title})}"></div>
+
+<!--    report content-->
+    <div class="report page-main-content g-0 d-flex flex-column ">
+        <div class="page-list">
+            <div class="page-list-body container-fluid">
+                <div class="row">
+                    <!-- Hàng 3 chart -->
+                    <div class="row mb-3">
+                        <div class="col">
+                            <div class="chart-container bg-white shadow-sm">
+                                <div class="chart-header">
+
+                                    <!-- //filter -->
+                                    <div class="d-flex flex-row justify-content-start align-items-center p-3">
+                                        <!-- //header -->
+                                        <div class="section-title d-flex align-items-center gap-2">
+                                            <i class="bi bi-graph-up-arrow fs-5 text-primary"></i>
+                                            <h4 class="m-0 fw-semibold">Ticket Theo Giờ</h4>
+                                        </div>
+                                        <!-- pick date range -->
+                                        <div class="field-group date-range ms-auto">
+                                            <label for="" class="d-inline-block fw-normal me-2">Thời gian:
+                                            </label>
+                                            <select class="form-select d-inline-block"
+                                                    aria-label="Default select example">
+                                                <option value="1" selected>Hôm nay</option>
+                                                <option value="2">Tuần này</option>
+                                                <option value="3">Tuần trước</option>
+                                                <option value="4">4 tuần</option>
+                                                <option value="5">Tháng này</option>
+                                                <option value="6">Tháng trước</option>
+                                                <option value="7">3 tháng</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="field-group" id="datasets">
+                                            <div class="dropdown">
+                                                <button class="btn btn-secondary dropdown-toggle" type="button"
+                                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                                    Dữ liệu
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li><a class="dropdown-item" href="#" id="add-dataset">Thêm
+                                                        dữ liệu</a></li>
+                                                    <div class="dropdown-divider"></div>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <!-- pick chart type -->
+                                        <div class="field-group chart-type">
+                                            <label for="" class="d-inline-block fw-normal me-2">Biểu đồ:
+                                            </label>
+                                            <select class="form-select d-inline-block"
+                                                    aria-label="Default select example">
+                                                <option value="bar" selected="">Cột</option>
+                                                <option value="line">Đường</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- pick metric type -->
+                                        <div class="field-group metric-type">
+                                            <label for="" class="d-inline-block fw-normal me-2">Đơn vị </label>
+                                            <select class="form-select d-inline-block"
+                                                    aria-label="Default select example">
+                                                <option value="1" selected="">Số </option>
+                                                <option value="2">%</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-submit-group d-flex gap-2 align-items-center">
+                                            <div class="btn " id="form-submit">
+                                                <i class="bi bi-arrow-counterclockwise me-1"></i> Làm mới
+                                            </div>
+                                            <div class="btn" id="form-create-ticket">
+                                                <i class="bi bi-plus-circle"></i> Thêm so sánh
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- //metrics -->
+                                    <div class="row mb-3 g-3">
+                                        <div class="col-md-4">
+                                            <div class="widget widget-sm stat-card text-center">
+
+                                                <div class="stat-title"><i
+                                                        class="bi bi-bar-chart-fill stat-icon me-2"></i>Trung
+                                                    bình</div>
+                                                <div class="stat-value" id="avgTicketPerHour">56</div>
+                                                <div class="stat-label">Ticket / Giờ</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <div class="widget widget-sm stat-card text-center">
+                                                <div class="stat-title"><i
+                                                        class="bi bi-arrow-up-right-circle-fill stat-icon me-2"></i>Nhiều
+                                                    nhất</div>
+                                                <div class="stat-value" id="maxTicketPerHour">24.5</div>
+                                                <div class="stat-label">Ticket / Giờ</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <div class="widget widget-sm stat-card text-center">
+                                                <div class="stat-title"><i
+                                                        class="bi bi-arrow-down-right-circle-fill me-2 stat-icon"></i>
+                                                    Thấp nhất</div>
+                                                <div class="stat-value" id="minTicketPerHour">4</div>
+                                                <div class="stat-label">Ticket / Giờ</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-body">
+                                    <canvas id="my-chart-canvas">
+                                    </canvas>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Hàng 4 tabular data -->
+                    <div class="row mb-3">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="widget widget-table text-start shadow-sm">
+                                    <div class="widget-header"></div>
+                                    <div class="widget-body">
+                                        <div class="header container-fluid">
+                                            <div class="row">
+                                                <div class="col">#</div>
+                                                <div class="col">Khung giờ</div>
+                                                <div class="col">Lượng Ticket</div>
+                                                <div class="col">Phần trăm</div>
+                                            </div>
+                                        </div>
+                                        <div class="body container-fluid">
+                                            <div class="row">
+                                                <div class="col">1</div>
+                                                <div class="col">01:00</div>
+                                                <div class="col">21</div>
+                                                <div class="col">5.7%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">2</div>
+                                                <div class="col">01:00</div>
+                                                <div class="col">21</div>
+                                                <div class="col">5.7%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">3</div>
+                                                <div class="col">02:00</div>
+                                                <div class="col">15</div>
+                                                <div class="col">5.1%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">4</div>
+                                                <div class="col">03:00</div>
+                                                <div class="col">12</div>
+                                                <div class="col">4.8%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">5</div>
+                                                <div class="col">04:00</div>
+                                                <div class="col">8</div>
+                                                <div class="col">3.2%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">6</div>
+                                                <div class="col">05:00</div>
+                                                <div class="col">10</div>
+                                                <div class="col">3.9%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">7</div>
+                                                <div class="col">06:00</div>
+                                                <div class="col">14</div>
+                                                <div class="col">4.5%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">8</div>
+                                                <div class="col">07:00</div>
+                                                <div class="col">20</div>
+                                                <div class="col">6.1%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">9</div>
+                                                <div class="col">08:00</div>
+                                                <div class="col">24</div>
+                                                <div class="col">7.0%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">10</div>
+                                                <div class="col">09:00</div>
+                                                <div class="col">28</div>
+                                                <div class="col">7.6%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">11</div>
+                                                <div class="col">10:00</div>
+                                                <div class="col">32</div>
+                                                <div class="col">8.2%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">12</div>
+                                                <div class="col">11:00</div>
+                                                <div class="col">35</div>
+                                                <div class="col">8.7%</div>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="widget widget-table text-start shadow-sm">
+                                    <div class="widget-header"></div>
+                                    <div class="widget-body">
+                                        <div class="header container-fluid">
+                                            <div class="row">
+                                                <div class="col">#</div>
+                                                <div class="col">Khung giờ</div>
+                                                <div class="col">Lượng Ticket</div>
+                                                <div class="col">Phần trăm</div>
+                                            </div>
+                                        </div>
+                                        <div class="body container-fluid">
+
+                                            <div class="row">
+                                                <div class="col">13</div>
+                                                <div class="col">12:00</div>
+                                                <div class="col">30</div>
+                                                <div class="col">8.0%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">14</div>
+                                                <div class="col">13:00</div>
+                                                <div class="col">26</div>
+                                                <div class="col">7.4%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">15</div>
+                                                <div class="col">14:00</div>
+                                                <div class="col">22</div>
+                                                <div class="col">6.6%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">16</div>
+                                                <div class="col">15:00</div>
+                                                <div class="col">18</div>
+                                                <div class="col">5.9%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">17</div>
+                                                <div class="col">16:00</div>
+                                                <div class="col">16</div>
+                                                <div class="col">5.3%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">18</div>
+                                                <div class="col">17:00</div>
+                                                <div class="col">19</div>
+                                                <div class="col">5.6%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">19</div>
+                                                <div class="col">18:00</div>
+                                                <div class="col">23</div>
+                                                <div class="col">6.2%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">20</div>
+                                                <div class="col">19:00</div>
+                                                <div class="col">27</div>
+                                                <div class="col">7.0%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">21</div>
+                                                <div class="col">20:00</div>
+                                                <div class="col">25</div>
+                                                <div class="col">6.8%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">22</div>
+                                                <div class="col">21:00</div>
+                                                <div class="col">22</div>
+                                                <div class="col">6.0%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">23</div>
+                                                <div class="col">22:00</div>
+                                                <div class="col">17</div>
+                                                <div class="col">5.2%</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">24</div>
+                                                <div class="col">23:00</div>
+                                                <div class="col">13</div>
+                                                <div class="col">4.7%</div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
     <div th:replace="~{fragments/footer :: footer}"></div>
 </div>
 

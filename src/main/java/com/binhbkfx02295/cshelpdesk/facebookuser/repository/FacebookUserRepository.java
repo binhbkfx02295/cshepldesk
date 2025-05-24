@@ -61,6 +61,7 @@ public class FacebookUserRepository implements FacebookUserDAO {
             throw new RuntimeException("Failed to search FacebookUsers", e);
         }
     }
+
     @Override
     public Map<String, Object> search(FacebookUserSearchCriteria criteria, Pageable pageable) {
         try {
@@ -200,6 +201,26 @@ public class FacebookUserRepository implements FacebookUserDAO {
         } catch (Exception e) {
             log.error("Delete FacebookUser failed {}", e.getMessage(), e);
             throw new RuntimeException("Delete FacebookUser failed", e);
+        }
+    }
+
+    @Override
+    public void deleteAll(List<String> ids) {
+        try {
+            if (ids == null || ids.isEmpty()) return;
+            for (String id : ids) {
+                FacebookUser user = entityManager.find(FacebookUser.class, id);
+                if (user != null) {
+                    entityManager.remove(user);
+                }
+            }
+
+            entityManager.createQuery("DELETE FROM FacebookUser f WHERE f.id IN :ids")
+                    .setParameter("ids", ids)
+                    .executeUpdate();
+        } catch (Exception e){
+            log.error("Loi delete all facebookId", e);
+            e.printStackTrace();
         }
     }
 }

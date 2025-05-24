@@ -54,8 +54,7 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .loginProcessingUrl("/process-login")          // xử lý login thành công
-                        .defaultSuccessUrl("/dashboard")
+                        .loginProcessingUrl("/process-login")
                         .failureHandler(failureHandler)
                         .successHandler(successHandler)
                         .permitAll()

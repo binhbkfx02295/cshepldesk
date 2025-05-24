@@ -35,7 +35,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         String username = authentication.getName();
         String rawPassword = authentication.getCredentials().toString();
         log.info("⏺️ Bắt đầu xác thực: {}", username);
-
+        log.info(rawPassword);
         LoginRequestDTO loginRequestDTO = new LoginRequestDTO();
         loginRequestDTO.setUsername(username);
         loginRequestDTO.setPassword(rawPassword);

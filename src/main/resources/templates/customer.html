@@ -40,7 +40,7 @@
                 </div>
 
                 <div class="customer-search-btn-group ms-2">
-                    <div class="btn me-1" id="customer-export-excel">
+                    <div class="btn me-1" id="customer-export-excel" disabled="">
                         <i class="bi bi-download"></i> Tải xuống
                     </div>
                 </div>
@@ -100,64 +100,230 @@
             </div>
 
         </div>
-        <!-- Customer Edit Modal -->
-        <div class="modal fade" id="customerEditModal" tabindex="-1" aria-labelledby="customerEditModalLabel"
-             aria-hidden="true" data-facebookid>
-            <div class="modal-dialog modal-md modal-dialog-scrollable">
+
+        <!-- Customer Detail Modal-->
+        <div class="modal modal-xl fade" id="customerDetailModal" tabindex="-1"
+             aria-labelledby="customerEditModalLabel" aria-hidden="true" data-facebookid="">
+            <div class="modal-dialog">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="customerEditModalLabel">Chi tiết khách hàng</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                aria-label="Đóng"></button>
-                    </div>
                     <div class="modal-body">
-                        <div class="d-flex flex-row" id="facebook-profile">
-                            <div id="edit-img">
-                                <img src="img/facebookuser-profile-placeholder.jpg" id="">
-                            </div>
-                            <div class="d-flex flex-column justify-content-center">
-                                <div id="edit-name">
-                                    <span class="facebookName d-block" id="facebookName">- -</span>
+                        <div class="d-flex flex-row h-100">
+                            <!-- customer profile -->
+                            <div class="customer-profile w-100% d-flex flex-column">
+                                <div
+                                        class="facebook-profile d-flex flex-column align-items-center justify-content-end mb-3">
+                                    <div class="img-contaier">
+                                        <img id="facebookProfilePic"
+                                             src="img/facebookuser-profile-placeholder.jpg" alt="" srcset="">
+                                    </div>
+                                    <div class="bg-cover"></div>
+                                    <div class="w-100 text-center">
+                                        <span id="facebookName">- -</span>
+
+                                    </div>
+                                    <span id="facebookId">- -</span>
                                 </div>
-                                <span class="text-secondary">#ID: <span class="facebookId">- -</span></span>
-                                <span class="text-secondary d-block">Ngày tham gia: <span class="createdAt">
-                                            </span></span>
+                                <div
+                                        class="d-flex flex-row fs-5 loading-row justify-content-center text-muted py-3">
+                                    <div class="text-center">
+                                        <div class="spinner-border spinner-border-sm me-2 text-primary"
+                                             role="status"></div>
+                                        Đang tải dữ liệu...
+                                    </div>
+                                </div>
+                                <div class="d-flex flex-column d-none">
+                                    <div class="detail-info flex-grow-1">
+                                        <div class="mb-2">
+                                                    <span class="fw-medium field-name">
+                                                        <i class="bi bi-person-fill me-2"></i>Họ tên:
+                                                    </span>
+                                            <span class="field-value float-end">- -</span>
+                                            <input type="text" id="realName" class="float-end d-none"
+                                                   data-original="Bùi Khắc Bình">
+                                        </div>
+                                        <div class="mb-2">
+                                                    <span class="fw-medium field-name">
+                                                        <i class="bi bi-telephone-fill me-2"></i>Số điện thoại:
+                                                    </span>
+                                            <span class="field-value float-end">- -</span>
+                                            <input type="text" id="phone" class="float-end d-none"
+                                                   data-original="0797409134">
+                                        </div>
+                                        <div class="mb-2">
+                                                    <span class="fw-medium field-name">
+                                                        <i class="bi bi-envelope-fill me-2"></i>Email:
+                                                    </span>
+                                            <span class="field-value float-end">- -</span>
+                                            <input type="text" id="email" class="float-end d-none"
+                                                   data-original="teddie.bbui@gmail.com">
+                                        </div>
+                                        <div class="mb-2">
+                                                    <span class="fw-medium field-name">
+                                                        <i class="bi bi-chat-dots-fill me-2"></i>Zalo:
+                                                    </span>
+                                            <span class="field-value float-end">- -</span>
+                                            <input type="text" id="zalo" class="float-end d-none"
+                                                   data-original="0797409134">
+                                        </div>
+                                        <div class="mb-2">
+                                                    <span class="fw-medium field-name">
+                                                        <i class="bi bi-calendar2-week-fill me-2"></i>Ngày sinh:
+                                                    </span>
+                                            <span class="float-end">- -</span>
+                                        </div>
+                                        <div class="mb-2">
+                                                    <span class="fw-medium field-name">
+                                                        <i class="bi bi-geo-alt-fill me-2"></i>Địa chỉ:
+                                                    </span>
+                                            <span class="float-end">- -</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div id="edit">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </div>
+                                        <div id="edited" class="d-none">
+                                            <button class="btn" id="cancel-edit"><i
+                                                    class="bi bi-arrow-clockwise me-2"></i>Hủy</button>
+                                            <button class="btn" id="submit-edited" disabled=""><i
+                                                    class="bi bi-save me-2"></i>Cập nhật</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="field-group">
-                            <label for="realName">Họ tên</label>
-                            <input type="text" id="realName" placeholder="Nhập họ tên...">
-                            <i class="bi bi-trash3-fill"></i>
-                        </div>
-                        <div class="field-group">
-                            <label for="phone">Số điện thoại</label>
-                            <input type="text" id="phone" placeholder="Nhập số điện thoại...">
-                            <i class="bi bi-trash3-fill"></i>
-                        </div>
-                        <div class="field-group">
-                            <label for="email">Email</label>
-                            <input type="text" id="email" placeholder="Nhập email...">
-                            <i class="bi bi-trash3-fill"></i>
-                        </div>
-                        <div class="field-group">
-                            <label for="zalo">Zalo</label>
-                            <input type="text" id="zalo" placeholder="Nhập Zalo...">
-                            <i class="bi bi-trash3-fill"></i>
+
+                            <!-- customer history ticket -->
+                            <div class="customer-history-ticket flex-grow-1 d-flex flex-column">
+
+                                <h3 id="title" class="py-3">Ticket Gần Đây</h3>
+                                <div class="data-table flex-grow-1 overflow-y-scroll" style="min-height: 0;">
+                                    <div class="item">
+                                        <div class="d-flex flex-row">
+                                            <div class="i-badge me-3">
+                                                <i class="bi bi-ticket-perforated"></i>
+                                            </div>
+                                            <div class="">
+                                                <div>
+                                                    <div class="title mb-2">Chưa có tiêu đề <span
+                                                            class="ticketId"> -
+                                                                    #ID: <span
+                                                                id="ticketId">98956859685465</span></span></div>
+                                                    <div class="assignee mb-1">Admin - <span
+                                                            class="category">Chưa phân loại</span></div>
+                                                    <div class="createdAt mb-1">21:57:09 - 17/05/2025</div>
+                                                </div>
+                                            </div>
+                                            <div
+                                                    class="ms-auto text-start d-flex flex-column justify-content-evenly">
+                                                <div class=""><i class="bi bi-activity me-3"></i><span
+                                                        class="progressStatus pending">Đang xử lý</span></div>
+                                                <div class="emotion"><i class="bi bi-emoji-smile me-3"></i>Rất
+                                                    tức giận</div>
+                                                <div class="satisfaction"><i class="bi bi-stars me-3"></i>Hài
+                                                    lòng</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="item">
+                                        <div class="d-flex flex-row">
+                                            <div class="i-badge me-3">
+                                                <i class="bi bi-ticket-perforated"></i>
+                                            </div>
+                                            <div class="">
+                                                <div>
+                                                    <div class="title mb-2">Chưa có tiêu đề <span
+                                                            class="ticketId"> -
+                                                                    #ID: <span
+                                                                id="ticketId">98956859685465</span></span></div>
+                                                    <div class="assignee mb-1">Admin - <span
+                                                            class="category">Chưa phân loại</span></div>
+                                                    <div class="createdAt mb-1">21:57:09 - 17/05/2025</div>
+                                                </div>
+                                            </div>
+                                            <div
+                                                    class="ms-auto text-start d-flex flex-column justify-content-evenly">
+                                                <div class=""><i class="bi bi-activity me-3"></i><span
+                                                        class="progressStatus resolved">Đã xử lý</span></div>
+                                                <div class="emotion"><i class="bi bi-emoji-smile me-3"></i>Rất
+                                                    tức giận</div>
+                                                <div class="satisfaction"><i class="bi bi-stars me-3"></i>Hài
+                                                    lòng</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="item">
+                                        <div class="d-flex flex-row">
+                                            <div class="i-badge me-3">
+                                                <i class="bi bi-ticket-perforated"></i>
+                                            </div>
+                                            <div class="">
+                                                <div>
+                                                    <div class="title mb-2">Chưa có tiêu đề <span
+                                                            class="ticketId"> -
+                                                                    #ID: <span
+                                                                id="ticketId">98956859685465</span></span></div>
+                                                    <div class="assignee mb-1">Admin - <span
+                                                            class="category">Chưa phân loại</span></div>
+                                                    <div class="createdAt mb-1">21:57:09 - 17/05/2025</div>
+                                                </div>
+                                            </div>
+                                            <div
+                                                    class="ms-auto text-start d-flex flex-column justify-content-evenly">
+                                                <div class=""><i class="bi bi-activity me-3"></i><span
+                                                        class="progressStatus on-hold">Đang chờ</span></div>
+                                                <div class="emotion"><i class="bi bi-emoji-smile me-3"></i>Rất
+                                                    tức giận</div>
+                                                <div class="satisfaction"><i class="bi bi-stars me-3"></i>Hài
+                                                    lòng</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="item">
+                                        <div class="d-flex flex-row">
+                                            <div class="i-badge me-3">
+                                                <i class="bi bi-ticket-perforated"></i>
+                                            </div>
+                                            <div class="ticket">
+                                                <div class="title">Chưa có tiêu đề</div>
+                                                <div class="assignee">Admin</div>
+                                                <div class="assignee">21:57:09 - 17/05/2025</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="item">
+                                        <div class="d-flex flex-row">
+                                            <div class="i-badge me-3">
+                                                <i class="bi bi-ticket-perforated"></i>
+                                            </div>
+                                            <div class="ticket">
+                                                <div class="title">Chưa có tiêu đề</div>
+                                                <div class="assignee">Admin</div>
+                                                <div class="assignee">21:57:09 - 17/05/2025</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="item">
+                                        <div class="d-flex flex-row">
+                                            <div class="i-badge me-3">
+                                                <i class="bi bi-ticket-perforated"></i>
+                                            </div>
+                                            <div class="ticket">
+                                                <div class="title">Trả hàng</div>
+                                                <div class="assignee">Bui Khac Binh</div>
+                                                <div class="assignee">11:25:09 - 16/05/2025</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" id="refresh-edit">
-                            <i class="bi bi-arrow-counterclockwise me-1"></i> Làm mới
-                        </button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="submit-edit"
-                                disabled>
-                            <i class="bi bi-check-lg me-1 "></i>Cập nhật</button>
-                    </div>
+
                 </div>
             </div>
         </div>
-
 
         <!-- Customer delete modal -->
         <div class="modal fade" id="customerDeleteModal" tabindex="-1"
@@ -181,6 +347,7 @@
                 </div>
             </div>
         </div>
+
     </div>
     <div th:replace="~{fragments/footer :: footer}"></div>
 </div>
