@@ -6,8 +6,10 @@ import com.binhbkfx02295.cshelpdesk.message.repository.MessageRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.repository.TicketRepository;
 import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.websocket.config.WebSocketConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,8 @@ public class MessageServiceImpl implements MessageService {
 
     private final MessageRepository messageRepository;
     private final TicketRepository ticketRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final WebSocketConfig webSocketConfig;
 
     @Override
     public APIResultSet<MessageDTO> addMessage(MessageDTO messageDTO) {
@@ -39,6 +43,7 @@ public class MessageServiceImpl implements MessageService {
             message.setTicket(ticket);
 
             Message saved = messageRepository.save(message);
+            messagingTemplate.convertAndSend(webSocketConfig.getDestination(), messageDTO);
             log.info("message saved: {}", messageDTO);
             return APIResultSet.ok("Message added successfully", convertToDTO(saved));
         } catch (Exception e) {
