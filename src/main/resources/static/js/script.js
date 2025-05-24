@@ -1,3 +1,4 @@
+//import { connectSocket } from './websocket.js';
 const currentSort = { field: null, direction: 'asc' };
 
 const BASE = window.location.href.includes(`cshelpdesk.online`) ? "" : `http://localhost:8080`;
@@ -30,6 +31,9 @@ var submitHandler = null;
 var keyupHandler = null;
 var debounceKeyup = null;
 var deleteCustomerHandler = null;
+var stompClient = null;
+var selectedTicketId = null;
+const subscriptions = new Map();
 window.customerViewDetailModal = null;
 $(document).ready(() => {
   $("#loadingOverlay").fadeOut()
@@ -66,6 +70,54 @@ $(document).ready(() => {
     $(".sidebar-menu li").get(6).classList.add("active");
   }
 })
+
+// Xử lý ngắt kết nối
+window.addEventListener('beforeunload', () => {
+    stompClient.disconnect(() => {
+        showMessage('Disconnected from WebSocket server', 'error');
+    });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  initWebSocket();
+});
+
+// Hàm hiển thị thông báo
+function onMessageReceived(payload) {
+  const msg = JSON.parse(payload.body);
+    if (selectedTicketId && selectedTicketId === msg.ticketId.toString()) {
+      const senderClass = msg.senderEmployee ? "staff" : "user";
+      const formattedTime = formatEpochTimestamp(msg.timestamp);
+      const bubble = `
+          <div class="d-flex mb-2 ${senderClass === "user" ? "justify-content-start" : "justify-content-end"}">
+            <div class="chat-bubble ${senderClass}">
+              <div class="message-text">${msg.text}</div>
+              <div class="message-timestamp text-muted small mt-1" title="Timestamp: ${msg.timestamp}">${formattedTime}</div>
+            </div>
+          </div>
+        `;
+      $("#messageList").append(bubble);
+      scrollToBottomMessageList();
+    }
+}
+
+function initWebSocket() {
+    console.log("initWebSocket triggered ");
+    const socket = new SockJS('http://localhost:8080/ws');
+    stompClient = Stomp.over(socket);
+    const maxMessages = 100;
+    stompClient.connect({},
+        onConnected,
+        function(error) {
+            console.log(error);
+        }
+    );
+}
+
+function onConnected() {
+  console.log('WebSocket connected');
+  stompClient.subscribe('/topic/messages', onMessageReceived);
+}
 
 // today-staff.html
 function initTodayStaff() {
@@ -962,7 +1014,8 @@ function populateDashboardTicket(tickets) {
   })
 
   $("#ticketList .item").click(function () {
-    loadTicketDetail($(this).data("ticket-id"));
+    selectedTicketId =  $(this).attr("data-ticket-id");
+    loadTicketDetail(selectedTicketId);
   });
 }
 
@@ -1688,8 +1741,8 @@ function populateTicketSearchResult(data) {
 
   // Gán sự kiện click cho từng item
   $("#ticket-list-body .item").click(function () {
-    const ticketId = $(this).attr("data-ticket-id");
-    loadTicketDetail(ticketId);
+    selectedTicketId =  $(this).attr("data-ticket-id");
+    loadTicketDetail(selectedTicketId);
   })
 }
 
