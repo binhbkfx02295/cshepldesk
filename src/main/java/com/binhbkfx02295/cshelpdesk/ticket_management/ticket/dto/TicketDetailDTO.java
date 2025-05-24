@@ -4,6 +4,7 @@ import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeDTO
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserListDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.dto.CategoryDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.dto.EmotionDTO;
+import com.binhbkfx02295.cshelpdesk.ticket_management.note.dto.NoteDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.dto.ProgressStatusDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.dto.SatisfactionDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.dto.TagDTO;
@@ -30,4 +31,5 @@ public class TicketDetailDTO {
     private SatisfactionDTO satisfaction;
     private FacebookUserListDTO facebookUser;
     private List<TagDTO> tags;
+    private List<NoteDTO> notes;
 }

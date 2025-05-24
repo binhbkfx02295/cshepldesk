@@ -3,9 +3,8 @@ package com.binhbkfx02295.cshelpdesk.employee_management.authentication.controll
 import com.binhbkfx02295.cshelpdesk.employee_management.authentication.dto.LoginRequestDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.authentication.dto.LoginResponseDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.authentication.service.AuthenticationService;
-import com.binhbkfx02295.cshelpdesk.util.APIResponseEntityHelper;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
-import jakarta.servlet.http.HttpSession;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResponseEntityHelper;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

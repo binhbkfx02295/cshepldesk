@@ -6,10 +6,10 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboard
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDetailDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketSearchCriteria;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.service.TicketServiceImpl;
-import com.binhbkfx02295.cshelpdesk.util.APIResponseEntityHelper;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
-import com.binhbkfx02295.cshelpdesk.util.PaginationResponse;
-import com.binhbkfx02295.cshelpdesk.util.TicketExcelExporter;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResponseEntityHelper;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.PaginationResponse;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.TicketExcelExporter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.Set;
 import java.util.List;
 @RestController
@@ -55,7 +54,6 @@ public class TicketController {
     public ResponseEntity<APIResultSet<TicketDetailDTO>> update(@PathVariable int id, @RequestBody TicketDetailDTO dto) {
         return APIResponseEntityHelper.from(ticketService.updateTicket(id, dto));
     }
-
 
     @PutMapping("/{ticketId}/note")
     public ResponseEntity<APIResultSet<Void>> addNote(@PathVariable int ticketId, @RequestBody NoteDTO noteDto) {

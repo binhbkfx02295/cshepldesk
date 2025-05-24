@@ -2,9 +2,10 @@ package com.binhbkfx02295.cshelpdesk.ticket_management.tag.service;
 
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.dto.TagDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.entity.Tag;
+import com.binhbkfx02295.cshelpdesk.ticket_management.tag.mapper.TagMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.repository.TagRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.Optional;
 public class TagServiceImpl implements TagService {
 
     private final TagRepository tagRepository;
+    private TagMapper mapper;
 
     @Override
     public APIResultSet<TagDTO> create(TagDTO tagDTO) {
@@ -31,7 +33,7 @@ public class TagServiceImpl implements TagService {
                     .name(tagDTO.getName())
                     .build();
             Tag saved = tagRepository.save(tag);
-            return APIResultSet.ok("Thêm hashtag thành công", toDTO(saved));
+            return APIResultSet.ok("Thêm hashtag thành công", mapper.toDTO(saved));
         } catch (Exception e) {
             log.error("Lỗi khi tạo hashtag", e);
             return APIResultSet.internalError("Lỗi khi tạo hashtag");
@@ -48,7 +50,7 @@ public class TagServiceImpl implements TagService {
             Tag tag = optional.get();
             tag.setName(newTagDTO.getName());
             Tag updated = tagRepository.save(tag);
-            return APIResultSet.ok("Cập nhật hashtag thành công", toDTO(updated));
+            return APIResultSet.ok("Cập nhật hashtag thành công", mapper.toDTO(updated));
         } catch (Exception e) {
             log.error("Lỗi khi cập nhật hashtag", e);
             return APIResultSet.internalError("Lỗi khi cập nhật hashtag");
@@ -77,7 +79,7 @@ public class TagServiceImpl implements TagService {
     public APIResultSet<List<TagDTO>> search(String keyword) {
         try {
             List<Tag> result = tagRepository.findByNameContainingIgnoreCase(keyword);
-            List<TagDTO> dtos = result.stream().map(this::toDTO).toList();
+            List<TagDTO> dtos = result.stream().map(mapper::toDTO).toList();
             return APIResultSet.ok("Tìm thấy " + dtos.size() + " hashtag", dtos);
         } catch (Exception e) {
             log.error("Lỗi khi tìm kiếm hashtag: {}", keyword, e);
@@ -89,16 +91,12 @@ public class TagServiceImpl implements TagService {
     public APIResultSet<List<TagDTO>> getAll() {
         try {
             List<TagDTO> allTags = tagRepository.findAll().stream()
-                    .map(this::toDTO)
+                    .map(mapper::toDTO)
                     .toList();
             return APIResultSet.ok("Lấy tất cả hashtag thành công", allTags);
         } catch (Exception e) {
             log.error("Lỗi khi lấy danh sách hashtag", e);
             return APIResultSet.internalError("Không thể lấy danh sách hashtag");
         }
-    }
-
-    private TagDTO toDTO(Tag tag) {
-        return new TagDTO(tag.getId(), tag.getName(), null);
     }
 }

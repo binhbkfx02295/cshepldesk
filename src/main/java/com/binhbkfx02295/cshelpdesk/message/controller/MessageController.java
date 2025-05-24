@@ -2,8 +2,8 @@ package com.binhbkfx02295.cshelpdesk.message.controller;
 
 import com.binhbkfx02295.cshelpdesk.message.dto.MessageDTO;
 import com.binhbkfx02295.cshelpdesk.message.service.MessageService;
-import com.binhbkfx02295.cshelpdesk.util.APIResponseEntityHelper;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResponseEntityHelper;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

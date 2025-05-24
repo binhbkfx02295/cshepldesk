@@ -4,15 +4,12 @@ import com.binhbkfx02295.cshelpdesk.employee_management.authentication.dto.Login
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.*;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.service.EmployeeServiceImpl;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupService;
-import com.binhbkfx02295.cshelpdesk.security.auth.UserPrincipal;
-import com.binhbkfx02295.cshelpdesk.util.APIResponseEntityHelper;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.infrastructure.security.auth.UserPrincipal;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResponseEntityHelper;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,14 +46,9 @@ public class EmployeeController {
         return APIResponseEntityHelper.from(employeeService.getAllUsers());
     }
 
-    @GetMapping("/group/{groupId}")
-    public ResponseEntity<APIResultSet<List<EmployeeDTO>>> getUsersByGroup(@PathVariable int groupId) {
-        return APIResponseEntityHelper.from(employeeService.getUsersByGroup(groupId));
-    }
-
     @GetMapping("/dashboard")
     public ResponseEntity<APIResultSet<List<EmployeeDashboardDTO>>> dashboard() {
-        return APIResponseEntityHelper.from(employeeService.findALlWithStatusLog());
+        return APIResponseEntityHelper.from(employeeService.getForDashboard());
     }
 
     //Employee profile

@@ -1,9 +1,9 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.emotion.service;
 
-import com.binhbkfx02295.cshelpdesk.common.cache.MasterDataCache;
+import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.dto.EmotionDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.mapper.EmotionMapper;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

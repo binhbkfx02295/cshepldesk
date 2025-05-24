@@ -1,6 +1,10 @@
 package com.binhbkfx02295.cshelpdesk.employee_management.authentication.service;
 
-import com.binhbkfx02295.cshelpdesk.common.cache.MasterDataCache;
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeMapper;
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.UserGroupMapper;
+import com.binhbkfx02295.cshelpdesk.employee_management.permission.Permission;
+import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionMapper;
+import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.employee_management.authentication.dto.LoginRequestDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.authentication.dto.LoginResponseDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.authentication.util.ValidationHelper;
@@ -14,7 +18,7 @@ import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.Stat
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.service.EmployeeServiceImpl;
 import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupDTO;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
@@ -35,16 +39,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final ValidationHelper validationHelper;
     private final MessageSource messageSource;
-    private final EmployeeServiceImpl employeeService;
     private final MasterDataCache cache;
+    private final EmployeeMapper employeeMapper;
 
     @Override
     @Transactional
     public APIResultSet<LoginResponseDTO> login(LoginRequestDTO request) {
+        LoginResponseDTO response;
         //TODO: 1. validate LoginRequestDTO
         ValidationResult validation = validate(request, locale);
         if (validation.hasErrors()) {
-            LoginResponseDTO response = new LoginResponseDTO();
+            response = new LoginResponseDTO();
             response.setValidationResult(validation);
             return APIResultSet.badRequest(messageSource.getMessage("auth.input.invalid", null, locale), response);
         }
@@ -85,35 +90,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         employee.setFailedLoginCount(0);
 
         //TODO: 5. Chuẩn bị LoginResponseDTO
-        LoginResponseDTO response = new LoginResponseDTO();
+        response = new LoginResponseDTO();
 
-        EmployeeDTO employeeDTO = new EmployeeDTO();
-        employeeDTO.setUsername(employee.getUsername());
-        employeeDTO.setName(employee.getName());
-        employeeDTO.setDescription(employee.getDescription());
-        employeeDTO.setGroupId(employee.getUserGroup().getGroupId());
+        EmployeeDTO employeeDTO = employeeMapper.toDTO(employee);
         response.setEmployeeDTO(employeeDTO);
-
-        UserGroupDTO groupDTO = new UserGroupDTO();
-        groupDTO.setGroupId(employee.getUserGroup().getGroupId());
-        groupDTO.setName(employee.getUserGroup().getName());
-        groupDTO.setDescription(employee.getUserGroup().getDescription());
-        groupDTO.setPermissionIds(
-                employee.getUserGroup().getPermissions().stream()
-                        .map(p -> p.getId())
-                        .collect(Collectors.toSet())
-        );
-
-        response.setGroup(groupDTO);
-        response.setPermissions(employee.getUserGroup().getPermissions().stream().map(
-                permission -> {
-                    PermissionDTO permissionDTO = new PermissionDTO();
-                    permissionDTO.setId(permission.getId());
-                    permissionDTO.setName(permission.getName());
-                    permissionDTO.setDescription(permission.getDescription());
-                    return permissionDTO;
-                }
-        ).collect(Collectors.toSet()));
         //TODO: 6: nếu có sẵn status log thì không lưu nữa;
         statusLogRepository.findFirstByEmployee_UsernameOrderByTimestampDesc( employee.getUsername()).ifPresentOrElse(
                 statusLog -> {

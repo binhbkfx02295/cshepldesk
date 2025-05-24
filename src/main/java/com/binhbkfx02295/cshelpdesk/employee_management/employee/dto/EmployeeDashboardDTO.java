@@ -11,12 +11,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EmployeeDashboardDTO {
-    private UserGroupDTO userGroup;
-    private String name;
     private String username;
-    private String password;
+    private String name;
     private String description;
-    private boolean isActive;
-    private int failedLoginCount;
-    private List<StatusLogDTO> statusLog;
+    private StatusLogDTO statusLog;
+    private UserGroupDTO userGroup;
 }

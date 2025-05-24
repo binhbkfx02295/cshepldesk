@@ -340,8 +340,7 @@ a {
   padding: 15px 0px;
 }
 .sidebar .sidebar-menu .sidebar-heading {
-  padding: 5px 15px;
-  margin-bottom: 15px;
+  padding: 5px 20px;
 }
 .sidebar .sidebar-menu .sidebar-heading .title {
   color: #6a81ff;
@@ -1517,6 +1516,18 @@ a {
   height: 100% !important;
   display: flex !important;
   align-items: center !important;
+}
+
+/* ================END================== */
+/* ============customer.html============ */
+.employee-content .employee-list .row {
+  padding: 15px 0px;
+}
+.employee-content .employee-list .row .col:nth-of-type(1) {
+  max-width: 15%;
+}
+.employee-content .employee-list .row .col:nth-of-type(8) {
+  max-width: 5%;
 }
 
 /* ================END================== *//*# sourceMappingURL=style.css.map */

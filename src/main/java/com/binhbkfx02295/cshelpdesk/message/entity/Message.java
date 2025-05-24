@@ -18,7 +18,6 @@ public class Message {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int Id;
 
-    @CreationTimestamp
     private Timestamp timestamp;
 
     private boolean senderEmployee;

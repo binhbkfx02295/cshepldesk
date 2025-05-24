@@ -8,6 +8,7 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,9 +28,11 @@ public class Employee {
     @ColumnDefault("true")
     private boolean active;
     private String description;
+    private String email;
+    private String phone;
 
     @CreationTimestamp
-    private Timestamp createdAt;
+    private Instant createdAt;
 
     @ManyToOne
     @JoinColumn(name = "group_id")

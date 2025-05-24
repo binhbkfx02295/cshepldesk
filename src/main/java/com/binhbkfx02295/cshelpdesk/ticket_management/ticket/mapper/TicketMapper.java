@@ -1,6 +1,6 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.mapper;
 
-import com.binhbkfx02295.cshelpdesk.common.cache.MasterDataCache;
+import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeMapper;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
@@ -9,14 +9,19 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.mapper.CategoryMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.mapper.EmotionMapper;
+import com.binhbkfx02295.cshelpdesk.ticket_management.note.dto.NoteDTO;
+import com.binhbkfx02295.cshelpdesk.ticket_management.note.entity.Note;
+import com.binhbkfx02295.cshelpdesk.ticket_management.note.mapper.NoteMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.entity.ProgressStatus;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.mapper.ProgressStatusMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisfaction;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.mapper.SatisfactionMapper;
+import com.binhbkfx02295.cshelpdesk.ticket_management.tag.dto.TagDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.mapper.TagMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketListDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDetailDTO;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketReportDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -36,6 +41,7 @@ public class TicketMapper {
     private final TagMapper tagMapper;
     private final EmotionMapper emotionMapper;
     private final SatisfactionMapper satisfactionMapper;
+    private final NoteMapper noteMapper;
 
     public TicketListDTO toListDTO(Ticket ticket) {
         if (ticket == null) return null;
@@ -87,23 +93,20 @@ public class TicketMapper {
         Ticket ticket = new Ticket();
 
         ticket.setTitle(dto.getTitle());
-
         ticket.setAssignee(dto.getAssignee() != null ? cache.getEmployee(dto.getAssignee().getUsername()) : null);
         ticket.setProgressStatus(cache.getProgress(dto.getProgressStatus().getCode()));
         ticket.setCategory(dto.getCategory() != null ? cache.getCategory(dto.getCategory().getCode()) : null);
         ticket.setEmotion(dto.getEmotion() != null ? cache.getEmotion(dto.getEmotion().getCode()) : null);
         ticket.setSatisfaction(dto.getSatisfaction() != null ? cache.getSatisfaction(dto.getSatisfaction().getCode()) : null);
-
         if (dto.getFacebookUser() != null) {
             FacebookUser facebookUser = new FacebookUser();
             facebookUser.setFacebookId(dto.getFacebookUser().getFacebookId());
             ticket.setFacebookUser(facebookUser);
         }
-
         return ticket;
     }
 
-    public Ticket toDashboard(TicketDashboardDTO dto) {
+    public Ticket toDashboardDTO(TicketDashboardDTO dto) {
         if (dto == null) return null;
         Ticket ticket = new Ticket();
 
@@ -130,20 +133,20 @@ public class TicketMapper {
 
         // 3. Assignee (username)
         if (dto.getAssignee() != null && (entity.getAssignee() == null ||
-                !dto.getAssignee().equals(entity.getAssignee().getUsername()))) {
+                !dto.getAssignee().getUsername().equals(entity.getAssignee().getUsername()))) {
             Employee assignee = cache.getEmployee(dto.getAssignee().getUsername());
             entity.setAssignee(assignee);
         }
 
         // 4. ProgressStatus (name hoặc code)
-        if (!dto.getProgressStatus().equals(entity.getProgressStatus().getCode())) {
+        if (!dto.getProgressStatus().getCode().equals(entity.getProgressStatus().getCode())) {
             ProgressStatus status = cache.getProgress(dto.getProgressStatus().getCode());
             entity.setProgressStatus(status);
         }
 
         // 5. Category (name)
         if (dto.getCategory() != null && (entity.getCategory() == null ||
-                !dto.getCategory().equals(entity.getCategory().getName()))) {
+                !dto.getCategory().getCode().equals(entity.getCategory().getName()))) {
             Category category = cache.getCategory(dto.getCategory().getCode());
             entity.setCategory(category);
         }
@@ -170,6 +173,23 @@ public class TicketMapper {
             entity.setFacebookUser(fb);
         }
 
+        // 9. Tags
+        if (dto.getTags() != null) {
+            for (TagDTO tagDTO: dto.getTags()) {
+                if (tagDTO.getId() == 0) {
+                    entity.getTags().add(tagMapper.toEntity(tagDTO));
+                }
+            }
+        }
+
+        // 10.Notes
+        if (dto.getNotes() != null) {
+            for (NoteDTO note: dto.getNotes()) {
+                if (note.getId() == 0) {
+                    entity.getNotes().add(noteMapper.toEntity(note));
+                }
+            }
+        }
         return entity;
     }
 
@@ -177,10 +197,20 @@ public class TicketMapper {
         TicketDashboardDTO dto = new TicketDashboardDTO();
         dto.setId(entity.getId());
         dto.setCreatedAt(entity.getCreatedAt());
-        dto.setAssignee(entity.getAssignee() != null ? employeeMapper.toDTO(entity.getAssignee()) : null);
+        dto.setAssignee(entity.getAssignee() != null ? employeeMapper.toTicketDTO(entity.getAssignee()) : null);
         dto.setFacebookUser(entity.getFacebookUser() != null ? facebookUserMapper.toListDTO(entity.getFacebookUser()) : null);
         dto.setProgressStatus(progressStatusMapper.toDTO(entity.getProgressStatus()));
         dto.setTitle(entity.getTitle());
+        return dto;
+    }
+
+    public TicketReportDTO toReportDTO(Ticket entity) {
+        TicketReportDTO dto = new TicketReportDTO();
+        dto.setId(entity.getId());
+        dto.setCreatedAt(entity.getCreatedAt());
+        dto.setResolutionRate(entity.getResolutionRate());
+        dto.setFirstResponseRate(entity.getFirstResponseRate());
+        dto.setOverallResponseRate(entity.getOverallResponseRate());
         return dto;
     }
 }

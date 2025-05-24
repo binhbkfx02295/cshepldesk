@@ -3,7 +3,9 @@ package com.binhbkfx02295.cshelpdesk.ticket_management.note.mapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.entity.Note;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.dto.NoteDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
+import org.springframework.stereotype.Component;
 
+@Component
 public class NoteMapper {
 
     public NoteDTO toDTO(Note note) {

@@ -4,16 +4,15 @@ import com.binhbkfx02295.cshelpdesk.facebookuser.dto.*;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.facebookuser.mapper.FacebookUserMapper;
 import com.binhbkfx02295.cshelpdesk.facebookuser.repository.FacebookUserRepository;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
-import com.binhbkfx02295.cshelpdesk.util.PaginationResponse;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.PaginationResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.Response;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.DeleteMapping;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -27,6 +26,9 @@ public class FacebookUserServiceImpl implements FacebookUserService {
     public APIResultSet<FacebookUserDetailDTO> save(FacebookUserDetailDTO userDTO) {
         try {
             FacebookUser user = facebookUserRepository.save(mapper.toEntity(userDTO));
+            if (user.getCreatedAt() == null) {
+                user.setCreatedAt(Instant.now());
+            }
             APIResultSet<FacebookUserDetailDTO> result = APIResultSet.ok(MSG_SUCCESS, mapper.toDetailDTO(user));
             log.info(result.getMessage());
             return result;
@@ -40,6 +42,10 @@ public class FacebookUserServiceImpl implements FacebookUserService {
     public APIResultSet<FacebookUserDetailDTO> save(FacebookUserFetchDTO userDTO) {
         try {
             FacebookUser user = facebookUserRepository.save(mapper.toEntity(userDTO));
+
+            if (user.getCreatedAt() == null) {
+                user.setCreatedAt(Instant.now());
+            }
             APIResultSet<FacebookUserDetailDTO> result = APIResultSet.ok(MSG_SUCCESS, mapper.toDetailDTO(user));
             log.info(result.getMessage());
             return result;
@@ -53,6 +59,7 @@ public class FacebookUserServiceImpl implements FacebookUserService {
     public APIResultSet<FacebookUserDetailDTO> update(FacebookUserDetailDTO updatedUserDTO) {
         try {
             FacebookUser entity = facebookUserRepository.get(updatedUserDTO.getFacebookId());
+
             return Optional.ofNullable(facebookUserRepository.update(mapper.toEntity(updatedUserDTO)))
                     .map(user -> {
                         APIResultSet<FacebookUserDetailDTO> result = APIResultSet.ok(String.format("Cập nhật khách hàng ID: %s thành công.", updatedUserDTO.getFacebookId()), mapper.toDetailDTO(user));

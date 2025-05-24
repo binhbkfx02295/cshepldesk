@@ -1,11 +1,11 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.category.service;
 
-import com.binhbkfx02295.cshelpdesk.common.cache.MasterDataCache;
+import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.dto.CategoryDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.mapper.CategoryMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.CategoryRepository;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

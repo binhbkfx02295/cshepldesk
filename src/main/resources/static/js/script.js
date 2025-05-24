@@ -72,80 +72,59 @@ function initTodayStaff() {
   loadDashboardEmployees()
 
   //Load employee2 list
-  function loadDashboardEmployees(sortField = null) {
-    const employeeList = $("#employeeList2");
-    employeeList.empty();
+  function loadDashboardEmployees() {
+    const employeeList = document.getElementById("employeeList2");
+    const url = `${API_EMPLOYEE}/dashboard`
+    const countElem = document.querySelector(".employee-count");
+    const callback = function (response) {
+      showLoadingElement(employeeList);
+      populateData(response.data, employeeList, renderDashboardEmployeeItem);
+      // Update employee count
+      countElem.innerText = response.data.length;
 
-    //fetch employees;
-    $.ajax({
-      url: `${API_EMPLOYEE}/dashboard`,
-      type: 'GET',
-      dataType: 'json',
-      success: function (data) {
-        console.log(data);
-        employees = data.data;
-        // Update employee count
-        $(".employee-count").text(employees.length);
-
-        // Sort nếu cần
-        if (sortField) {
-          if (currentSort.field === sortField) {
-            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-          } else {
-            currentSort.field = sortField;
-            currentSort.direction = 'asc';
-          }
-
-          employees.sort((a, b) => {
-            let valA = a[sortField];
-            let valB = b[sortField];
-
-            if (typeof valA === "string") valA = valA.toLowerCase();
-            if (typeof valB === "string") valB = valB.toLowerCase();
-
-            if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
-            if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
-            return 0;
-          });
-        }
-
-        // Render
-        employees.forEach((employee) => {
-
-          const employeeRow = `
-          <tr class="show">
-            <td>${employee.name}</td>
-            <td>${employee.userGroup.name}</td>
-            <td>${employee.ticketCount || 0}/6</td>
-            <td style="text-transform: capitalize;">
-              <span class="status-indicator ${employee.statusLog[0].status}"></span>
-              ${employee.statusLog[0].status}
-            </td>
-            ${employee.statusLog[0].status == "offline" ? "" : `<td class="time-elapse" data-timestamp="${employee.statusLog[0].from}">${startElapsedTimer(employee.statusLog[0].from)}</td>`}
-
-          </tr>
-        `;
-
-          employeeList.append(employeeRow);
-        });
-
-        if (window.startElapsedTimerInterval) {
-          clearInterval(window.startElapsedTimerInterval);
-          console.log("cleared window.startElapsedTimerInterval");
-        }
-        window.startElapsedTimerInterval = setInterval(function () {
-          $(".time-elapse").each(function () {
-            const timestamp = $(this).attr("data-timestamp");
-            $(this).text(startElapsedTimer(timestamp));
-          })
-        })
-      },
-      error: function (xhr, status, error) {
-        console.error('Lỗi:', error);
+      //add event interval
+      if (window.startElapsedTimerInterval) {
+        clearInterval(window.startElapsedTimerInterval);
+        console.log("cleared window.startElapsedTimerInterval");
       }
-    })
+      window.startElapsedTimerInterval = setInterval(function () {
+        $(".time-elapse").each(function () {
+          const timestamp = $(this).attr("data-timestamp");
+          $(this).text(startElapsedTimer(timestamp));
+        })
+      })
+    }
+
+    openAPIxhr(HTTP_GET_METHOD, url, callback);
 
   }
+}
+
+function renderDashboardEmployeeItem(employee) {
+  console.log("..rendering items");
+  const tr = document.createElement("tr");
+  tr.classList.add("show");
+  tr.innerHTML = `
+            <td>${sanitizeText(employee.name)}</td>
+            <td>${sanitizeText(employee.userGroup.name)}</td>
+            <td>${employee.ticketCount || 0}/6</td>
+            <td style="text-transform: capitalize;">
+              <span class="status-indicator ${employee.statusLog.status}"></span>
+              ${sanitizeText(employee.statusLog.status)}
+            </td>
+            ${employee.statusLog.status == "offline" ? "" : `<td class="time-elapse" data-timestamp="${employee.statusLog.from}">${startElapsedTimer(employee.statusLog.from)}</td>`}
+        `;
+  console.log(tr);
+  return tr;
+}
+function populateData(data, container, renderItemCallback) {
+  container.innerHTML = "";
+  const fragment = document.createDocumentFragment();
+  console.log(data);
+  data.forEach((item) => {
+    fragment.append(renderItemCallback(item));
+  })
+  container.append(fragment);
 }
 
 // today-ticket.html
@@ -224,7 +203,7 @@ function initCustomer() {
           window.customerDeleteModal.hide();
           setTimeout(function () {
             checkboxes.forEach(checkbox => {
-              checkbox.checked=false;
+              checkbox.checked = false;
               checkbox.dispatchEvent(new Event("change", { bubbles: true }));
             })
             performSearchCustomer();
@@ -333,7 +312,7 @@ function initCustomer() {
       <div class="col facebookProfile">
         <img class="avt" src="${customer.facebookProfilePic || "- -"}">
         ${customer.facebookName || "- -"}</div>
-      <div class="col">${sanitizeText(customer.facebookName) || "- -"}</div>
+      <div class="col">${sanitizeText(customer.realName) || "- -"}</div>
       <div class="col">${sanitizeText(customer.phone) || "- -"}</div>
       <div class="col">${sanitizeText(customer.email) || "- -"}</div>
       <div class="col">${sanitizeText(customer.zalo) || "- -"}</div>
@@ -833,89 +812,102 @@ function initHeader() {
 function refreshDashboardTicket() {
   // Show loading animation on refresh button
   const refreshBtn = $("#refreshDashboardTicket")
-  const originalContent = refreshBtn.html()
+  const originalContent = refreshBtn.html();
+  const url = `${API_TICKET}/dashboard`;
+  const container = document.getElementById("ticketList");
   refreshBtn.html('<i class="bi bi-arrow-repeat"></i> <span>Đang tải...</span>')
   refreshBtn.prop("disabled", true)
 
+  //defines callback
+  const callback = function (response) {
+
+    data = sortDashboardTicket(response.data);
+    console.log(data);
+    showLoadingElement(container);
+    populateData(data, container, renderDashboardTicketItem)
+
+    //after render tickets, start  event
+    if (window.startElapsedTimerTicketInterval) {
+      clearInterval(window.startElapsedTimerTicketInterval);
+      console.log("cleared ticket timer interval")
+    }
+    window.startElapsedTimerTicketInterval = setInterval(function () {
+      $(".time-elapse").each(function () {
+        const timestamp = $(this).attr("data-timestamp");
+        $(this).text(startElapsedTimer(timestamp));
+      })
+    });
+
+    //refreshing ticket metrics;
+    refreshDashboardTicketMetrics(response.data);
+
+    // Restore refresh button
+    refreshBtn.html(originalContent)
+    refreshBtn.prop("disabled", false)
+  }
+
+  //call API
+  openAPIxhr(HTTP_GET_METHOD, url, callback);
+
+}
+
+function refreshDashboardTicketMetrics(data) {
+  console.log("..refreshing ticket metrics");
+  const totalElem = document.getElementById("totalTickets");
+  const inprogressElem = document.getElementById("inProgressTickets");
+  const onHoldElem = document.getElementById("onHoldTickets");
+  const resolvedElem = document.getElementById("resolvedTickets");
+
+  //resolving data
+  total = 0;
+  inprogress = 0;
+  onhold = 0;
+  resolved = 0;
+  data.map(ticket => {
+    //get status
+    let code = ticket.progressStatus.code;
+    total += 1;
+    if (code == "pending") {
+      inprogress += 1;
+    } else if (code == "on-hold") {
+      onhold += 1;
+    } else {
+      resolved += 1;
+    }
+  })
+  //animate count
+  animateCount(totalElem, total, 1000, 0);
+  animateCount(inprogressElem, inprogress, 1000, 0);
+  animateCount(onHoldElem, onhold, 1000, 0);
+  animateCount(resolvedElem, resolved, 1000, 0);
 
   // Update last updated time
   const now = new Date()
   $("#lastUpdated").text(formatTime(now))
-
-  // Reload data
-  // loadDashboardTickets()
-  xhr = createXHR();
-  xhr.open(HTTP_GET_METHOD, `${API_TICKET}/dashboard`);
-  handleResponse(xhr, function (res) {
-    // get data
-    console.log(res.data);
-    //refresh ticket list
-    showTicketListLoading($("#ticketList"));
-    populateDashboardTicket(res.data.sort((a,b) => {
-    const isA3 = a.progressStatus.id === 3;
-      const isB3 = b.progressStatus.id === 3;
-
-      // Nếu chỉ A là 3 → A xuống dưới
-      if (isA3 && !isB3) return 1;
-
-      // Nếu chỉ B là 3 → B xuống dưới
-      if (!isA3 && isB3) return -1;
-
-      // Nếu cả hai đều != 3 → sort theo createdAt DESC
-      return new Date(b.createdAt) - new Date(a.createdAt);
-
-
-    }));
-    populateDashboardTicketMetrics(res.data);
-    hideTicketListLoading($("#ticketList"));
-
-    //refresh ticket metrics
-    console.log("..refreshing ticket metrics");
-    const totalElem = document.getElementById("totalTickets");
-    const inprogressElem = document.getElementById("inProgressTickets");
-    const onHoldElem = document.getElementById("onHoldTickets");
-    const resolvedElem = document.getElementById("resolvedTickets");
-
-    //resolving data
-    total = 0;
-    inprogress = 0;
-    onhold = 0;
-    resolved = 0;
-    res.data.map(ticket => {
-      //get status
-      let code = ticket.progressStatus.code;
-      total += 1;
-      if (code == "pending") {
-        inprogress += 1;
-      } else if (code == "on-hold") {
-        onhold += 1;
-      } else {
-        resolved += 1;
-      }
-    })
-
-    console.log(total, inprogress, onhold, resolved);
-    totalElem.innerHTML = total || "- -";
-    inprogressElem.innerHTML = inprogress || "- -";
-    onHoldElem.innerHTML = onhold || "- -";
-    resolvedElem.innerHTML = resolved || "- -";
-
-  })
-  xhr.send();
-
-  // Restore refresh button
-  refreshBtn.html(originalContent)
-  refreshBtn.prop("disabled", false)
 }
 
+function sortDashboardTicket(data) {
+  data.sort((a, b) => {
+    const isA3 = a.progressStatus.id === 3;
+    const isB3 = b.progressStatus.id === 3;
+
+    // Nếu chỉ A là 3 → A xuống dưới
+    if (isA3 && !isB3) return 1;
+
+    // Nếu chỉ B là 3 → B xuống dưới
+    if (!isA3 && isB3) return -1;
+
+    // Nếu cả hai đều != 3 → sort theo createdAt DESC
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  })
+
+  return data;
+}
 
 //Populate Dashboard tick
-function populateDashboardTicket(tickets) {
-  const ticketList = $("#ticketList")
-  ticketList.empty()
-
-  tickets.forEach((ticket, index) => {
-    const card = $(`
+function renderDashboardTicketItem(ticket) {
+  const div = document.createElement("div");
+  div.innerHTML = `
         <div class="item mb-2" data-ticket-id="${ticket.id}">
             <div class="d-flex flex-row">
                 <div class=" w-100 d-flex flex-column me-2">
@@ -941,29 +933,18 @@ function populateDashboardTicket(tickets) {
                 </div>
             </div>
         </div>
-      `)
-    ticketList.append(card);
-    window.card = card;
-    setTimeout(function () {
-      card.addClass("visible");
-    }, index * 50);
-
-
-  })
-  if (window.startElapsedTimerTicketInterval) {
-    clearInterval(window.startElapsedTimerTicketInterval);
-    console.log("cleared ticket timer interval")
-  }
-  window.startElapsedTimerTicketInterval = setInterval(function () {
-    $(".time-elapse").each(function () {
-      const timestamp = $(this).attr("data-timestamp");
-      $(this).text(startElapsedTimer(timestamp));
-    })
-  })
-
-  $("#ticketList .item").click(function () {
+      `;
+  const target = div.firstElementChild;
+  target.addEventListener("click", function () {
     loadTicketDetail($(this).data("ticket-id"));
-  });
+  })
+  setTimeout(function () {
+    target.style.opacity = 1;
+    console.log(target);
+  }, 300);
+
+  return target;
+
 }
 
 // Dashboard Load ticket metrics
@@ -1363,9 +1344,7 @@ function initTicketDetailModal() {
 }
 
 function performTicketSearch(page, pageSize) {
-  $(this).prop("disabled", true);
   loadTicketSearch(page, pageSize);
-  $(this).prop("disabled", false);
 }
 
 function initTicketSearch() {
@@ -1626,24 +1605,82 @@ function setDateRange(from, to, label = '') {
   // $('#toDate').attr("data-timestamp-to", Math.round(to.getTime()));
 }
 
-function populateTicketSearchResult(data) {
-  const content = data.content;
-  console.log(data)
-  console.log(data.totalElements == 0)
-  const container = $("#ticket-list-body");
-  container.innerHTML="";
+function loadTicketDetail(ticketId) {
+  console.log("click ticket view ", ticketId);
+  window.fullModal.show();
 
-  if (data.totalElements == 0) {
-    container.append($(`
-      <div id="no-ticket-result" class="text-center text-muted py-3" style="display: block;">
-        <i class="bi bi-inbox me-1"></i> Không có kết quả phù hợp.
-      </div>
-      `))
-    return;
+  $.ajax({
+    url: `${API_TICKET}`,
+    method: 'GET',
+    data: { id: ticketId },
+    success: function (response) {
+      populateTicketDetail(response.data);
+      loadTicketMessages(response.data.id);
+      loadTicketHistory(response.data.facebookUser.facebookId);
+    },
+    error: function (res) {
+      errorToast(rres.responseJSON.message);
+    }
+  });
+
+  // Khởi tạo lại tooltip (nếu dùng Bootstrap tooltip)
+  $('[data-bs-toggle="tooltip"]').tooltip?.();
+}
+function loadTicketSearch(page = null, pageSize = null) {
+  const container = document.getElementById("ticket-list-body");
+  const data = getTicketSearchData(page, pageSize);
+  const url = `${API_TICKET}/search?${buildQueryParam(data)}`;
+  callback = function (response) {
+    //TODO: populate list
+    showLoadingElement(container);
+
+    if (response.totalElements == 0) {
+      showNoResult(container);
+      return;
+    }
+    populateData(response.data.content, container, renderTicketSearchItem);
+    renderPagination(response.data.page,
+      response.data.totalElements,
+      response.data.size,
+      performTicketSearch);
+    successToast(response.message);
+    // populateTicketSearchResult(res.data);
   }
 
-  content.forEach(function (ticket) {
-    const html = `
+  // call API search
+  openAPIxhr(HTTP_GET_METHOD, url, callback);
+
+}
+function showNoResult(container) {
+  container.innerHTML = `
+    <div id="no-ticket-result" class="text-center text-muted py-3" style="display: block;">
+        <i class="bi bi-inbox me-1"></i> Không có kết quả phù hợp.
+      </div>
+  `
+}
+function getTicketSearchData(page, size) {
+  //get ticketDetailDTO data
+  const ticketSearchCriteria = {
+    assignee: $("#ticket-search #assignee").attr("data-username") || null,          // assignee
+    facebookId: $("#ticket-search #facebookuser").val() || null,
+    title: $("#ticket-search #title").val() || null,
+    progressStatus: $("#ticket-search #progress-status").attr("data-progress-status-code") || null,
+    fromTime: toTimestamp($("#fromDate").val()),
+    toTime: toTimestamp($("#toDate").val()),
+    category: $("#ticket-search #category").attr("data-category-code") || null,
+    emotion: $("#ticket-search #emotion").attr("data-emotion-code") || null,
+    satisfaction: $("#ticket-search #satisfaction").attr("satisfaction") || null,
+    page: page,
+    size: pageSize,
+    sort: "createdAt,DESC"
+  }
+  console.log("ticketSearchCriteria ", ticketSearchCriteria);
+  return ticketSearchCriteria;
+}
+
+function renderTicketSearchItem(ticket) {
+  const div = document.createElement("div");
+  div.innerHTML = `
       <div class="row border-bottom item"
            data-ticket-id="${ticket.id}"
            data-facebookId="${ticket.facebookUser.facebookId}">
@@ -1676,87 +1713,9 @@ function populateTicketSearchResult(data) {
         </div>
       </div>
     `;
-
-    container.append(html);
-    // initColumnResizeHandles();
-
-    //paging
-
-
-
-  });
-
-  // Gán sự kiện click cho từng item
-  $("#ticket-list-body .item").click(function () {
-    const ticketId = $(this).attr("data-ticket-id");
-    loadTicketDetail(ticketId);
-  })
+  return div.firstElementChild;
 }
 
-function loadTicketDetail(ticketId) {
-  console.log("click ticket view ", ticketId);
-  window.fullModal.show();
-
-  $.ajax({
-    url: `${API_TICKET}`,
-    method: 'GET',
-    data: { id: ticketId },
-    success: function (response) {
-      populateTicketDetail(response.data);
-      loadTicketMessages(response.data.id);
-      loadTicketHistory(response.data.facebookUser.facebookId);
-    },
-    error: function (res) {
-      errorToast(rres.responseJSON.message);
-    }
-  });
-
-  // Khởi tạo lại tooltip (nếu dùng Bootstrap tooltip)
-  $('[data-bs-toggle="tooltip"]').tooltip?.();
-}
-function loadTicketSearch(page = null, pageSize = null) {
-  console.log("button submit: page and pagesize", page, pageSize);
-  console.log(`${API_TICKET}/search?page=${page}&size=${pageSize}&sort=createdAt,DESC`);
-  //get ticketDetailDTO data
-  const ticketSearchCriteria = {
-    assignee: $("#ticket-search #assignee").attr("data-username") || null,          // assignee
-    facebookId: $("#ticket-search #facebookuser").val() || null,
-    title: $("#ticket-search #title").val() || null,
-    progressStatus: $("#ticket-search #progress-status").attr("data-progress-status-code") || null,
-    fromTime: toTimestamp($("#fromDate").val()),
-    toTime: toTimestamp($("#toDate").val()),
-    category: $("#ticket-search #category").attr("data-category-code") || null,
-    emotion: $("#ticket-search #emotion").attr("data-emotion-code") || null,
-    satisfaction: $("#ticket-search #satisfaction").attr("satisfaction") || null,
-    page: page,
-    size: pageSize,
-    sort: "createdAt,DESC"
-  }
-  console.log("ticketSearchCriteria ", ticketSearchCriteria);
-
-  //TODO: call API search
-  $.ajax({
-    url: `${API_TICKET}/search?${buildQueryParam(ticketSearchCriteria)}`,
-    method: "GET",
-    success: function (res) {
-      successToast(res.message);
-      //TODO: populate list
-      showTicketListLoading($("#ticket-list-body"));
-      setTimeout(function () {
-        hideTicketListLoading($("#ticket-list-body"));
-        populateTicketSearchResult(res.data)
-        renderPagination(res.data.page,
-          res.data.totalElements,
-          res.data.size,
-          performTicketSearch);
-      }, 300);
-      // populateTicketSearchResult(res.data);
-    },
-    error: function (res) {
-      errorToast(res.responseJSON.message);
-    },
-  })
-}
 function resizeColumnByContent(index) {
   const $headerRow = $(".ticket-list-header");
   const $bodyRows = $(".ticket-list-body .row");
@@ -2035,7 +1994,7 @@ function loadDashboardTickets() {
     success: function (res) {
       console.log(res);
       //populateDashboard
-      showTicketListLoading($("#ticketList"));
+      showLoadingElement($("#ticketList"));
       //      setTimeout(function () {
       //        populateDashboardTicket(res.data);
       //        populateDashboardTicketMetrics(res.data);
@@ -2051,7 +2010,7 @@ function loadDashboardTickets() {
   })
 }
 
-function showTicketListLoading(container) {
+function showLoadingElement(container) {
   content = `
     <div class="d-flex flex-row fs-5 loading-row justify-content-center text-muted py-3">
       <div class="text-center">
@@ -2212,6 +2171,7 @@ function validateChangePassword() {
 
 
 function sanitizeText(text) {
+  if (text == null || text.trim() == "") return ``;
   const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
@@ -2250,6 +2210,30 @@ function initReport() {
   initChart();
   initAddDataset();
 
+
+  function initWidgetCard() {
+    // Định nghĩa giá trị theo tỷ lệ Max
+    const max = 56;
+    const avg = 24.5;
+    const min = 4;
+
+    const duration = 500; // 0.5s
+
+    // Tính phần trăm
+    const avgPercent = (avg / max * 100).toFixed(1);
+    const minPercent = (min / max * 100).toFixed(1);
+
+    // Lấy ra thanh progress
+    const widgets = document.querySelectorAll(".stat-value");
+
+    // Set width sau 100ms để trigger transition
+    setTimeout(() => {
+
+      animateCount(widgets[0], max, duration, 0);
+      animateCount(widgets[1], avg, duration, 1);
+      animateCount(widgets[2], min, duration, 0);
+    }, 100);
+  }
   function initChart() {
     const dataset = {
       label: "Hôm nay",
@@ -2319,41 +2303,23 @@ function initReport() {
     }
     addDataset(ticketVolumeHourlyChart, newData);
   }
-  function initWidgetCard() {
-    // Định nghĩa giá trị theo tỷ lệ Max
-    const max = 56;
-    const avg = 24.5;
-    const min = 4;
+  function initAddDataset() {
+    console.log("init adad dataset");
+    const btn = document.getElementById("add-dataset");
 
-    const duration = 500; // 0.5s
-
-    // Tính phần trăm
-    const avgPercent = (avg / max * 100).toFixed(1);
-    const minPercent = (min / max * 100).toFixed(1);
-
-    // Lấy ra thanh progress
-    const widgets = document.querySelectorAll(".stat-value");
-
-    // Set width sau 100ms để trigger transition
-    setTimeout(() => {
-
-      animateCount(widgets[0], max, duration, 0);
-      animateCount(widgets[1], avg, duration, 1);
-      animateCount(widgets[2], min, duration, 0);
-    }, 100);
-  }
-  function animateCount(element, target, duration, decimals = 0) {
-    const start = performance.now();
-    function update(currentTime) {
-      const elapsed = currentTime - start;
-      const progress = Math.min(elapsed / duration, 1);
-      const current = (target * progress).toFixed(decimals);
-      element.textContent = current;
-      if (progress < 1) {
-        requestAnimationFrame(update);
+    //init button click
+    btn.addEventListener("click", function () {
+      const dateOption = document.querySelector(".date-range select").value;
+      const [fromDate, toDate] = getDateRangeFromOption(dateOption);
+      data = {
+        fromTime: toTimestamp(fromDate),
+        toTime: toTimestamp(toDate)
       }
-    }
-    requestAnimationFrame(update);
+      console.log(fromDate + "\n", toDate);
+      url = `${API_TICKET}/search-report?${buildQueryParam(data)}`;
+      console.log(data, url)
+      fetchDataset(url);
+    });
   }
   function createChart(canvasId, labels, dataset) {
     const ctx = document.getElementById(canvasId).getContext('2d');
@@ -2409,22 +2375,7 @@ function initReport() {
     });
     return myChart;
   }
-  function initAddDataset() {
-    console.log("init adad dataset");
-    const btn = document.getElementById("add-dataset");
-    btn.addEventListener("click", function () {
-      const dateOption = document.querySelector(".date-range select").value;
-      const [fromDate, toDate] = getDateRangeFromOption(dateOption);
-      data = {
-        fromTime: toTimestamp(fromDate),
-        toTime: toTimestamp(toDate)
-      }
-      console.log(fromDate + "\n", toDate);
-      url = `${API_TICKET}/search-report?${buildQueryParam(data)}`;
-      console.log(data, url)
-      fetchDataset(url);
-    });
-  }
+
   function getDateRangeFromOption(optionValue) {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // reset về 00:00:00
@@ -2577,7 +2528,6 @@ function initReport() {
     return dataset;
   }
 
-
   function buildReportUrl(params) {
     return `${API_TICKET}/search?${buildQueryParam(params)}`;
   }
@@ -2613,11 +2563,15 @@ function initReport() {
                 <a class="dropdown-item d-flex align-items-center" href="#">${dataset.label} <i class="ms-auto bi bi-trash3"></i> </a>
             `
     ul.appendChild(li)
+    //add event remove
     li.querySelector("i").addEventListener("click", function () {
       console.log("hello ", dataset.label)
       removeDataset(dataset.label);
       ul.removeChild(li);
     });
+
+    //TODO: add event create dropdown
+    li.querySelector("a").addEventListener("click", openOptionModal)
   }
   function removeDataset(label) {
     if (!myChart) return;
@@ -2628,6 +2582,20 @@ function initReport() {
       myChart.update();
     }
   }
+}
+
+function animateCount(element, target, duration, decimals = 0) {
+  const start = performance.now();
+  function update(currentTime) {
+    const elapsed = currentTime - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const current = (target * progress).toFixed(decimals);
+    element.textContent = current;
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    }
+  }
+  requestAnimationFrame(update);
 }
 
 function createXHR() {

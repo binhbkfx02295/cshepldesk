@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StatusLogDTO {
+    private String username;
     private String status;
     private Timestamp from;
 

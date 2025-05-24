@@ -1,5 +1,7 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.repository;
 
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketReportDTO;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketVolumeReportDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +42,10 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer>, JpaSpe
     WHERE t.createdAt BETWEEN :startOfDay AND :endOfDay
        OR t.progressStatus.id <> 3
 """)
+    @EntityGraph(attributePaths = {
+            "assignee", "facebookUser", "progressStatus", "satisfaction",
+            "progressStatus", "facebookUser", "category"
+    })
     List<Ticket> findOpeningOrToday(@Param("startOfDay") Timestamp startOfDay,
                                     @Param("endOfDay") Timestamp endOfDay);
 
@@ -48,4 +54,27 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer>, JpaSpe
     })
     @Override
     Page<Ticket> findAll(Specification<Ticket> spec, Pageable pageable);
+
+    @Query("""
+    SELECT new com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketReportDTO(
+        t.id, t.firstResponseRate, t.overallResponseRate, 
+        t.resolutionRate, t.createdAt)
+    FROM Ticket t
+    WHERE t.progressStatus.id = 3
+      AND t.createdAt BETWEEN :startTime AND :endTime
+      AND t.firstResponseRate IS NOT NULL
+      AND t.overallResponseRate IS NOT NULL
+      AND t.resolutionRate IS NOT NULL
+""")
+    List<TicketReportDTO> findTicketsWithMetrics(@Param("startTime")Timestamp startTime,
+                                                 @Param("endTime")Timestamp endTime);
+
+    @Query("""
+            SELECT new com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketVolumeReportDTO 
+            (t.id, t.createdAt) 
+            FROM Ticket t 
+            WHERE t.createdAt BETWEEN :fromTime AND :toTime
+            """)
+    List<TicketVolumeReportDTO> findTicketsForHourlyReport(@Param("fromTime") Timestamp fromTime,
+                                                           @Param("toTime") Timestamp toTime);
 }

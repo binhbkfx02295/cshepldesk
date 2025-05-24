@@ -30,12 +30,8 @@ public class Ticket {
 
     private String title;
 
-    @CreationTimestamp
     private Timestamp createdAt;
-
-    @UpdateTimestamp
     private Timestamp lastUpdateAt;
-
     private Timestamp closedAt;
 
     // Người xử lý (username hoặc tên người dùng)
@@ -79,4 +75,9 @@ public class Ticket {
 
     @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     private List<Message> messages;
+
+    private Long firstResponseRate;
+    private Long overallResponseRate;
+    private Long resolutionRate;
+
 }

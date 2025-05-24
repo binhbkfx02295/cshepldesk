@@ -11,7 +11,5 @@ import java.util.Set;
 @Data
 public class LoginResponseDTO {
     private EmployeeDTO employeeDTO;
-    private UserGroupDTO group;
     private ValidationResult validationResult;
-    private Set<PermissionDTO> permissions;
 }

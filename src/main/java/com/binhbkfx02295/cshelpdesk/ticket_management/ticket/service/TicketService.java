@@ -1,14 +1,12 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.service;
 
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.dto.NoteDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketListDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDetailDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketSearchCriteria;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
-import com.binhbkfx02295.cshelpdesk.util.PaginationResponse;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.*;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.PaginationResponse;
 import org.springframework.data.domain.Pageable;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Set;
 
@@ -26,8 +24,7 @@ public interface TicketService {
     APIResultSet<Void> addNoteToTicket(int ticketId, NoteDTO note);
     APIResultSet<Void> deleteNoteFromTicket(int ticketId, int noteId);
     APIResultSet<Set<NoteDTO>> getNotes(int ticketId);
-    APIResultSet<Void> updateCategoryForTicket(int ticketId, int categoryId);
-    APIResultSet<Void> removeCategoryFromTicket(int ticketId, int categoryId);
     APIResultSet<Void> deleteById(int ticketId);
     APIResultSet<List<TicketDashboardDTO>> getForDashboard();
+    APIResultSet<List<TicketVolumeReportDTO>> searchTicketsForVolumeReport(Timestamp fromTime, Timestamp toTime);
 }

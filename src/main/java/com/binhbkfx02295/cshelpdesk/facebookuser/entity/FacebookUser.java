@@ -31,7 +31,6 @@ public class FacebookUser {
     private String phone;
     private String zalo;
 
-    @CreationTimestamp
     private Instant createdAt;
 
     @OneToMany(mappedBy = "facebookUser", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -1,6 +1,6 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto;
 
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeDTO;
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeTicketDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserListDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.dto.ProgressStatusDTO;
 import lombok.AllArgsConstructor;
@@ -17,7 +17,7 @@ public class TicketDashboardDTO {
     private int id;
     private String title;
     private Timestamp createdAt;
-    private EmployeeDTO assignee;
+    private EmployeeTicketDTO assignee;
     private FacebookUserListDTO facebookUser;
     private ProgressStatusDTO progressStatus;
 

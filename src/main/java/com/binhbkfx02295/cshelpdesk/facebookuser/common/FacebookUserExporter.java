@@ -1,16 +1,12 @@
 package com.binhbkfx02295.cshelpdesk.facebookuser.common;
 
-import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDetailDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserExportDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketListDTO;
-import com.binhbkfx02295.cshelpdesk.util.TicketExcelExporter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

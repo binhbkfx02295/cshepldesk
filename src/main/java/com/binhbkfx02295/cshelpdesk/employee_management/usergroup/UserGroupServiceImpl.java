@@ -1,10 +1,13 @@
 package com.binhbkfx02295.cshelpdesk.employee_management.usergroup;
 
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.UserGroupMapper;
 import com.binhbkfx02295.cshelpdesk.employee_management.permission.Permission;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
+import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionDTO;
+import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionMapper;
 import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionRepository;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.EmployeeRepository;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,17 +25,19 @@ public class UserGroupServiceImpl implements UserGroupService {
     private final UserGroupRepository userGroupRepository;
     private final PermissionRepository permissionRepository;
     private final EmployeeRepository employeeRepository;
+    private final UserGroupMapper mapper;
+    private final PermissionMapper permissionMapper;
 
     @Override
     public APIResultSet<UserGroupDTO> createGroup(UserGroupDTO groupDTO) {
         try {
             UserGroup group = new UserGroup();
             group.setName(groupDTO.getName());
-            group.setPermissions(fetchPermissions(groupDTO.getPermissionIds()));
+            group.setPermissions(groupDTO.getPermissions().stream().map(permissionMapper::toEntity).collect(Collectors.toSet()));
             group.setDescription(groupDTO.getDescription());
             UserGroup saved = userGroupRepository.save(group);
             log.info("✅ Đã tạo nhóm quyền: {}", saved.getName());
-            return APIResultSet.ok("Tạo nhóm thành công", convertToDTO(saved));
+            return APIResultSet.ok("Tạo nhóm thành công", mapper.toDTO(saved));
         } catch (Exception e) {
             log.error("❌ Lỗi khi tạo nhóm quyền: {}", e.getMessage(), e);
             return APIResultSet.internalError("Tạo nhóm quyền thất bại: " + e.getMessage());
@@ -47,12 +52,12 @@ public class UserGroupServiceImpl implements UserGroupService {
                     .orElseThrow(() -> new NoSuchElementException("Không tìm thấy nhóm có ID: " + groupId));
 
             group.setName(groupDTO.getName());
-            group.setPermissions(fetchPermissions(groupDTO.getPermissionIds()));
+            group.setPermissions(groupDTO.getPermissions().stream().map(permissionMapper::toEntity).collect(Collectors.toSet()));
             group.setDescription(groupDTO.getDescription());
 
             UserGroup updated = userGroupRepository.save(group);
             log.info("✅ Cập nhật nhóm quyền ID {} thành công", groupId);
-            return APIResultSet.ok("Cập nhật nhóm thành công", convertToDTO(updated));
+            return APIResultSet.ok("Cập nhật nhóm thành công", mapper.toDTO(updated));
         } catch (NoSuchElementException e) {
             log.warn("⚠️ Không tìm thấy nhóm quyền ID {} để cập nhật", groupId);
             return APIResultSet.notFound(e.getMessage());
@@ -95,7 +100,7 @@ public class UserGroupServiceImpl implements UserGroupService {
             int id = Integer.parseInt(groupId);
             UserGroup group = userGroupRepository.findById(id)
                     .orElseThrow(() -> new NoSuchElementException("Không tìm thấy nhóm quyền với ID: " + groupId));
-            return APIResultSet.ok("Lấy nhóm thành công", convertToDTO(group));
+            return APIResultSet.ok("Lấy nhóm thành công", mapper.toDTO(group));
         } catch (NoSuchElementException e) {
             log.warn("⚠️ Nhóm quyền ID {} không tồn tại", groupId);
             return APIResultSet.notFound(e.getMessage());
@@ -107,7 +112,7 @@ public class UserGroupServiceImpl implements UserGroupService {
         try {
             List<UserGroupDTO> result = new ArrayList<>();
             for (UserGroup group : userGroupRepository.findAll()) {
-                result.add(convertToDTO(group));
+                result.add(mapper.toDTO(group));
             }
             log.info("📦 Đã lấy danh sách tất cả nhóm quyền, tổng số: {}", result.size());
             return APIResultSet.ok("Lấy danh sách nhóm thành công", result);
@@ -121,16 +126,4 @@ public class UserGroupServiceImpl implements UserGroupService {
         return new HashSet<>(permissionRepository.findAllById(permissionIds));
     }
 
-    private UserGroupDTO convertToDTO(UserGroup group) {
-        UserGroupDTO dto = new UserGroupDTO();
-        dto.setGroupId(group.getGroupId());
-        dto.setName(group.getName());
-        dto.setDescription(group.getDescription());
-        dto.setPermissionIds(
-                new HashSet<>(group.getPermissions()).stream()
-                        .map(Permission::getId)
-                        .collect(Collectors.toSet())
-        );
-        return dto;
-    }
 }

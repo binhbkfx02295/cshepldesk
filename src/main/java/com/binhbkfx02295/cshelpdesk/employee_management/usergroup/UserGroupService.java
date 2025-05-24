@@ -1,6 +1,6 @@
 package com.binhbkfx02295.cshelpdesk.employee_management.usergroup;
 
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 
 import java.util.List;
 

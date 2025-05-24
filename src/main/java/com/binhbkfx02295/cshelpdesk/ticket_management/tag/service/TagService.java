@@ -1,7 +1,7 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.tag.service;
 
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.dto.TagDTO;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 
 import java.util.List;
 

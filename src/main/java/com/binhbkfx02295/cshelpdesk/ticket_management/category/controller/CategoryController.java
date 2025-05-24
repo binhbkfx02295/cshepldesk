@@ -2,8 +2,8 @@ package com.binhbkfx02295.cshelpdesk.ticket_management.category.controller;
 
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.dto.CategoryDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.service.CategoryService;
-import com.binhbkfx02295.cshelpdesk.util.APIResponseEntityHelper;
-import com.binhbkfx02295.cshelpdesk.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResponseEntityHelper;
+import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

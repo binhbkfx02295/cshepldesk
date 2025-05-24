@@ -12,19 +12,13 @@ public class TagMapper {
           TagDTO dto = new TagDTO();
           dto.setId(tag.getId());
           dto.setName(tag.getName());
-          dto.setTickets(tag.getTickets().stream().map(Ticket::getId).toList());
           return dto;
      };
 
-     public Tag ToEntity(TagDTO dto) {
+     public Tag toEntity(TagDTO dto) {
           Tag tag = new Tag();
           tag.setName(dto.getName());
           tag.setId(dto.getId());
-          tag.setTickets(dto.getTickets().stream().map(integer -> {
-               Ticket ticket = new Ticket();
-               ticket.setId(integer);
-               return ticket;
-          }).toList());
           return tag;
      };
 

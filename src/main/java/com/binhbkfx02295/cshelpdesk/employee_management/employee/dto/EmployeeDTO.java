@@ -1,18 +1,20 @@
 package com.binhbkfx02295.cshelpdesk.employee_management.employee.dto;
 
+import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupDTO;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
 public class EmployeeDTO {
-    private int groupId;
+    private UserGroupDTO userGroup;
     private String name;
     private String username;
     private String password;
     private String description;
     private boolean isActive;
     private int failedLoginCount;
-    private List<StatusLogDTO> statusLog;
+    private List<StatusLogDTO> statusLogs = new ArrayList<>();
 
 }
