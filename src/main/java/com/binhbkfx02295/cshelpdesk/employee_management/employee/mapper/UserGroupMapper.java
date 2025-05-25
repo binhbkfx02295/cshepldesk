@@ -30,9 +30,6 @@ public class UserGroupMapper {
         dto.setName(entity.getName());
         dto.setDescription(entity.getDescription());
         dto.setGroupId(entity.getGroupId());
-        if (entity.getPermissions() != null) {
-            entity.getPermissions().forEach(permission -> dto.getPermissions().add(permissionMapper.toDTO(permission)));
-        }
         return dto;
     }
 }

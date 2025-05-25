@@ -92,8 +92,11 @@ public class TicketServiceImpl implements TicketService {
 
             Ticket existing = existingOpt.get();
             mapper.mergeToEntity(dto, existing);
-            //TODO: check if ticket closed
-            if (existing.getProgressStatus().getId() == 3) {
+
+            if (existing.getProgressStatus().getId() == 3 &&
+                    (existing.getFirstResponseRate() == null ||
+                            existing.getOverallResponseRate() == null ||
+                            existing.getResolutionRate() == null)) {
                 calculateKPI(existing);
             }
             existing.setLastUpdateAt(new Timestamp(System.currentTimeMillis()));

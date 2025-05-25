@@ -748,7 +748,18 @@ function initHeader() {
   $("#lastUpdated").text(formatTime(now))
 
 
-  // fetch_online_status()
+  // fetch online status
+  const statusIndicator = document.querySelector('.status-dropdown .status-indicator');
+  const statusText = document.querySelector('.status-dropdown #currentStatusText');
+  const url = `${API_EMPLOYEE}/me/online-status`;
+  console.log(url);
+  const callback = function(response) {
+    console.log(response);
+    statusIndicator.classList.add(response.data.status);
+    statusText.innerHTML = toCapital(sanitizeText(response.data.status))
+  }
+  ;
+  openAPIxhr(HTTP_GET_METHOD, url, callback);
 
   const userProfileModal = new bootstrap.Modal(document.getElementById("userProfileModal"));
   const settingModal = new bootstrap.Modal(document.getElementById("settingModal"));
@@ -1038,7 +1049,7 @@ function populateTicketDetail(ticket) {
   $("#editProgressStatus").val(ticket.progressStatus?.name || "- -");
   $("#editEmotion").val(ticket.emotion?.name || "- -");
   $("#editSatisfaction").val(ticket.satisfaction?.name || "- -");
-  $("#editNote").val(ticket.description || "- -");
+  $("#editNote").val(ticket.description || "");
 
 
   $("#editCategory").attr("data-category-code", ticket.category?.code || null);
@@ -1124,26 +1135,6 @@ function toTime(epochMillis) {
   const seconds = date.getSeconds().toString().padStart(2, "0");
 
   return `${hours}:${minutes}:${seconds}`;
-}
-
-function fetch_online_status() {
-  //get API to get online status
-  const statusText = $(this).text().trim();
-  const statusValue = statusText.toLowerCase();
-  var $indicator = $('.status-dropdown .status-indicator');
-  var $statusText = $('.status-dropdown #currentStatusText');
-
-  const xhr = createXHR();
-  xhr.open(HTTP_GET_METHOD, `${API_EMPLOYEE}/me/online-status`);
-  handleResponse(xhr, function (response) {
-    res = JSON.parse(response);
-    console.log(res);
-    const statusValue = res.status;
-    const statusText = toCapital(statusValue);
-    $indicator.addClass(statusValue);
-    $statusText.text(statusText);
-  })
-  xhr.send(JSON.stringify(null));
 }
 
 function startElapsedTimer(startTimestamp) {
@@ -1348,7 +1339,7 @@ function initTicketDetailModal() {
     $("#editStatus").val(originalTicketData.status);
     $("#editProcessingStatus").val(originalTicketData.progressStatus);
     $("#editAssignee").val(originalTicketData.employee?.name || "- -");
-    $("#editDescription").val(originalTicketData.description || "- -");
+    $("#editDescription").val(originalTicketData.description);
 
     disableEditButtons();
   });
@@ -1711,7 +1702,7 @@ function getTicketSearchData(page, size) {
     assignee: $("#ticket-search #assignee").attr("data-username") || null,          // assignee
     facebookId: $("#ticket-search #facebookuser").val() || null,
     title: $("#ticket-search #title").val() || null,
-    progressStatus: $("#ticket-search #progress-status").attr("data-progress-status-code") || null,
+    progressStatus: $("#ticket-search #progress-status").attr("data-progress-code") || null,
     fromTime: toTimestamp($("#fromDate").val()),
     toTime: toTimestamp($("#toDate").val()),
     category: $("#ticket-search #category").attr("data-category-code") || null,

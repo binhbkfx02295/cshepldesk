@@ -118,7 +118,7 @@ public class WebHookServiceImpl implements WebHookService {
             employee.getUserGroup().getName().equalsIgnoreCase("staff");
         }).toList();
 
-        //get their current tickets and get least
+        //Least recently used first
         Employee least = employeeList.get(0);
         int minTickets = Integer.MAX_VALUE;
 
@@ -133,7 +133,6 @@ public class WebHookServiceImpl implements WebHookService {
             }
         }
 
-        //assign to least ticket
         ticket.setAssignee(employeeMapper.toDTO(least));
         log.info("Ticket: auto assigned OK, username: {}", least.getUsername());
     }
