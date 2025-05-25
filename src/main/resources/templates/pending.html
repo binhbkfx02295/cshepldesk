@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" th:replace="~{layout:: layout(~{::title}, ~{}, ~{::div.page-content})}"
+      xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>CS Help Desk | Pending</title>
+</head>
+<body>
+
+<h2 class="page-title">Báo Cáo</h2>
+<div class="page-content">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div th:replace="~{fragments/header:: header(~{::h2.page-title})}"></div>
+
+    <!--    pending content-->
+    <div class="pending-container" th:fragment="pending">
+        <i class="bi bi-tools pending-icon"></i>
+        <h1 class="mt-3">Trang đang được phát triển</h1>
+        <p class="lead">Chức năng này hiện chưa hoàn tất. Vui lòng quay lại sau.</p>
+        <a href="/" class="btn btn-outline-primary mt-3"><i class="bi bi-arrow-left"></i> Quay lại trang chủ</a>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</div>
+</body>
+</html>

@@ -1,5 +1,4 @@
 const currentSort = { field: null, direction: 'asc' };
-
 const BASE = window.location.href.includes(`cshelpdesk.online`) ? "" : `http://localhost:8080`;
 const API_EMPLOYEE = `${BASE}/api/employee-management`;
 const API_PERMISSION = `${BASE}/api/employee-management/permission`;
@@ -12,6 +11,7 @@ const API_EMOTION = `${BASE}/api/emotion`;
 const API_SATISFACTION = `${BASE}/api/satisfaction`;
 const API_MESSAGE = `${BASE}/api/message`;
 const API_FACEBOOK_USER = `${BASE}/api/facebookuser`
+const API_REPORT = `${BASE}/api/report`
 const USERS = []
 const CATEGORIES = []
 const PROGRESS_STATUS = [];
@@ -30,7 +30,36 @@ var submitHandler = null;
 var keyupHandler = null;
 var debounceKeyup = null;
 var deleteCustomerHandler = null;
-window.customerViewDetailModal = null;
+var customerViewDetailModal = null;
+var ticketVolumeHourlyChart = null;
+var addDatasetCallback = null;
+var charts = {};
+var cache = {};
+
+const CHART_CONFIG = {
+  padding: {
+    sm: 15,
+    md: 20,
+    lg: 25
+  },
+  title: "Ticket Distribution Hourly",
+  axisTitles: {
+    x: "Khung giờ",
+    y: "Số lượng ticket"
+  },
+  colors: {
+    font: '#6c757d',
+    mainColors: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'], // dùng làm borderColor cho line, backgroundColor cho bar
+    hoverColors: ['#2e59d9', '#17a673', '#2c9faf', '#f4b619'], // dùng hover cho cả line và bar nếu cần
+  },
+  fontSize: {
+    axis: 14,
+    title: 18
+  },
+  barPercentage: 1,
+  MAX_DATASETS: 4
+};
+
 $(document).ready(() => {
   $("#loadingOverlay").fadeOut()
   initHeader();
@@ -55,6 +84,7 @@ $(document).ready(() => {
     $(".sidebar-menu li").get(3).classList.add("active");
 
   } else if (window.location.href.includes("performance")) {
+    initPerformance()
     $(".sidebar-menu li").removeClass("active");
     $(".sidebar-menu li").get(4).classList.add("active");
   } else if (window.location.href.includes("report")) {
@@ -64,6 +94,9 @@ $(document).ready(() => {
   } else if (window.location.href.includes("setting")) {
     $(".sidebar-menu li").removeClass("active");
     $(".sidebar-menu li").get(6).classList.add("active");
+  } else if (window.location.href.includes("user-group")) {
+    $(".sidebar-menu li").removeClass("active");
+    $(".sidebar-menu li").get(7).classList.add("active");
   }
 })
 
@@ -737,6 +770,20 @@ function initHeader() {
     confirmResetModal.show();
   });
 
+  const toggleBtn = document.getElementById("showSidebar");
+  const pageContent = document.querySelector(".page-content");
+  const sidebar = document.getElementById("sidebar");
+
+  toggleBtn.addEventListener("click", function () {
+    if (sidebar.classList.contains("show")) {
+      sidebar.classList.remove("show");
+      pageContent.style.marginLeft = "0px";
+    } else {
+      sidebar.classList.add("show");
+      pageContent.style.marginLeft = "230px";
+    }
+  })
+
 
 
   $("#confirmResetModal input").on("keyup", function () {
@@ -900,7 +947,6 @@ function sortDashboardTicket(data) {
     // Nếu cả hai đều != 3 → sort theo createdAt DESC
     return new Date(b.createdAt) - new Date(a.createdAt);
   })
-
   return data;
 }
 
@@ -2178,203 +2224,228 @@ function sanitizeText(text) {
 }
 
 function initReport() {
-  let ticketVolumeHourlyChart = null;
-  const CHART_CONFIG = {
-    padding: {
-      sm: 15,
-      md: 20,
-      lg: 25
-    },
-    title: "Ticket Distribution Hourly",
-    axisTitles: {
-      x: "Khung giờ",
-      y: "Số lượng ticket"
-    },
-    colors: {
-      font: '#6c757d',
-      bar: 'rgba(54, 162, 235, 0.6)',
-      hoverBar: 'rgba(54, 162, 235, 1)',
-      barSet: ['#4e73df77', '#1cc88a77', '#36b9cc', '#f6c23e'],
-      hoverBarSet: ['#2e59d9ffff', '#1cc88aff', '#2c9fafff', '#f4b619ff'],
-      lineSet: ['#e74a3b', '#fd7e14', '#20c997', '#6610f2'] // màu đường line
-    },
-    fontSize: {
-      axis: 14,
-      title: 18
-    },
-    barPercentage: 1,
-    MAX_DATASETS: 4
-  };
 
-  initWidgetCard();
   initChart();
-  initAddDataset();
-
-
-  function initWidgetCard() {
-    // Định nghĩa giá trị theo tỷ lệ Max
-    const max = 56;
-    const avg = 24.5;
-    const min = 4;
-
-    const duration = 500; // 0.5s
-
-    // Tính phần trăm
-    const avgPercent = (avg / max * 100).toFixed(1);
-    const minPercent = (min / max * 100).toFixed(1);
-
-    // Lấy ra thanh progress
-    const widgets = document.querySelectorAll(".stat-value");
-
-    // Set width sau 100ms để trigger transition
-    setTimeout(() => {
-
-      animateCount(widgets[0], max, duration, 0);
-      animateCount(widgets[1], avg, duration, 1);
-      animateCount(widgets[2], min, duration, 0);
-    }, 100);
-  }
+  initMockChart();
   function initChart() {
+    const id = "ticket-by-hour";
+    const api = `${API_REPORT}/ticket-hourly`
+    const chartContainer = document.getElementById(id);
+    const canvas = chartContainer.querySelector("canvas").getContext("2d");
+    const chart = createDefaultChart(canvas);
+    window.charts[id] = chart;
+    window.cache[id] = {}
+    window.cache[id].datasets = {}
+    initController(chartContainer, api);
+  }
+
+  function initMockChart() {
     const dataset = {
       label: "Hôm nay",
-      data: [
-        { hour: 0, value: 10 },
-        { hour: 1, value: 20 },
-        { hour: 2, value: 15 },
-        { hour: 3, value: 25 },
-        { hour: 4, value: 22 },
-        { hour: 5, value: 30 },
-        { hour: 6, value: 28 },
-        { hour: 7, value: 28 },
-        { hour: 8, value: 20 },
-        { hour: 9, value: 15 },
-        { hour: 10, value: 25 },
-        { hour: 11, value: 22 },
-        { hour: 12, value: 30 },
-        { hour: 13, value: 0 },
-        { hour: 14, value: 0 },
-        { hour: 15, value: 0 },
-        { hour: 16, value: 0 },
-        { hour: 17, value: 0 },
-        { hour: 18, value: 0 },
-        { hour: 19, value: 0 },
-        { hour: 20, value: 0 },
-        { hour: 21, value: 0 },
-        { hour: 22, value: 0 },
-        { hour: 23, value: 0 },
-      ]
+      type: "line",
+      data: {
+        labels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 1, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+        data: [0, 0, 0, 0, 0, 0, 0, 0, 20, 15, 25, 22, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      nonce: "e"
 
     };
+
 
     const newData = {
       label: "3 Tháng",
       type: "bar",
-      data: [
-        { hour: 0, value: 15 },
-        { hour: 1, value: 25 },
-        { hour: 2, value: 11 },
-        { hour: 3, value: 19 },
-        { hour: 4, value: 17 },
-        { hour: 5, value: 22 },
-        { hour: 6, value: 12 },
-        { hour: 7, value: 12 },
-        { hour: 8, value: 16 },
-        { hour: 9, value: 17 },
-        { hour: 10, value: 23 },
-        { hour: 11, value: 19 },
-        { hour: 12, value: 6 },
-        { hour: 13, value: 9 },
-        { hour: 14, value: 15 },
-        { hour: 15, value: 19 },
-        { hour: 16, value: 20 },
-        { hour: 17, value: 33 },
-        { hour: 18, value: 39 },
-        { hour: 19, value: 47 },
-        { hour: 20, value: 0 },
-        { hour: 21, value: 0 },
-        { hour: 22, value: 0 },
-        { hour: 23, value: 0 },
-      ]
+      data: {
+        labels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 21, 22, 23],
+        data: [0, 0, 0, 0, 0, 0, 0, 0, 16, 17, 23, 19, 6, 9, 15, 19, 20, 33, 39, 47, 25, 19, 5, 67]
+      },
+      nonce: "g"
     };
     // Initialize chart
-    const canvas = document.getElementById('my-chart-canvas').getContext('2d');
-    if (window.ticketVolumeHourlyChart == null) {
-      ticketVolumeHourlyChart = createChart('my-chart-canvas', dataset.data.map(row => row.hour), dataset);
-    }
-    addDataset(ticketVolumeHourlyChart, newData);
+    chart = charts["ticket-by-hour"];
+    addDataset(chart, dataset);
+    addDataset(chart, newData);
+    cache["ticket-by-hour"]["datasets"][dataset.nonce] = {};
+    cache["ticket-by-hour"]["datasets"][newData.nonce] = {};
+    cache["ticket-by-hour"]["datasets"][dataset.nonce]["origin"] = dataset;
+    cache["ticket-by-hour"]["datasets"][newData.nonce]["origin"] = newData;
   }
-  function initAddDataset() {
-    console.log("init adad dataset");
-    const btn = document.getElementById("add-dataset");
 
-    //init button click
-    btn.addEventListener("click", function () {
-      const dateOption = document.querySelector(".date-range select").value;
-      const [fromDate, toDate] = getDateRangeFromOption(dateOption);
-      data = {
-        fromTime: toTimestamp(fromDate),
-        toTime: toTimestamp(toDate)
-      }
-      console.log(fromDate + "\n", toDate);
-      url = `${API_TICKET}/search-report?${buildQueryParam(data)}`;
-      console.log(data, url)
-      fetchDataset(url);
+  function initController(container, api) {
+    //init metric-type
+    const metricBtnList = container.querySelectorAll(".field-group.metric-type ul a")
+
+    metricBtnList.forEach(btn => {
+      btn.addEventListener("click", function () {
+        const i = btn.firstElementChild.cloneNode(true);
+        const target = btn.closest("ul").previousElementSibling;
+        const currentMetric = target.getAttribute("data-value");
+        const newMetric = btn.getAttribute("data-value");
+        if (!changeChartToMetric(container, newMetric)) {
+          return;
+        }
+
+        target.replaceChildren(i);
+        target.setAttribute("data-value", newMetric);
+      })
     });
+
+    //init reload type;
+    const refreshBtn = container.querySelector(".field-group.refresh-chart");
+    refreshBtn.addEventListener("click", function () {
+      //TODO: finish later
+      console.log("...reloading chart");
+    })
+
+    // init add dataset button
+    const addDatasetBtn = container.querySelector(".add-dataset");
+    addDatasetBtn.addEventListener("click", function () {
+      initAddDataset(container, api);
+    })
   }
-  function createChart(canvasId, labels, dataset) {
-    const ctx = document.getElementById(canvasId).getContext('2d');
-    myChart = new Chart(ctx, {
-      data: {
-        labels: labels, // ['08h', '09h', '10h']
-        datasets: [{
-          label: dataset.label || "Không nhãn",
-          type: dataset.type || "line",
-          data: dataset.data.map(row => row.value),
-          borderColor: CHART_CONFIG.colors.lineSet[0],
-          barPercentage: CHART_CONFIG.barPercentage,
-          pointBackgroundColor: CHART_CONFIG.colors.lineSet[0]
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        layout: {
-          padding: CHART_CONFIG.padding.lg
-        },
-        plugins: {
-          legend: {
-            display: true,
-            position: "bottom",
-            align: "center",
-            labels: {
-              padding: CHART_CONFIG.padding.lg,
-              usePointStyle: true,
-              pointStyle: 'circle'
-            }
-          },
-          tooltip: {
-            enabled: true
-          }
-        },
-        animations: {
-          duration: 1000,
-          easing: 'easeOutQuart',
-          delay: (ctx) => ctx.datasetIndex * 100 + ctx.dataIndex * 50
-        },
-        scales: {
-          x: {
-            grid: {
-              drawOnChartArea: false,
-              drawTicks: true,
-              drawBorder: true,
-              tickLength: 8
-            }
-          }
+  function changeChartToMetric(container, newMetric) {
+    const cachedDatasets = cache[container.id]["datasets"];
+    const datasets = charts[container.id].data.datasets;
+    try {
+      for (let index in datasets) {
+        let dataset = datasets[index];
+        let nonce = dataset.nonce;
+        let cachedMetrics = cachedDatasets[nonce];
+        if (cachedMetrics[newMetric] != null) {
+          dataset.data = cachedMetrics[newMetric].data.data;
+        } else {
+          let originDataset = cachedMetrics["origin"];
+          let clone = JSON.parse(JSON.stringify(originDataset));
+          clone.data.data = computeToMetric(clone.data.data, newMetric);
+          dataset.data = clone.data.data;
+          cachedMetrics[newMetric] = clone;
         }
       }
-    });
-    return myChart;
+      chart.update();
+      return true;
+
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
   }
+
+  function initAddDataset(container, api) {
+    console.log("add daatset..");
+    const nonce = crypto.randomUUID();
+    const template = document.querySelector(".template-add-dataset");
+    const datasetModal = template.content.cloneNode(true).children[0];
+    datasetModal.setAttribute("data-nonce", nonce);
+    datasetModal.setAttribute("data-draft", true);
+    const chart = window.charts[container.id];
+    container.querySelector(".datasets").append(datasetModal);
+
+    //init chart-type
+    datasetModal.querySelectorAll(".chart-type ul a").forEach(function (item) {
+      item.addEventListener("click", function () {
+        const child = item.firstElementChild;
+        const target = item.closest(".dropdown").firstElementChild;
+        target.replaceChildren(child.cloneNode(true));
+        target.closest(".chart-type").setAttribute("data-value", item.getAttribute("data-value"));
+      })
+    })
+
+    //bind events
+    datasetModal.querySelector(".confirm-add").addEventListener("click", function () {
+      const params = getDatasetProperty(datasetModal);
+      const url = `${api}?fromDate=${params.fromDate.getTime()}&toDate=${params.toDate.getTime()}`
+      callback = function (response) {
+        const dataset = buildDataset(response.data, params.name, params.type);
+        const comptedDataset = JSON.parse(JSON.stringify(dataset));
+        comptedDataset.data.data = computeToMetric(comptedDataset.data.data, params.metricType);
+        comptedDataset.nonce = nonce;
+        if (datasetModal.getAttribute("data-draft") == "true") {
+          const result = addDataset(chart, comptedDataset);
+          if (!result) return;
+          renderDatasetController(datasetModal, params.name);
+          datasetModal.removeAttribute("data-draft");
+        } else {
+          updateDataset(chart, cache[container.id].datasets.nonce, comptedDataset);
+        }
+        cache[container.id]["datasets"][nonce] = {};
+        cache[container.id]["datasets"][nonce]["origin"] = dataset;
+        datasetModal.classList.add("d-none");
+      }
+      openAPIxhr(HTTP_GET_METHOD, url, callback);
+    });
+
+    datasetModal.querySelector(".cancel-add").addEventListener("click", function () {
+      console.log("..cancel-add");
+      if (datasetModal.getAttribute("data-draft") == true) {
+        datasetModal.parentElement.removeChild(datasetModal);
+
+      } else {
+        datasetModal.classList.add("d-none");
+        //remove cache
+        cache[container.id]["datasets"][nonce] = null;
+      }
+
+    });
+
+  }
+
+  function computeToMetric(data, metricType) {
+    if (metricType == "percentage") {
+      data = computeToPercentage(data);
+    }
+    return data;
+  }
+
+  function computeToPercentage(data) {
+    const max = data.reduce((a, b) => (a + b));
+    return data.map(value => {
+      return (value / max * 100).toFixed(1);
+    });
+  }
+
+  function getDatasetProperty(datasetModal) {
+    const name = datasetModal.querySelector("input").value;
+    const type = datasetModal.querySelector(".chart-type").getAttribute("data-value");
+    const dateRange = datasetModal.querySelector("select").value;
+    const metricType = datasetModal.parentElement.parentElement.querySelector(".metric-type *[data-value]").getAttribute("data-value");
+    const [fromDate, toDate] = getDateRangeFromOption(dateRange);
+    return {
+      name: name,
+      type: type,
+      fromDate: fromDate,
+      toDate: toDate,
+      metricType: metricType
+    }
+
+  }
+
+  function renderDatasetController(datasetModal, datasetName) {
+    const ul = datasetModal.parentElement.firstElementChild.querySelector("ul");
+    const li = document.createElement("li");
+    li.className = "d-flex flex-row align-items-center"
+    li.innerHTML = `
+                        <a class="dropdown-item d-flex align-items-center" href="#">${datasetName || "Không tên"} </a>
+                        <i class="me-2 bi bi-trash3"></i>
+                    `
+    //bind the a to reopen this datasetModal
+    li.querySelector("a").addEventListener("click", function () {
+      //repoen this datasetModal
+      datasetModal.classList.remove("d-none");
+    })
+    //add event remove
+    li.querySelector("i").addEventListener("click", function () {
+
+      //remove cache
+      cache[datasetModal.closest(".chart-container").id]["datasets"][datasetModal.getAttribute("data-nonce")] = null;
+      ul.removeChild(li); //remove button from controller
+      datasetModal.parentElement.removeChild(datasetModal); //removing datasets from chart
+      removeDataset(datasetName); //completely delete this modal
+    });
+
+    //add to ul
+    ul.appendChild(li)
+  }
+
 
   function getDateRangeFromOption(optionValue) {
     const now = new Date();
@@ -2459,129 +2530,146 @@ function initReport() {
     }
     return [fromDate, toDate];
   }
-  function groupByHourMetric(dataList, metricType = 1) {
-    const counts = new Array(24).fill(0);
+}
 
-    // Đếm số lượng theo giờ
-    dataList.forEach(item => {
-      const hour = new Date(item.createdAt).getHours(); // local time
-      counts[hour]++;
-    });
+function fetchDataset(url, callback) {
+  //fetch dataz1
+  openAPIxhr(HTTP_GET_METHOD, url, function (response) {
+    successToast(response.message);
+    callback(response.data);
+  });
+  xhr = createXHR();
+  xhr.open("GET", url)
+  handleResponse(xhr, function (response) {
+    //build data
+    const dataset = buildDataset(response.data.content, label = name || "Unnamed", type = "line");
+    addDataset(ticketVolumeHourlyChart, dataset)
 
-    console.log("dataList total: ", dataList.length);
+    //refreshChartMetrics
+    const avgTickerPerHour = document.getElementById("avgTicketPerHour");
+    const maxTickerPerHour = document.getElementById("maxTicketPerHour");
+    const minTickerPerHour = document.getElementById("minTicketPerHour");
 
-    const total = counts.reduce((sum, val) => sum + val, 0);
-
-    // Tạo array kết quả
-    return counts.map((count, hour) => ({
-      hour: hour,
-      value: metricType === 2
-        ? total === 0 ? 0 : Math.round((count / total) * 10000) / 100 // phần trăm, làm tròn 2 chữ số
-        : count
-    }));
-  }
-  function fetchDataset(url) {
-    //fetch dataz1
-    xhr = createXHR();
-    xhr.open("GET", url)
-    handleResponse(xhr, function (response) {
-      //build data
-      const dataset = buildDataset(response.data.content, label = "", type = "line");
-      console.log("total data: ", response.data.content.length);
-      addDataset(ticketVolumeHourlyChart, dataset)
-
-      //refreshChartMetrics
-      const avgTickerPerHour = document.getElementById("avgTicketPerHour");
-      const maxTickerPerHour = document.getElementById("maxTicketPerHour");
-      const minTickerPerHour = document.getElementById("minTicketPerHour");
-
-      arr = new Array(24).fill(0);
-      response.data.content.map((ticket) => {
-        createdAt = new Date(ticket.createdAt);
-        index = createdAt.getHours();
-        arr[index] += 1;
-      })
-      avg = arr.reduce((a, b) => a + b) / 24
-      max = arr.reduce((a, b) => Math.max(a, b), arr[0])
-      min = arr.reduce((a, b) => Math.min(a, b), arr[0])
-      console.log("avg, max, min: ", avg, max, min);
-      console.log(arr);
-
-      animateCount(avgTickerPerHour, avg.toFixed(2), 500, 2);
-      animateCount(maxTickerPerHour, max, 500, 0);
-      animateCount(minTickerPerHour, min, 500, 0);
-
-
+    arr = new Array(24).fill(0);
+    response.data.content.map((ticket) => {
+      createdAt = new Date(ticket.createdAt);
+      index = createdAt.getHours();
+      arr[index] += 1;
     })
-    xhr.send();
-  }
-  function buildDataset(rawData, type = "line") {
-    const metricType = document.querySelector(".metric-type select").value;
-    const data = groupByHourMetric(rawData, parseInt(metricType));
-    const select = document.querySelector(".date-range select");
-    const label = select.options[select.selectedIndex].text;
-    dataset = {};
-    dataset.data = data
-    dataset.type = document.querySelector(".chart-type select").value
-    dataset.label = label
-    console.log(dataset);
-    return dataset;
-  }
+    avg = arr.reduce((a, b) => a + b) / 24
+    max = arr.reduce((a, b) => Math.max(a, b), arr[0])
+    min = arr.reduce((a, b) => Math.min(a, b), arr[0])
+    console.log("avg, max, min: ", avg, max, min);
+    console.log(arr);
 
-  function buildReportUrl(params) {
-    return `${API_TICKET}/search?${buildQueryParam(params)}`;
+    animateCount(avgTickerPerHour, avg.toFixed(2), 500, 2);
+    animateCount(maxTickerPerHour, max, 500, 0);
+    animateCount(minTickerPerHour, min, 500, 0);
+
+
+  })
+  xhr.send();
+}
+
+function buildDataset(data, label, type = "line") {
+  dataset = {};
+  dataset.data = data
+  dataset.type = type
+  dataset.label = label
+  return dataset;
+}
+
+function addDataset(chart, dataset) {
+  console.log(chart);
+  if (chart.data.datasets.length >= CHART_CONFIG.MAX_DATASETS) {
+    errorToast("Chỉ được so sánh tối đa 4 kỳ!");
+    return false;
   }
-  function addDataset(chart, dataset) {
-    if (chart.data.datasets.length >= CHART_CONFIG.MAX_DATASETS) {
-      errorToast("Chỉ được so sánh tối đa 4 kỳ!");
-      return;
+  //append to chart.js
+  const index = chart.data.datasets.length;
+  const mainColor = CHART_CONFIG.colors.mainColors[index % CHART_CONFIG.colors.mainColors.length];
+  const hoverColor = CHART_CONFIG.colors.hoverColors[index % CHART_CONFIG.colors.hoverColors.length];
+  const isLine = dataset.type == "line";
+
+  if (chart.data.labels.length === 0 && dataset.data.data.length > 0) {
+    chart.data.labels = dataset.data.labels;
+  }
+  chart.data.datasets.push({
+    nonce: dataset.nonce,
+    label: dataset.label,
+    type: dataset.type,
+    data: dataset.data.data,
+    backgroundColor: isLine ? 'transparent' : mainColor,
+    hoverBackgroundColor: hoverColor,
+    borderColor: isLine ? mainColor : undefined,
+    pointBackgroundColor: isLine ? mainColor : undefined,
+    borderWidth: isLine ? 2 : undefined,
+    barPercentage: isLine ? undefined : CHART_CONFIG.barPercentage,
+    fill: false,
+    tension: 0.3,
+  });
+
+  chart.update();
+
+
+  return true;
+}
+function removeDataset(label) {
+  if (!myChart) return;
+
+  const index = myChart.data.datasets.findIndex(ds => ds.label === label);
+  if (index !== -1) {
+    myChart.data.datasets.splice(index, 1);
+    myChart.update();
+  }
+}
+
+function createDefaultChart(ctx) {
+  myChart = new Chart(ctx, {
+    data: {
+      labels: [],
+      datasets: []
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: {
+        padding: CHART_CONFIG.padding.lg
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom",
+          align: "center",
+          labels: {
+            padding: CHART_CONFIG.padding.lg,
+            usePointStyle: true,
+            pointStyle: 'circle'
+          }
+        },
+        tooltip: {
+          enabled: true
+        }
+      },
+      animations: {
+        duration: 1000,
+        easing: 'easeOutQuart',
+        delay: (ctx) => ctx.datasetIndex * 100 + ctx.dataIndex * 50
+      },
+      scales: {
+        x: {
+          offset: true,
+          grid: {
+            drawOnChartArea: false,
+            drawTicks: true,
+            drawBorder: true,
+            tickLength: 8
+          }
+        }
+      }
     }
-
-    //append to chart.js
-    const index = chart.data.datasets.length;
-    const isLine = dataset.line === 'line';
-    chart.data.datasets.push({
-      label: dataset.label,
-      type: dataset.type || "bar",
-      data: dataset.data.map(row => row.value),
-      backgroundColor: isLine ? 'transparent' : CHART_CONFIG.colors.barSet[index % CHART_CONFIG.colors.barSet.length],
-      hoverBackgroundColor: isLine ? 'transparent' : CHART_CONFIG.colors.hoverBarSet[index % CHART_CONFIG.colors.barSet.length],
-      borderColor: isLine ? CHART_CONFIG.colors.lineSet[index % CHART_CONFIG.colors.lineSet.length] : undefined,
-      borderWidth: isLine ? 2 : undefined,
-      fill: false,
-      tension: 0.3,
-      pointBackgroundColor: isLine ? CHART_CONFIG.colors.lineSet[index % CHART_CONFIG.colors.lineSet.length] : undefined,
-      barPercentage: isLine ? undefined : CHART_CONFIG.barPercentage,
-    });
-
-    chart.update();
-
-    //add remove button
-    const ul = document.querySelector("#datasets .dropdown-menu");
-    const li = document.createElement("li");
-    li.innerHTML = `
-                <a class="dropdown-item d-flex align-items-center" href="#">${dataset.label} <i class="ms-auto bi bi-trash3"></i> </a>
-            `
-    ul.appendChild(li)
-    //add event remove
-    li.querySelector("i").addEventListener("click", function () {
-      console.log("hello ", dataset.label)
-      removeDataset(dataset.label);
-      ul.removeChild(li);
-    });
-
-    //TODO: add event create dropdown
-    li.querySelector("a").addEventListener("click", openOptionModal)
-  }
-  function removeDataset(label) {
-    if (!myChart) return;
-
-    const index = myChart.data.datasets.findIndex(ds => ds.label === label);
-    if (index !== -1) {
-      myChart.data.datasets.splice(index, 1);
-      myChart.update();
-    }
-  }
+  });
+  return myChart;
 }
 
 function animateCount(element, target, duration, decimals = 0) {
@@ -2650,4 +2738,54 @@ function openAPIxhr(method, url, callback, errorCallback = null, data = null, he
   } else {
     xhr.send();
   }
+}
+
+function initPerformance() {
+
+}
+
+function renderAddDadasetModal(nonce) {
+  console.log("..rendering modal")
+  const container = ``;
+  const confirmBtn = ``;
+  container.classList.remove("d-none");
+  container.setAttribute("data-nonce", nonce);
+  container.addEventListener("click", callback);
+  container.addEventListener("click", function () {
+
+  })
+}
+
+function bindAddDataset(elem) {
+  elem.removeEventListener("click", addDatasetCallback)
+  //check if modal is open.. return
+
+  //generate nonce
+  const nonce = crypto.randomUUID();
+  //render modal with nonce
+  renderAddDadasetModal(nonce);
+  //bind nonce modal's confirm button with following callback
+  //..get dateRamge, get type, get name.
+  //.. fetchData with that callback
+  elem.addEventListener("click", function () {
+    //get name
+    //get date
+    //get chart type
+
+    fetchDataset(url, parseDataset);
+  })
+}
+
+function updateDataset(chart, oldDataset, dataset) {
+
+
+  //replace dataset
+  for (index in chart.data.datasets) {
+    let current = chart.data.datasets[index];
+    if (current.label == oldDataset.label) {
+      current.data = dataset.data.data;
+    }
+  }
+  console.log(chart);
+  chart.update();
 }

@@ -16,7 +16,7 @@
             <div class="title">BẢNG ĐIỀU KHIỂN </div>
             <div class="label">Theo dõi thời gian thực</div>
         </div>
-        <li sec:authorize="hasAnyRole('STAFF', 'SUPERVISOR')" class="active">
+        <li sec:authorize="hasAnyRole('STAFF', 'SUPERVISOR')">
             <a th:href="@{/today-staff}">
                 <i class="bi bi-speedometer2"></i>
                 <span>Bảng Điều Khiển</span>

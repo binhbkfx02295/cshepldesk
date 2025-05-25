@@ -50,12 +50,17 @@ public class MainController {
 
     @GetMapping("/report")
     public String report() {
-        return "report"; // layout.html sẽ chèn fragment này
-    }
+        return "report";     }
 
     @GetMapping("/setting")
     public String setting() {
-        return "setting"; // layout.html sẽ chèn fragment này
+        return "setting";
+    }
+
+
+    @GetMapping("/user-group")
+    public String userGroup() {
+        return "user-group";
     }
 
     @GetMapping("/error")
