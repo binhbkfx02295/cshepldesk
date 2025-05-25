@@ -153,10 +153,14 @@ function renderDashboardEmployeeItem(employee) {
 function populateData(data, container, renderItemCallback) {
   container.innerHTML = "";
   const fragment = document.createDocumentFragment();
-  console.log(data);
-  data.forEach((item) => {
-    fragment.append(renderItemCallback(item));
-  })
+  if (data.length > 0) {
+    data.forEach((item) => {
+      fragment.append(renderItemCallback(item));
+    })
+  } else {
+    fragment.append(renderNoResultElement());
+  }
+
   container.append(fragment);
 }
 
@@ -191,6 +195,8 @@ function refreshTodayTicketMetrics() {
 //customer/html
 function initCustomer() {
   console.log("init customer page");
+  const tables = document.querySelectorAll(".data-table");
+  tables.forEach(table => initSortingByIndex(table))
   initCustomerDeleteModal();
   initCustomerExport();
   initCustomerViewModal();
@@ -266,14 +272,6 @@ function initCustomer() {
       xhr.open(HTTP_GET_METHOD, url)
       xhr.send();
     });
-  }
-
-
-  function sendExportData() {
-    data = getCustomerSearchData();
-    xhr = createXHR();
-
-
   }
 
   function performSearchCustomer(page = 0, size = 10) {
@@ -733,7 +731,11 @@ function getAPI({ url, container, renderItem,
 function initTicket() {
   console.log("init ticket search ..");
   initTicketSearch();
-  initTicketSortingByIndex();
+  //check coi co data table khong
+  const dataTable = document.querySelectorAll(".data-table");
+  if (dataTable.length > 0) {
+    dataTable.forEach(table => initSortingByIndex(table));
+  }
   initTicketCreate();
   initTicketDetailModal();
 }
@@ -1364,29 +1366,19 @@ function initTicketDetailModal() {
       category: category,
       progressStatus: progressStatus,
     };
-
-    console.log("Updated Ticket Data:", ticketData);
-
-    $.ajax({
-      url: `${API_TICKET}/${$("#editTicketId").val()}`,
-      method: "PUT",
-      contentType: "application/json",
-      data: JSON.stringify(ticketData),
-      success: function (response) {
-        successToast(response.message);
-        populateTicketDetail(response.data);
-        // performTicketSearch(0, $('#pageSize').val());
-        // refresh danh sách
-      },
-      error: function (res) {
-        errorToast(res.responseJSON.message)
-      }
-    });
-
-    disableEditButtons();
+    updateTicketData(ticketData);
   });
+}
 
-
+function updateTicketData(ticketData) {
+  const url = `${API_TICKET}/${$("#editTicketId").val()}`;
+  const callback = function (response) {
+    successToast(response.message);
+    populateTicketDetail(response.data);
+  }
+  console.log("Updated Ticket Data:", ticketData);
+  disableEditButtons();
+  openAPIxhr(HTTP_PUT_METHOD, url, callback, null, ticketData);
 }
 
 function performTicketSearch(page, pageSize) {
@@ -1450,12 +1442,16 @@ function loadDatetimePickerField() {
 
       case "this_week": {
         from = new Date(today);
-        from.setDate(today.getDate() - today.getDay() + 1 + 1);
+        const dayOfWeek = today.getDay();
+
+        const diffToMonday = (dayOfWeek + 6) % 7;
+        from.setDate(today.getDate() - diffToMonday);
         from.setHours(0, 0, 0, 0);
 
         to = new Date(today);
         to.setDate(to.getDate() + 1);
         to.setHours(0, 0, 0, 0);
+
         setDateRange(from, to, "Tuần này");
         break;
       }
@@ -1679,23 +1675,28 @@ function loadTicketSearch(page = null, pageSize = null) {
   callback = function (response) {
     //TODO: populate list
     showLoadingElement(container);
-
-    if (response.totalElements == 0) {
-      showNoResult(container);
-      return;
-    }
     populateData(response.data.content, container, renderTicketSearchItem);
     renderPagination(response.data.page,
       response.data.totalElements,
       response.data.size,
       performTicketSearch);
     successToast(response.message);
-    // populateTicketSearchResult(res.data);
   }
 
   // call API search
   openAPIxhr(HTTP_GET_METHOD, url, callback);
 
+}
+
+function renderNoResultElement() {
+  const div = document.createElement("div");
+  div.innerHTML =
+    `
+<div id="no-ticket-result" class="text-center text-muted py-3" style="display: block;">
+        <i class="bi bi-inbox me-1"></i> Không có kết quả phù hợp.
+      </div>
+  `
+  return div.firstElementChild;
 }
 function showNoResult(container) {
   container.innerHTML = `
@@ -1717,7 +1718,7 @@ function getTicketSearchData(page, size) {
     emotion: $("#ticket-search #emotion").attr("data-emotion-code") || null,
     satisfaction: $("#ticket-search #satisfaction").attr("satisfaction") || null,
     page: page,
-    size: pageSize,
+    size: size,
     sort: "createdAt,DESC"
   }
   console.log("ticketSearchCriteria ", ticketSearchCriteria);
@@ -1746,8 +1747,8 @@ function renderTicketSearchItem(ticket) {
              title="${ticket.category?.name || ''}">
           ${ticket.category?.name || ''}
         </div>
-        <div class="col text-truncate" title="${formatEpochTimestamp(ticket.createdAt)}">
-          ${ticket.progressStatus.code == "resolved" ? "- -" : formatEpochTimestamp(ticket.createdAt)}
+        <div class="col text-truncate" title="${formatEpochTimestamp(ticket.createdAt)}" data-timestamp="${ticket.createdAt}">
+          ${formatEpochTimestamp(ticket.createdAt)}
         </div>
         <div class="col text-truncate emotion-${ticket.emotion?.code || ''}"
              title="${ticket.emotion?.name || ''}">
@@ -1759,94 +1760,12 @@ function renderTicketSearchItem(ticket) {
         </div>
       </div>
     `;
-  return div.firstElementChild;
+  const target = div.firstElementChild;
+  target.addEventListener("click", function () {
+    loadTicketDetail($(this).data("ticket-id"));
+  })
+  return target;
 }
-
-function resizeColumnByContent(index) {
-  const $headerRow = $(".ticket-list-header");
-  const $bodyRows = $(".ticket-list-body .row");
-
-  const $cells = $([$headerRow.children().eq(index)[0]]);
-  $bodyRows.each(function () {
-    const $cell = $(this).children().eq(index);
-    if ($cell.length) $cells.push($cell[0]);
-  });
-
-  const $testSpan = $("<span>")
-    .css({
-      visibility: "hidden",
-      whiteSpace: "nowrap",
-      position: "absolute",
-      font: $headerRow.children().eq(index).css("font")
-    })
-    .appendTo("body");
-
-  let maxWidth = 0;
-  $cells.each(function () {
-    $testSpan.text($(this).text());
-    const width = $testSpan[0].offsetWidth + 24; // trừ hao
-    maxWidth = Math.max(maxWidth, width);
-  });
-
-  $testSpan.remove();
-
-  $cells.each(function () {
-    $(this).css({
-      flex: "none",
-      width: `${maxWidth}px`
-    });
-  });
-}
-
-function initColumnResizeHandles() {
-  $('.ticket-list-header .resizable').each(function () {
-    const $col = $(this);
-    const $handle = $("<div>")
-      .css({
-        width: "5px",
-        cursor: "col-resize",
-        position: "absolute",
-        right: "0",
-        top: "0",
-        bottom: "0",
-        zIndex: "10"
-      })
-      .appendTo($col);
-
-    // Kéo để resize
-    $handle.on("mousedown", function (e) {
-      e.preventDefault();
-      const startX = e.pageX;
-      const startWidth = $col.outerWidth();
-      const index = $col.index();
-
-      function onMouseMove(e) {
-        const newWidth = startWidth + (e.pageX - startX);
-        $(`.ticket-list-header .col:nth-child(${index + 1}),
-           .ticket-list-body .row .col:nth-child(${index + 1})`).css({
-          flex: "none",
-          width: `${newWidth}px`
-        });
-      }
-
-      function onMouseUp() {
-        $(document).off("mousemove", onMouseMove);
-        $(document).off("mouseup", onMouseUp);
-      }
-
-      $(document).on("mousemove", onMouseMove);
-      $(document).on("mouseup", onMouseUp);
-    });
-
-    // Double click để auto resize theo nội dung
-    $handle.on("dblclick", function (e) {
-      e.preventDefault();
-      const index = $col.index();
-      resizeColumnByContent(index);
-    });
-  });
-}
-
 
 function renderPagination(currentPageZeroBased, totalElements, pageSize, callback) {
   console.log("rendering pagination...");
@@ -1913,81 +1832,111 @@ function renderPagination(currentPageZeroBased, totalElements, pageSize, callbac
   $pagination.append(createPageItem(currentPage + 1, "Next", false, currentPage === totalPages));
 }
 
-function initTicketSorting() {
-  console.log("init ticket sorting");
-  $(".page-list-header .col.resizable").click(function () {
-    const $col = $(this);
-    const sortField = $col.data("sort");
-    let currentDirection = $col.data("sort-direction") || "none";
 
-    // Reset các cột khác
-    $(".page-list-header .col.resizable").not($col).data("sort-direction", "none");
+function initSortingByIndex(container) {
+  const headerSelector = ".page-list-header .col.resizable";
+  const bodySelector = ".page-list-body";
 
-    // Toggle hướng sắp xếp
-    const newDirection = currentDirection === "asc" ? "desc" : "asc";
-    $col.data("sort-direction", newDirection);
+  const headers = container.querySelectorAll(headerSelector);
+  const body = container.querySelector(bodySelector);
 
-    // Gọi hàm reload list (ví dụ từ server hoặc sort tại client)
-    sortTicketListByIndex(sortField, newDirection);
-  });
-}
+  if (!headers.length || !body) return;
 
-function sortTicketListBy(field, direction) {
-  const $rows = $("#ticket-list-body .row").get();
-
-  $rows.sort((a, b) => {
-    const aText = $(a).find(`.col[data-field="${field}"]`).text().trim();
-    const bText = $(b).find(`.col[data-field="${field}"]`).text().trim();
-
-    if (!isNaN(aText) && !isNaN(bText)) {
-      return direction === "asc" ? aText - bText : bText - aText;
-    } else {
-      return direction === "asc"
-        ? aText.localeCompare(bText)
-        : bText.localeCompare(aText);
+  headers.forEach(col => {
+    // Tạo icon nếu chưa có
+    if (!col.querySelector(".sort-icons")) {
+      const iconWrapper = document.createElement("div");
+      iconWrapper.className = "sort-icons d-flex flex-column justify-content-center align-items-center position-absolute end-0 top-50 translate-middle-y me-1";
+      iconWrapper.style.fontSize = "12px";
+      iconWrapper.innerHTML = `
+        <i class="bi bi-caret-up-fill arrow-up text-gray-400"></i>
+        <i class="bi bi-caret-down-fill arrow-down text-gray-400" style="margin-top: -4px;"></i>
+      `;
+      col.style.position = "relative";
+      col.appendChild(iconWrapper);
     }
-  });
 
-  console.log($rows);
-  $("#ticket-list-body").html($rows);
+    col.addEventListener("click", () => {
+      const index = Array.from(col.parentNode.children).indexOf(col);
+      let direction = col.getAttribute("data-sort-direction") || "none";
+
+      // Reset tất cả header khác
+      headers.forEach(h => {
+        h.setAttribute("data-sort-direction", "none");
+        const up = h.querySelector(".arrow-up");
+        const down = h.querySelector(".arrow-down");
+        if (up && down) {
+          up.classList.remove("text-dark");
+          up.classList.add("text-gray-400");
+          down.classList.remove("text-dark");
+          down.classList.add("text-gray-400");
+        }
+      });
+
+      // Toggle hướng
+      direction = direction === "asc" ? "desc" : "asc";
+      col.setAttribute("data-sort-direction", direction);
+
+      // Highlight arrow đúng hướng
+      const up = col.querySelector(".arrow-up");
+      const down = col.querySelector(".arrow-down");
+      if (up && down) {
+        if (direction === "asc") {
+          up.classList.replace("text-gray-400", "text-dark");
+          down.classList.replace("text-dark", "text-gray-400");
+        } else {
+          up.classList.replace("text-dark", "text-gray-400");
+          down.classList.replace("text-gray-400", "text-dark");
+        }
+      }
+
+      sortByIndex(body, index, direction);
+    });
+  });
 }
 
-function initTicketSortingByIndex() {
-  $(".page-list-header .col.resizable").click(function () {
-    const $col = $(this);
-    const index = $col.index();
-    let direction = $col.data("sort-direction") || "none";
-
-    // Reset các cột khác
-    $(".page-list-header .col.resizable").not($col).data("sort-direction", "none");
-
-    // Toggle hướng
-    direction = direction === "asc" ? "desc" : "asc";
-    $col.data("sort-direction", direction);
-
-    sortTicketListByIndex(index, direction);
-  });
-}
 
 
-function sortTicketListByIndex(colIndex, direction) {
-  const $rows = $("#ticket-list-body .row").get();
 
-  $rows.sort((a, b) => {
-    const aText = $(a).children(".col").eq(colIndex).text().trim();
-    const bText = $(b).children(".col").eq(colIndex).text().trim();
 
-    if (!isNaN(aText) && !isNaN(bText)) {
-      return direction === "asc" ? aText - bText : bText - aText;
-    } else {
-      return direction === "asc"
-        ? aText.localeCompare(bText)
-        : bText.localeCompare(aText);
+function sortByIndex(container, colIndex, direction) {
+  const rows = Array.from(container.querySelectorAll(".row"));
+
+  const sorted = rows.sort((a, b) => {
+    //kiếm tra nếu là date thì sort theo date
+    const aTimestamp = a.children[colIndex]?.getAttribute("data-timestamp");
+    const bTimestamp = b.children[colIndex]?.getAttribute("data-timestamp");
+    console.log(aTimestamp, bTimestamp);
+    if (aTimestamp != null && bTimestamp != null) {
+      console.log("sort timestamp");
+      return direction === "asc" ? aTimestamp - bTimestamp : bTimestamp - aTimestamp;
     }
+
+    const aText = a.children[colIndex]?.textContent.trim() || "";
+    const bText = b.children[colIndex]?.textContent.trim() || "";
+
+    //Kiểm tra nếu là số thì sort theo số
+    const isNumeric = !isNaN(aText) && !isNaN(bText);
+    if (isNumeric) {
+      return direction === "asc" ? aText - bText : bText - aText;
+    }
+
+    //if tra nếu là text thì sort theo text
+
+    return direction === "asc"
+      ? aText.localeCompare(bText)
+      : bText.localeCompare(aText);
   });
 
-  $("#ticket-list-body").html($rows);
+
+  container.innerHTML = "";
+  const fragment = document.createDocumentFragment();
+  sorted.forEach(row => fragment.appendChild(row));
+  container.innerHTML = "";
+  container.appendChild(fragment);
 }
+
+
 
 // Sự kiện mở modal
 function initDataExport() {
@@ -2116,42 +2065,33 @@ function validationToast(message) {
 
 // Load messages kiểu chat
 function loadTicketMessages(ticketId) {
-  $("#messageList").empty();
-  $.ajax({
-    url: `${API_MESSAGE}`,
-    method: 'GET',
-    data: { ticketId: ticketId },
-    success: function (response) {
-      console.log("get message Success:", response);
-      const ticketMessages = response.data;
-      ticketMessages.sort((a, b) => a.timestamp - b.timestamp);
-
-      ticketMessages.forEach(msg => {
-        const senderClass = msg.senderEmployee ? "staff" : "user";
-        const formattedTime = formatEpochTimestamp(msg.timestamp);
-
-        const bubble = `
-      <div class="d-flex mb-2 ${senderClass === "user" ? "justify-content-start" : "justify-content-end"}">
-        <div class="chat-bubble ${senderClass}">
-          <div class="message-text">${msg.text}</div>
-          <div class="message-timestamp text-muted small mt-1" title="Timestamp: ${msg.timestamp}">${formattedTime}</div>
-        </div>
-      </div>
-    `;
-        $("#messageList").append(bubble);
-      });
-      scrollToBottomMessageList();
-
-    },
-    error: (res) => errorToast(res.responseJSON.message)
-  });
+  const container = document.getElementById("messageList");
+  showLoadingElement(container);
+  const url = `${API_MESSAGE}?ticketId=${ticketId}`
+  const callback = function (response) {
+    console.log(response);
+    populateData(response.data, container, renderMessageItem);
+    scrollToBottomMessageList(container);
+  }
+  openAPIxhr(HTTP_GET_METHOD, url, callback);
 }
 
 
+function renderMessageItem(msg) {
+  const div = document.createElement("div");
+  div.innerHTML =
+    `<div class="d-flex mb-2 ${msg.senderEmployee ? "justify-content-end" : "justify-content-start"}">
+        <div class="chat-bubble ${msg.senderEmployee ? "staff" : "user"}">
+          <div class="message-text">${sanitizeText(msg.text)}</div>
+          <div class="message-timestamp text-muted small mt-1" title="Timestamp: ${msg.timestamp}">${formatEpochTimestamp(msg.timestamp)}</div>
+        </div>
+      </div>`
+  return div.firstElementChild;
+}
+
 // Auto scroll to bottom
-function scrollToBottomMessageList() {
-  const messageList = document.getElementById('messageList');
-  if (messageList) {
+function scrollToBottomMessageList(container) {
+  if (container) {
     messageList.scrollTop = messageList.scrollHeight;
   }
 }
@@ -2720,8 +2660,6 @@ function handleResponse(xhr, callback, errorCallback) {
 function openAPIxhr(method, url, callback, errorCallback = null, data = null, headers = {}) {
   xhr = createXHR();
   xhr.open(method, url);
-  console.log(url);
-  console.log(data);
   //merge GLOBAL_API_HEADERS and headers together
   const allHeaders = { ...GLOBAL_API_HEADERS, ...headers };
 

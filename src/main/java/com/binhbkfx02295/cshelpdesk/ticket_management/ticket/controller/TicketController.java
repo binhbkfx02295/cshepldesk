@@ -33,16 +33,10 @@ public class TicketController {
 
     private final TicketServiceImpl ticketService;
 
-    @GetMapping("")
+    @GetMapping()
     public ResponseEntity<APIResultSet<TicketDetailDTO>> getById(@RequestParam(value = "id") int id) {
         return APIResponseEntityHelper.from(ticketService.getTicketById(id));
     }
-
-    @GetMapping("/get-by-facebook-id")
-    public ResponseEntity<APIResultSet<List<TicketListDTO>>> getByFacebookId(@RequestParam(value = "id") String id) {
-        return APIResponseEntityHelper.from(ticketService.findAllByFacebookUserId(id));
-    }
-
 
     @PostMapping
     public ResponseEntity<APIResultSet<TicketDetailDTO>> create(@RequestBody TicketDetailDTO dto) {
@@ -53,6 +47,11 @@ public class TicketController {
     @PutMapping("/{id}")
     public ResponseEntity<APIResultSet<TicketDetailDTO>> update(@PathVariable int id, @RequestBody TicketDetailDTO dto) {
         return APIResponseEntityHelper.from(ticketService.updateTicket(id, dto));
+    }
+
+    @GetMapping("/get-by-facebook-id")
+    public ResponseEntity<APIResultSet<List<TicketListDTO>>> getByFacebookId(@RequestParam(value = "id") String id) {
+        return APIResponseEntityHelper.from(ticketService.findAllByFacebookUserId(id));
     }
 
     @PutMapping("/{ticketId}/note")

@@ -100,7 +100,11 @@ public class TicketServiceImpl implements TicketService {
             Ticket saved = ticketRepository.save(existing);
             APIResultSet<TicketDetailDTO> result = APIResultSet.ok("Updated successfully", mapper.toDetailDTO(saved));
             //update cache
-            cache.putTicket(saved);
+            log.info("debug: {}", saved.getId());
+
+            if (cache.getTicket(existing.getId()) != null) {
+                cache.putTicket(saved);
+            }
             log.info(result.getMessage());
             return result;
         } catch (Exception e) {
