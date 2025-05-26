@@ -33,7 +33,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer>, JpaSpe
             "WHERE t.id = :id")
     @EntityGraph(attributePaths = {
             "assignee", "facebookUser", "emotion", "satisfaction",
-            "progressStatus", "facebookUser", "category"
+            "progressStatus", "facebookUser", "category",
+            "firstResponseRate", "overallResponseRate", "resolutionRate"
     })
     Optional<Ticket> findByIdWithDetails(@Param("id") int id);
 

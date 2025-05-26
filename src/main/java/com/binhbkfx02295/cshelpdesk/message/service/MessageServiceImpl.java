@@ -60,10 +60,15 @@ public class MessageServiceImpl implements MessageService {
         try {
             Ticket openingTicket = cache.getTicket(ticketId);
             List<Message> messages;
+
             if (openingTicket != null && cache.getAllMessages() != null) {
-                messages = cache.getAllMessages().values().stream().filter(message -> message.getTicket().getId()==ticketId).toList();
+                messages = cache.getAllMessages().values().stream().filter(message -> {
+                    log.info("loop ticketid {}, message.getTicket().getId() {}", ticketId, message.getTicket().getId());
+                    return message.getTicket().getId()==ticketId;
+                }).toList();
             } else {
                 messages = messageRepository.findByTicket_Id(ticketId);
+                log.info("hello, o day ne, retrieved msg list size {}", messages.size());
             }
             List<MessageDTO> dtos = messages.stream()
                     .map(mapper::toDTO)

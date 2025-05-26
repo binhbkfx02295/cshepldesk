@@ -92,15 +92,22 @@ public class TicketServiceImpl implements TicketService {
 
             Ticket existing = existingOpt.get();
             mapper.mergeToEntity(dto, existing);
-            //TODO: check if ticket closed
-            if (existing.getProgressStatus().getId() == 3) {
+
+            if (existing.getProgressStatus().getId() == 3 &&
+                    (existing.getFirstResponseRate() == null ||
+                            existing.getOverallResponseRate() == null ||
+                            existing.getResolutionRate() == null)) {
                 calculateKPI(existing);
             }
             existing.setLastUpdateAt(new Timestamp(System.currentTimeMillis()));
             Ticket saved = ticketRepository.save(existing);
             APIResultSet<TicketDetailDTO> result = APIResultSet.ok("Updated successfully", mapper.toDetailDTO(saved));
             //update cache
-            cache.putTicket(saved);
+            log.info("debug: {}", saved.getId());
+
+            if (cache.getTicket(existing.getId()) != null) {
+                cache.putTicket(saved);
+            }
             log.info(result.getMessage());
             return result;
         } catch (Exception e) {
