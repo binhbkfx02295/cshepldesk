@@ -26,4 +26,6 @@ public interface FacebookUserDAO {
     void deleteById(String facebookUserId);
 
     void deleteAll(List<String> ids);
+
+    FacebookUser getReferenceById(String facebookId);
 }

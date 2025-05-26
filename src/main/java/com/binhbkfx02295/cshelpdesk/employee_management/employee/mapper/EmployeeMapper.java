@@ -1,9 +1,6 @@
 package com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper;
 
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeDTO;
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeDashboardDTO;
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeTicketDTO;
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.StatusLogDTO;
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.*;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.StatusLog;
 import lombok.Data;
@@ -39,6 +36,12 @@ public class EmployeeMapper {
         return null;
     }
 
+    public Employee toEntity(EmployeeStatusDTO dto) {
+        Employee entity = new Employee();
+        entity.setUsername(dto.getUsername());
+        return entity;
+    }
+
     public EmployeeDashboardDTO toDashboardDTO(Employee entity) {
         EmployeeDashboardDTO dto = new EmployeeDashboardDTO();
         dto.setDescription(entity.getDescription());
@@ -50,5 +53,12 @@ public class EmployeeMapper {
         dto.setStatusLog(statusLogDTO);
         return dto;
     }
+
+    public EmployeeStatusDTO toStatusDTO(Employee employee) {
+        EmployeeStatusDTO dto = new EmployeeStatusDTO();
+        dto.setUsername(employee.getUsername());
+        return dto;
+    }
+
 
 }

@@ -100,7 +100,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
             if (statusLog.getStatus().getId() != 1) {
                 StatusLog newLog = new StatusLog();
-                Status status = cache.getStatus("online");
+                Status status = cache.getStatus(1);
                 log.info("status: {}", status.getName());
                 newLog.setStatus(status);
                 newLog.setEmployee(employee);
@@ -109,7 +109,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         },
                 () -> {
             StatusLog newLog = new StatusLog();
-            Status status = cache.getStatus("online");
+            Status status = cache.getStatus(1);
             newLog.setStatus(status);
             ArrayList<StatusLog> logs = new ArrayList<>();
             logs.add(newLog);
@@ -136,7 +136,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             StatusLog statusLog = logs.get(logs.size()-1);
             if (statusLog.getStatus().getId() != 3) {
                 StatusLog newLog = new StatusLog();
-                Status status = cache.getStatus("offline");
+                Status status = cache.getStatus(3);
                 newLog.setStatus(status);
                 newLog.setEmployee(employee);
                 employee.getStatusLogs().add(newLog);

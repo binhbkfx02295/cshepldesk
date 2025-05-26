@@ -1,5 +1,7 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.mapper;
 
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.EmployeeRepository;
+import com.binhbkfx02295.cshelpdesk.facebookuser.repository.FacebookUserRepository;
 import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeMapper;
@@ -7,16 +9,21 @@ import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.facebookuser.mapper.FacebookUserMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.mapper.CategoryMapper;
+import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.CategoryRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.mapper.EmotionMapper;
+import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.repository.EmotionRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.dto.NoteDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.entity.Note;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.mapper.NoteMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.entity.ProgressStatus;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.mapper.ProgressStatusMapper;
+import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.repository.ProgressStatusRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisfaction;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.mapper.SatisfactionMapper;
+import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.repository.SatisfactionRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.dto.TagDTO;
+import com.binhbkfx02295.cshelpdesk.ticket_management.tag.entity.Tag;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.mapper.TagMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketListDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
@@ -27,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -42,6 +50,13 @@ public class TicketMapper {
     private final EmotionMapper emotionMapper;
     private final SatisfactionMapper satisfactionMapper;
     private final NoteMapper noteMapper;
+
+    private final CategoryRepository categoryRepository;
+    private final EmotionRepository emotionRepository;
+    private final SatisfactionRepository satisfactionRepository;
+    private final EmployeeRepository employeeRepository;
+    private final ProgressStatusRepository progressStatusRepository;
+    private final FacebookUserRepository facebookUserRepository;
 
     public TicketListDTO toListDTO(Ticket ticket) {
         if (ticket == null) return null;
@@ -93,11 +108,11 @@ public class TicketMapper {
         Ticket ticket = new Ticket();
 
         ticket.setTitle(dto.getTitle());
-        ticket.setAssignee(dto.getAssignee() != null ? cache.getEmployee(dto.getAssignee().getUsername()) : null);
-        ticket.setProgressStatus(cache.getProgress(dto.getProgressStatus().getCode()));
-        ticket.setCategory(dto.getCategory() != null ? cache.getCategory(dto.getCategory().getCode()) : null);
-        ticket.setEmotion(dto.getEmotion() != null ? cache.getEmotion(dto.getEmotion().getCode()) : null);
-        ticket.setSatisfaction(dto.getSatisfaction() != null ? cache.getSatisfaction(dto.getSatisfaction().getCode()) : null);
+        ticket.setAssignee(dto.getAssignee() != null ? employeeRepository.getReferenceById(dto.getAssignee().getUsername()) : null);
+        ticket.setProgressStatus(progressStatusRepository.getReferenceById(dto.getProgressStatus().getId()));
+        ticket.setCategory(dto.getCategory() != null ? categoryRepository.getReferenceById(dto.getCategory().getId()) : null);
+        ticket.setEmotion(dto.getEmotion() != null ? emotionRepository.getReferenceById(dto.getEmotion().getId()) : null);
+        ticket.setSatisfaction(dto.getSatisfaction() != null ? satisfactionRepository.getReferenceById(dto.getSatisfaction().getId()) : null);
         if (dto.getFacebookUser() != null) {
             FacebookUser facebookUser = new FacebookUser();
             facebookUser.setFacebookId(dto.getFacebookUser().getFacebookId());
@@ -113,7 +128,7 @@ public class TicketMapper {
         ticket.setTitle(dto.getTitle());
 
         ticket.setAssignee(dto.getAssignee() != null ? cache.getEmployee(dto.getAssignee().getUsername()) : null);
-        ticket.setProgressStatus(cache.getProgress(dto.getProgressStatus().getCode()));
+        ticket.setProgressStatus(cache.getProgress(dto.getProgressStatus().getId()));
         if (dto.getFacebookUser() != null) {
             FacebookUser facebookUser = new FacebookUser();
             facebookUser.setFacebookId(dto.getFacebookUser().getFacebookId());
@@ -134,62 +149,49 @@ public class TicketMapper {
         // 3. Assignee (username)
         if (dto.getAssignee() != null && (entity.getAssignee() == null ||
                 !dto.getAssignee().getUsername().equals(entity.getAssignee().getUsername()))) {
-            Employee assignee = cache.getEmployee(dto.getAssignee().getUsername());
+            Employee assignee = employeeRepository.getReferenceById(dto.getAssignee().getUsername());
             entity.setAssignee(assignee);
         }
 
         // 4. ProgressStatus (name hoặc code)
-        if (!dto.getProgressStatus().getCode().equals(entity.getProgressStatus().getCode())) {
-            ProgressStatus status = cache.getProgress(dto.getProgressStatus().getCode());
+        if (dto.getProgressStatus().getId() != (entity.getProgressStatus().getId())) {
+            ProgressStatus status = progressStatusRepository.getReferenceById(dto.getProgressStatus().getId());
             entity.setProgressStatus(status);
         }
 
         // 5. Category (name)
         if (dto.getCategory() != null && (entity.getCategory() == null ||
-                !dto.getCategory().getCode().equals(entity.getCategory().getName()))) {
-            Category category = cache.getCategory(dto.getCategory().getCode());
+                dto.getCategory().getId() != (entity.getCategory().getId()))) {
+            Category category = categoryRepository.getReferenceById(dto.getCategory().getId());
             entity.setCategory(category);
         }
 
         // 6. Emotion (by ID)
         if (dto.getEmotion() != null && (entity.getEmotion() == null ||
                 dto.getEmotion().getId() != entity.getEmotion().getId())) {
-            Emotion emotion = cache.getEmotion(dto.getEmotion().getCode());
+            Emotion emotion = emotionRepository.getReferenceById(dto.getEmotion().getId());
             entity.setEmotion(emotion);
         }
 
         // 7. Satisfaction (by score)
         if (dto.getSatisfaction() != null && (entity.getSatisfaction() == null ||
                 dto.getSatisfaction().getId() != entity.getSatisfaction().getId())) {
-            Satisfaction satisfaction = cache.getSatisfaction(dto.getSatisfaction().getCode());
+            Satisfaction satisfaction = satisfactionRepository.getReferenceById(dto.getSatisfaction().getId());
             entity.setSatisfaction(satisfaction);
         }
 
         // 8. FacebookUser (by facebookId)
         if (dto.getFacebookUser() != null && (entity.getFacebookUser() == null ||
                 !dto.getFacebookUser().getFacebookId().equals(entity.getFacebookUser().getFacebookId()))) {
-            FacebookUser fb = new FacebookUser();
-            fb.setFacebookId(dto.getFacebookUser().getFacebookId());
+            FacebookUser fb = facebookUserRepository.getReferenceById(dto.getFacebookUser().getFacebookId());
             entity.setFacebookUser(fb);
         }
 
         // 9. Tags
-        if (dto.getTags() != null) {
-            for (TagDTO tagDTO: dto.getTags()) {
-                if (tagDTO.getId() == 0) {
-                    entity.getTags().add(tagMapper.toEntity(tagDTO));
-                }
-            }
-        }
+        //TODO: implement later
 
         // 10.Notes
-        if (dto.getNotes() != null) {
-            for (NoteDTO note: dto.getNotes()) {
-                if (note.getId() == 0) {
-                    entity.getNotes().add(noteMapper.toEntity(note));
-                }
-            }
-        }
+        //TODO: implement later
         return entity;
     }
 

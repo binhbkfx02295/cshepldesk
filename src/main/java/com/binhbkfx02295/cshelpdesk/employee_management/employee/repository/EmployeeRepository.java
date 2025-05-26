@@ -1,6 +1,7 @@
 package com.binhbkfx02295.cshelpdesk.employee_management.employee.repository;
 
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.StatusLog;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -46,5 +47,16 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
 
     boolean existsByUsername(String username);
 
-
+    @Query("""
+            SELECT e
+            FROM Employee e
+            LEFT JOIN FETCH e.statusLogs l
+            LEFT JOIN FETCH l.status s
+            WHERE l.timestamp = (
+                SELECT MAX(l2.timestamp)
+                FROM StatusLog l2
+                WHERE l2.employee = e
+            ) AND e.username = :username
+            """)
+    Optional<Employee> findWithTop1StatusLog(@Param("username") String username);
 }

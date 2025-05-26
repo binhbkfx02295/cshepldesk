@@ -223,4 +223,15 @@ public class FacebookUserRepository implements FacebookUserDAO {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public FacebookUser getReferenceById(String facebookId) {
+        try {
+            return entityManager.getReference(FacebookUser.class, facebookId);
+        } catch (Exception e){
+            log.error("Loi get reference by id", e);
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

@@ -31,7 +31,7 @@ public class CategoryServiceImpl implements CategoryService {
                 return APIResultSet.badRequest("Mã danh mục đã tồn tại.");
             }
             Category saved = categoryRepository.save(mapper.toEntity(categoryDTO));
-            cache.updateAllCategories();
+            cache.getAllCategories().put(saved.getId(), saved);
             APIResultSet<CategoryDTO> result = APIResultSet.ok("Tạo danh mục thành công.", mapper.toDTO(saved));
             log.info(result.getMessage());
             return result;
@@ -54,7 +54,9 @@ public class CategoryServiceImpl implements CategoryService {
             existing.setName(categoryDTO.getName());
             existing.setCode(categoryDTO.getCode());
             Category updated = categoryRepository.save(mapper.toEntity(categoryDTO));
-            cache.updateAllCategories();
+            if (cache.getAllCategories().containsKey((int)updated.getId())) {
+                cache.getAllCategories().put(updated.getId(), updated);
+            }
             APIResultSet<CategoryDTO> result = APIResultSet.ok("Cập nhật danh mục thành công.", mapper.toDTO(updated));
             log.info(result.getMessage());
             return APIResultSet.ok("Cập nhật danh mục thành công.", mapper.toDTO(updated));
@@ -68,7 +70,7 @@ public class CategoryServiceImpl implements CategoryService {
     public APIResultSet<Void> delete(int id) {
         try {
             categoryRepository.deleteById(id);
-            cache.updateAllCategories();
+            cache.getAllCategories().remove(id);
             APIResultSet<Void> result = APIResultSet.ok("Xóa danh mục thành công.", null);
             log.info(result.getMessage());
             return result;

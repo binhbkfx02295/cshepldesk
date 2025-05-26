@@ -91,7 +91,7 @@ public class WebHookServiceImpl implements WebHookService {
 
             //create new ticket
             TicketDetailDTO dto = new TicketDetailDTO();
-            dto.setProgressStatus(progressStatusMapper.toDTO(cache.getProgress("pending")));
+            dto.setProgressStatus(progressStatusMapper.toDTO(cache.getProgress(1)));
             dto.setFacebookUser(facebookUserMapper.toDTO(facebookUser));
 
             //TODO: implement auto assign
