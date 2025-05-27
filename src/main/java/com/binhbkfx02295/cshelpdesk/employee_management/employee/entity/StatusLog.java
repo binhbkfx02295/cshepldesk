@@ -29,11 +29,4 @@ public class StatusLog {
 
     @CreationTimestamp
     private Timestamp timestamp;
-
-    public StatusLogDTO toDTO() {
-        StatusLogDTO dto = new StatusLogDTO();
-        dto.setStatus(status.getName());
-        dto.setFrom(getTimestamp());
-        return dto;
-    }
 }

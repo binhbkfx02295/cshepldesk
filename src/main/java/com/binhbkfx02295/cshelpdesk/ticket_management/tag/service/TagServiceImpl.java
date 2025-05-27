@@ -1,5 +1,6 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.tag.service;
 
+import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.dto.TagDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.entity.Tag;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.mapper.TagMapper;
@@ -21,6 +22,7 @@ import java.util.Optional;
 public class TagServiceImpl implements TagService {
 
     private final TagRepository tagRepository;
+    private final MasterDataCache cache;
     private TagMapper mapper;
 
     @Override
@@ -33,6 +35,7 @@ public class TagServiceImpl implements TagService {
                     .name(tagDTO.getName())
                     .build();
             Tag saved = tagRepository.save(tag);
+            cache.getAllTag().put(saved.getId(), saved);
             return APIResultSet.ok("Thêm hashtag thành công", mapper.toDTO(saved));
         } catch (Exception e) {
             log.error("Lỗi khi tạo hashtag", e);
@@ -50,6 +53,9 @@ public class TagServiceImpl implements TagService {
             Tag tag = optional.get();
             tag.setName(newTagDTO.getName());
             Tag updated = tagRepository.save(tag);
+            if (cache.getAllTag().containsKey(updated)) {
+                cache.getAllTag().put(updated.getId(), updated);
+            }
             return APIResultSet.ok("Cập nhật hashtag thành công", mapper.toDTO(updated));
         } catch (Exception e) {
             log.error("Lỗi khi cập nhật hashtag", e);
@@ -68,6 +74,7 @@ public class TagServiceImpl implements TagService {
             List<Ticket> tickets = tag.getTickets();
             tickets.forEach(ticket -> ticket.getTags().remove(tag));
             tagRepository.deleteById(id);
+            cache.getAllTag().remove(id);
             return APIResultSet.ok("Đã xóa hashtag và các liên kết với ticket", null);
         } catch (Exception e) {
             log.error("Lỗi khi xóa hashtag", e);
@@ -90,7 +97,7 @@ public class TagServiceImpl implements TagService {
     @Override
     public APIResultSet<List<TagDTO>> getAll() {
         try {
-            List<TagDTO> allTags = tagRepository.findAll().stream()
+            List<TagDTO> allTags = cache.getAllTag().values().stream()
                     .map(mapper::toDTO)
                     .toList();
             return APIResultSet.ok("Lấy tất cả hashtag thành công", allTags);

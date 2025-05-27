@@ -57,14 +57,14 @@ public class MasterDataCache {
     private final TicketRepository ticketRepository;
 
 
-    private Map<String, ProgressStatus> progressMap = new HashMap<>();
-    private Map<String, Emotion> emotionMap  = new HashMap<>();
-    private Map<String, Satisfaction> satisfactionMap = new HashMap<>();
-    private Map<String, Category> categoryMap = new HashMap<>();
-    private Map<String, Status> statusMap = new HashMap<>();
+    private Map<Integer, ProgressStatus> progressMap = new HashMap<>();
+    private Map<Integer, Emotion> emotionMap  = new HashMap<>();
+    private Map<Integer, Satisfaction> satisfactionMap = new HashMap<>();
+    private Map<Integer, Category> categoryMap = new HashMap<>();
+    private Map<Integer, Status> statusMap = new HashMap<>();
     private Map<String, Employee> employeeMap = new HashMap<>();
     private Map<Integer, UserGroup> groupMap = new HashMap<>();
-    private Map<String, Tag> tagMap = new HashMap<>();
+    private Map<Integer, Tag> tagMap = new HashMap<>();
     private Map<Integer, Ticket> openingTickets = new HashMap<>();
     private Map<Integer, Message> messages = new HashMap<>();
 
@@ -106,32 +106,32 @@ public class MasterDataCache {
     }
 
     public void updateALlTags() {
-        this.tagMap = tagRepository.findAll().stream().collect(Collectors.toMap(Tag::getName, Function.identity()));
+        this.tagMap = tagRepository.findAll().stream().collect(Collectors.toMap(Tag::getId, Function.identity()));
     }
 
 
-    public ProgressStatus getProgress(String code) {
-        return progressMap.getOrDefault(code, null);
+    public ProgressStatus getProgress(int id) {
+        return progressMap.getOrDefault(id, null);
     }
 
-    public Emotion getEmotion(String code) {
-        return emotionMap.getOrDefault(code, null);
+    public Emotion getEmotion(int id) {
+        return emotionMap.getOrDefault(id, null);
     }
 
-    public Satisfaction getSatisfaction(String code) {
-        return satisfactionMap.getOrDefault(code, null);
+    public Satisfaction getSatisfaction(int id) {
+        return satisfactionMap.getOrDefault(id, null);
     }
 
-    public Category getCategory(String code) {
-        return categoryMap.getOrDefault(code, null);
+    public Category getCategory(int id) {
+        return categoryMap.getOrDefault(id, null);
     }
 
     public UserGroup getUserGroup(int id) {
         return groupMap.getOrDefault(id, null);
     }
 
-    public Status getStatus(String status) {
-        return statusMap.getOrDefault(status, null);
+    public Status getStatus(int id) {
+        return statusMap.getOrDefault(id, null);
     }
 
     public Employee getEmployee(String username) {
@@ -142,19 +142,19 @@ public class MasterDataCache {
         return employeeMap;
     }
 
-    public Map<String, ProgressStatus> getAllProgress() {
+    public Map<Integer, ProgressStatus> getAllProgress() {
         return progressMap;
     }
 
-    public Map<String, Emotion> getAllEmotions() {
+    public Map<Integer, Emotion> getAllEmotions() {
         return emotionMap;
     }
 
-    public Map<String, Satisfaction> getAllSatisfactions() {
+    public Map<Integer, Satisfaction> getAllSatisfactions() {
         return satisfactionMap;
     }
 
-    public Map<String, Category> getAllCategories() {
+    public Map<Integer, Category> getAllCategories() {
         return categoryMap;
     }
 
@@ -162,8 +162,12 @@ public class MasterDataCache {
         return groupMap;
     }
 
-    public Map<String, Status> getAllStatus() {
+    public Map<Integer, Status> getAllStatus() {
         return statusMap;
+    }
+
+    public Map<Integer, Tag> getAllTag() {
+        return tagMap;
     }
 
     // update cache
@@ -173,34 +177,30 @@ public class MasterDataCache {
                 .collect(Collectors.toMap(Employee::getUsername, Function.identity()));
     }
 
-
-
     public void updateAllEmotions() {
         this.emotionMap = emotionRepository.findAll().stream()
-                .collect(Collectors.toMap(Emotion::getCode, Function.identity()));
+                .collect(Collectors.toMap(Emotion::getId, Function.identity()));
     }
 
     public void updateAllSatisfactions() {
         this.satisfactionMap = satisfactionRepository.findAll().stream()
-                .collect(Collectors.toMap(Satisfaction::getCode, Function.identity()));
+                .collect(Collectors.toMap(Satisfaction::getId, Function.identity()));
     }
 
     public void updateAllCategories() {
         this.categoryMap = categoryRepository.findAll().stream()
-                .collect(Collectors.toMap(Category::getCode, Function.identity()));
+                .collect(Collectors.toMap(Category::getId, Function.identity()));
     }
 
     public void updateAllProgressStatus() {
         this.progressMap = progressStatusRepository.findAll().stream()
-                .collect(Collectors.toMap(ProgressStatus::getCode, Function.identity()));
+                .collect(Collectors.toMap(ProgressStatus::getId, Function.identity()));
     }
 
     public void updateAllOnlineStatus() {
         this.statusMap = statusRepository.findAll().stream()
-                .collect(Collectors.toMap(Status::getName, Function.identity()));
-
+                .collect(Collectors.toMap(Status::getId, Function.identity()));
     }
-
     private void updateAllGroups() {
         this.groupMap = groupRepository.findAll().stream()
                 .collect(Collectors.toMap(UserGroup::getGroupId, Function.identity()));
@@ -210,8 +210,8 @@ public class MasterDataCache {
         this.employeeMap.put(employee.getUsername(), employee);
     }
 
-    public Tag getTag(String tag) {
-        return tagMap.getOrDefault(tag, null);
+    public Tag getTag(int id) {
+        return tagMap.getOrDefault(id, null);
     }
 
     public void putTicket(Ticket saved) {

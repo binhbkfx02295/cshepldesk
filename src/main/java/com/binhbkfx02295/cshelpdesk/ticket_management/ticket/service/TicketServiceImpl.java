@@ -3,10 +3,20 @@ package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.service;
 import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.facebookuser.service.FacebookUserServiceImpl;
 import com.binhbkfx02295.cshelpdesk.message.dto.MessageDTO;
+import com.binhbkfx02295.cshelpdesk.message.entity.Message;
 import com.binhbkfx02295.cshelpdesk.message.service.MessageServiceImpl;
+import com.binhbkfx02295.cshelpdesk.openai.model.GPTResult;
+import com.binhbkfx02295.cshelpdesk.openai.service.GPTTicketService;
+import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
+import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.CategoryRepository;
+import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
+import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.repository.EmotionRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.entity.Note;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.dto.NoteDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.repository.NoteRepository;
+import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.repository.ProgressStatusRepository;
+import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisfaction;
+import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.repository.SatisfactionRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.dto.TagDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.*;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
@@ -22,6 +32,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +53,12 @@ public class TicketServiceImpl implements TicketService {
     private final FacebookUserServiceImpl facebookUserService;
     private final MasterDataCache cache;
     private final MessageServiceImpl messageService;
+    private final GPTTicketService gptService;
+    private final CategoryRepository categoryRepository;
+    private final ProgressStatusRepository progressStatusRepository;
+    private final EmotionRepository emotionRepository;
+    private final SatisfactionRepository satisfactionRepository;
+
 
     @Override
     public APIResultSet<TicketDetailDTO> createTicket(TicketDetailDTO dto) {
@@ -98,6 +115,23 @@ public class TicketServiceImpl implements TicketService {
                             existing.getOverallResponseRate() == null ||
                             existing.getResolutionRate() == null)) {
                 calculateKPI(existing);
+
+                //TODO: goi analyse service
+                List<Message> messages = cache.getAllMessages().values().stream().filter(message -> {
+                    return message.getTicket().getId() == existing.getId();
+                }).toList();
+                if (!messages.isEmpty()) {
+                    messages = existing.getMessages();
+                }
+                GPTResult gptResult = gptService.analyze(messages);
+
+                existing.setCategory(categoryRepository.getReferenceById(gptResult.getCategoryId()));
+                existing.setSatisfaction(satisfactionRepository.getReferenceById(gptResult.getSatisfactionId()));
+                existing.setEmotion(emotionRepository.getReferenceById(gptResult.getEmotionId()));
+                existing.setPrice(gptResult.getPrice());
+                existing.setGptModelUsed(gptResult.getGptModelused());
+                existing.setTokenUsed(gptResult.getTokenUsed());
+                existing.setClosedAt(new Timestamp(System.currentTimeMillis()));
             }
             existing.setLastUpdateAt(new Timestamp(System.currentTimeMillis()));
             Ticket saved = ticketRepository.save(existing);
@@ -250,28 +284,28 @@ public class TicketServiceImpl implements TicketService {
 
         if (dto.getProgressStatus() == null) {
             return APIResultSet.badRequest("Lỗi thiếu trình trạng xử lý");
-        } else if (cache.getProgress(dto.getProgressStatus().getCode()) == null){
-            return APIResultSet.badRequest("Lỗi tình trạng xử lý không tồn tại " + dto.getProgressStatus().getCode());
+        } else if (cache.getProgress(dto.getProgressStatus().getId()) == null){
+            return APIResultSet.badRequest("Lỗi tình trạng xử lý không tồn tại " + dto.getProgressStatus().getId());
         }
 
         if (dto.getCategory() != null &&
-                cache.getCategory(dto.getCategory().getCode()) == null) {
-            return APIResultSet.badRequest("Lỗi mã phân loại không tồn tại " + dto.getCategory().getCode());
+                cache.getCategory(dto.getCategory().getId()) == null) {
+            return APIResultSet.badRequest("Lỗi mã phân loại không tồn tại " + dto.getCategory().getId());
         }
 
         if (dto.getEmotion() != null &&
-                cache.getEmotion(dto.getEmotion().getCode()) == null) {
-            return APIResultSet.badRequest("Lỗi mã cảm xúc không tồn tại " + dto.getEmotion().getCode());
+                cache.getEmotion(dto.getEmotion().getId()) == null) {
+            return APIResultSet.badRequest("Lỗi mã cảm xúc không tồn tại " + dto.getEmotion().getId());
         }
 
         if (dto.getSatisfaction() != null &&
-                cache.getSatisfaction(dto.getSatisfaction().getCode()) == null) {
+                cache.getSatisfaction(dto.getSatisfaction().getId()) == null) {
             return APIResultSet.badRequest("Lỗi mã hài lòng không tồn tại " + dto.getSatisfaction().getCode());
         }
 
         if (dto.getTags() != null) {
             for (TagDTO tag : dto.getTags()) {
-                if (cache.getTag(tag.getName()) == null) {
+                if (cache.getTag(tag.getId()) == null) {
                     return APIResultSet.badRequest("Lỗi tag không tồn tại " + tag);
                 }
             }

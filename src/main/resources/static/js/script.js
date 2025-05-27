@@ -142,8 +142,8 @@ function renderDashboardEmployeeItem(employee) {
             <td>${sanitizeText(employee.userGroup.name)}</td>
             <td>${employee.ticketCount || 0}/6</td>
             <td style="text-transform: capitalize;">
-              <span class="status-indicator ${employee.statusLog.status}"></span>
-              ${sanitizeText(employee.statusLog.status)}
+              <span class="status-indicator ${employee.statusLog.status.name}"></span>
+              ${sanitizeText(employee.statusLog.status.name)}
             </td>
             ${employee.statusLog.status == "offline" ? "" : `<td class="time-elapse" data-timestamp="${employee.statusLog.from}">${startElapsedTimer(employee.statusLog.from)}</td>`}
         `;
@@ -749,16 +749,15 @@ function initHeader() {
 
 
   // fetch online status
-  const statusIndicator = document.querySelector('.status-dropdown .status-indicator');
-  const statusText = document.querySelector('.status-dropdown #currentStatusText');
-  const url = `${API_EMPLOYEE}/me/online-status`;
-  console.log(url);
-  const callback = function(response) {
-    console.log(response);
-    statusIndicator.classList.add(response.data.status);
-    statusText.innerHTML = toCapital(sanitizeText(response.data.status))
-  }
-  ;
+    const statusIndicator = document.querySelector('.status-dropdown .status-indicator');
+    const statusText = document.querySelector('.status-dropdown #currentStatusText');
+    const url = `${API_EMPLOYEE}/me/online-status`;
+    console.log(url);
+    const callback = function(response) {
+      console.log(response);
+      statusIndicator.classList.add(response.data.status.name);
+      statusText.innerHTML = toCapital(sanitizeText(response.data.status.name))
+}
   openAPIxhr(HTTP_GET_METHOD, url, callback);
 
   const userProfileModal = new bootstrap.Modal(document.getElementById("userProfileModal"));
@@ -834,6 +833,7 @@ function initHeader() {
   // Đổi trạng thái Online/Away
   $('.status-dropdown .dropdown-item').click(function (e) {
     const statusText = $(this).text().trim();
+    const statusId = $(this).data("status-id");
     const statusValue = statusText.toLowerCase();
     var $indicator = $('.status-dropdown .status-indicator');
     var $statusText = $('.status-dropdown #currentStatusText');
@@ -842,7 +842,7 @@ function initHeader() {
       url: `${API_EMPLOYEE}/me/online-status`,
       method: 'PUT',
       contentType: 'application/json',
-      data: JSON.stringify({ status: statusValue }),
+      data: JSON.stringify({ status: {id: statusId}, from: new Date().getTime() }),
       success: function (res) {
         successToast(res.message);
         if (statusValue === 'online') {
@@ -1052,10 +1052,10 @@ function populateTicketDetail(ticket) {
   $("#editNote").val(ticket.description || "");
 
 
-  $("#editCategory").attr("data-category-code", ticket.category?.code || null);
-  $("#editProgressStatus").attr("data-progress-code", ticket.progressStatus.code || null);
-  $("#editEmotion").attr("data-emotion-code", ticket.emotion?.code || null);
-  $("#editSatisfaction").attr("data-satisfaction-code", ticket.satisfaction?.code || null);
+  $("#editCategory").attr("data-category-id", ticket.category?.id || null);
+  $("#editProgressStatus").attr("data-progress-id", ticket.progressStatus.id || null);
+  $("#editEmotion").attr("data-emotion-id", ticket.emotion?.id || null);
+  $("#editSatisfaction").attr("data-satisfaction-id", ticket.satisfaction?.id || null);
   $("#editAssignee").attr("data-username", ticket.assignee?.username || null);
 
   // Load Tags (nhiều tag)
@@ -1288,9 +1288,9 @@ function initTicketDetailModal() {
         input,
         loadCategories,
         CATEGORIES,
-        "category-code",
+        "category-id",
         "name",
-        "code"
+        "id"
       );
     } else if (container.attr("class").includes("progress-status")) {
       loadDropdownField(
@@ -1298,9 +1298,9 @@ function initTicketDetailModal() {
         input,
         loadProgressStatus,
         PROGRESS_STATUS,
-        "progress-code",
+        "progress-id",
         "name",
-        "code"
+        "id"
       );
     } else if (container.attr("class").includes("emotion")) {
       loadDropdownField(
@@ -1308,9 +1308,9 @@ function initTicketDetailModal() {
         input,
         loadEmotions,
         EMOTIONS,
-        "emotion-code",
+        "emotion-id",
         "name",
-        "code"
+        "id"
       );
     } else if (container.attr("class").includes("satisfaction")) {
       loadDropdownField(
@@ -1318,9 +1318,9 @@ function initTicketDetailModal() {
         input,
         loadSatisfaction,
         SATISFACTIONS,
-        "satisfaction-code",
+        "satisfaction-id",
         "name",
-        "code"
+        "id"
       );
     }
 
@@ -1346,11 +1346,11 @@ function initTicketDetailModal() {
 
   // Save edit
   $("#saveEdit").click(function () {
-    const category = $("#editCategory").attr("data-category-code") ?
-      { code: $("#editCategory").attr("data-category-code") } : null
+    const category = $("#editCategory").attr("data-category-id") ?
+      { id: $("#editCategory").attr("data-category-id") } : null
 
-    const progressStatus = $("#editProgressStatus").attr("data-progress-code") ?
-      { code: $("#editProgressStatus").attr("data-progress-code") } : null
+    const progressStatus = $("#editProgressStatus").attr("data-progress-id") ?
+      { id: $("#editProgressStatus").attr("data-progress-id") } : null
 
     const ticketData = {
       title: $("#editTitle").val(),

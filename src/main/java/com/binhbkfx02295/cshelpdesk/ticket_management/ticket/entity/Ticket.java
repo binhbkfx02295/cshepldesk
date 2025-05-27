@@ -45,19 +45,19 @@ public class Ticket {
     private FacebookUser facebookUser;
 
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "progress_status_id", nullable = false)
     private ProgressStatus progressStatus;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "emotion_id")
     private Emotion emotion;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "satisfaction_id")
     private Satisfaction satisfaction;
 
@@ -79,5 +79,8 @@ public class Ticket {
     private Long firstResponseRate;
     private Long overallResponseRate;
     private Long resolutionRate;
+    private int tokenUsed;
+    private float price;
+    private String gptModelUsed;
 
 }

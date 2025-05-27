@@ -50,7 +50,6 @@ public class MasterDataSeeder implements CommandLineRunner {
     private final ProgressStatusRepository progressStatusRepository;
     private final EmotionRepository emotionRepository;
     private final SatisfactionRepository satisfactionRepository;
-    private final EmployeeServiceImpl employeeService;
     private final StatusRepository  statusRepository;
     private final UserGroupRepository userGroupRepository;
     private final PermissionRepository permissionRepository;
@@ -60,7 +59,6 @@ public class MasterDataSeeder implements CommandLineRunner {
     private final MasterDataCache cache;
     private final FacebookUserRepository facebookUserRepository;
     private final TicketRepository ticketRepository;
-    private final MessageServiceImpl messageService;
     private final MessageRepository messageRepository;
 
 
@@ -139,6 +137,11 @@ public class MasterDataSeeder implements CommandLineRunner {
         category5.setCode("refund");
         category5.setName("Hoàn Tiền");
         addCategoryIfMissing(category5);
+
+        Category category6 = new Category();
+        category5.setCode("other");
+        category5.setName("Khác");
+        addCategoryIfMissing(category6);
     }
 
     private void addCategoryIfMissing(Category category) {

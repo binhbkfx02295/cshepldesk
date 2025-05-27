@@ -1,5 +1,6 @@
 package com.binhbkfx02295.cshelpdesk.employee_management.employee.service;
 
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.StatusLogMapper;
 import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeDashboardDTO;
@@ -35,6 +36,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final StatusLogRepository statusLogRepository;
     private final MasterDataCache cache;
     private final EmployeeMapper mapper;
+    private final StatusLogMapper statusLogMapper;
 
     @Override
     public APIResultSet<EmployeeDTO> createUser(EmployeeDTO employeeDTO) {
@@ -59,7 +61,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             user.setFailedLoginCount(0);
 
             //add status log
-            Status status = cache.getStatus("offline");
+            Status status = cache.getStatus(3);
             StatusLog newLog = new StatusLog();
             newLog.setStatus(status);
             newLog.setEmployee(user);
@@ -187,15 +189,15 @@ public class EmployeeServiceImpl implements EmployeeService {
     public APIResultSet<StatusLogDTO> getLatestOnlineStatus(String username) {
         log.info("finding latest log for {}", username);
         try {
-            Optional<StatusLog> logOpt = statusLogRepository.findFirstByEmployee_UsernameOrderByTimestampDesc(username);
-            if (logOpt.isPresent()) {
-                StatusLog log = logOpt.get();
-                StatusLogDTO logDTO = new StatusLogDTO();
-                logDTO.setStatus(log.getStatus().getName());
-                logDTO.setFrom(log.getTimestamp());
-                return APIResultSet.ok(String.format("Get recent status log of %s: found", username), logDTO);
+            Optional<Employee> employeeOtp =  employeeRepository.findWithTop1StatusLog(username);
+
+            if (employeeOtp.isPresent()) {
+                StatusLogDTO dto = statusLogMapper.toDTO(employeeOtp.get().getStatusLogs().get(0));
+                String msg = String.format("Get recent status log of %s: found", username);
+                return APIResultSet.ok(msg, dto);
             } else {
-                return APIResultSet.notFound(String.format("Get recent status log of %s: not found", username));
+                String msg = String.format("Get recent status log of %s: not found", username);
+                return APIResultSet.notFound(msg);
             }
         } catch (Exception e) {
             log.error("Lỗi lấy user với status log ", e);
@@ -210,8 +212,14 @@ public class EmployeeServiceImpl implements EmployeeService {
         log.info("finding recent logs for {}", username);
         try {
             Optional<Employee> employee = employeeRepository.findByUsername(username);
-            List<StatusLog> logs = employee.get().getStatusLogs();
-            return APIResultSet.ok(String.format("Get recent status log of %s: found", username), logs.stream().map(StatusLog::toDTO).toList());
+            if (employee.isPresent()) {
+                List<StatusLog> logs = employee.get().getStatusLogs();
+                return APIResultSet.ok(String.format("Get recent status log of %s: found", username),
+                        logs.stream().map(statusLogMapper::toDTO).toList());
+            } else {
+                return APIResultSet.notFound(String.format("Recent status of %s log not found",username));
+            }
+
         } catch (Exception e) {
             log.error("Lỗi lấy user với status log ", e);
             return APIResultSet.internalError("Lỗi lấy user với status log ");
@@ -229,8 +237,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                 newLog = new StatusLog();
                 latestLog = statusLogRepository.findFirstByEmployee_UsernameOrderByTimestampDesc(username);
                 //checking if duplicate status, then skip
-                if (latestLog.isPresent() && !latestLog.get().getStatus().getName().equalsIgnoreCase(logDTO.getStatus())) {
-                    newLog.setStatus(cache.getStatus(logDTO.getStatus()));
+                if (latestLog.isPresent() && latestLog.get().getStatus().getId() != (logDTO.getStatus().getId())) {
+                    newLog.setStatus(cache.getStatus(logDTO.getStatus().getId()));
                     newLog.setEmployee(employee);
                     statusLogRepository.save(newLog);
                     log.info(String.format("Cập nhật status của %s thành công", username));
@@ -239,7 +247,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                     return APIResultSet.badRequest("Trùng status, không cập nhật");
                 }
             } else {
-                newLog = null;
                 return APIResultSet.ok(String.format("Lỗi username: %s không tồn tại", username), null);
             }
         } catch (Exception e) {

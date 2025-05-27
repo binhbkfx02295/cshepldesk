@@ -12,13 +12,6 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StatusLogDTO {
-    private String username;
-    private String status;
+    private StatusDTO status;
     private Timestamp from;
-
-    public StatusLog toEntity() {
-        StatusLog log = new StatusLog();
-        log.setStatus(new Status(0,status, null));
-        return log;
-    }
 }
