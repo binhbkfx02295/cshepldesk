@@ -2,18 +2,18 @@ package com.binhbkfx02295.cshelpdesk.webhook.service;
 
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeMapper;
+import com.binhbkfx02295.cshelpdesk.facebookgraphapi.dto.FacebookUserProfileDTO;
+import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.config.FacebookAPIProperties;
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.service.FacebookGraphAPIService;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDetailDTO;
-import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserFetchDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.mapper.FacebookUserMapper;
 import com.binhbkfx02295.cshelpdesk.facebookuser.service.FacebookUserService;
+import com.binhbkfx02295.cshelpdesk.message.dto.AttachmentDTO;
 import com.binhbkfx02295.cshelpdesk.message.service.MessageServiceImpl;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.mapper.ProgressStatusMapper;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDetailDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.service.TicketServiceImpl;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import com.binhbkfx02295.cshelpdesk.message.dto.MessageDTO;
@@ -21,7 +21,6 @@ import com.binhbkfx02295.cshelpdesk.webhook.dto.WebHookEventDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -44,23 +43,63 @@ public class WebHookServiceImpl implements WebHookService {
     @Override
     public void handleWebhook(WebHookEventDTO event) {
         for (WebHookEventDTO.Entry entry : event.getEntry()) {
+
             for (WebHookEventDTO.Messaging messaging : entry.getMessaging()) {
 
                 //extract json fields
                 String senderId = messaging.getSender().getId();
-                String recipientId = messaging.getRecipient().getId();
-                String messageText = messaging.getMessage().getText();
-                Timestamp timestamp = new Timestamp(messaging.getTimestamp());
+                String recipient = messaging.getRecipient().getId();
+                boolean isSenderEmployee = senderId.equalsIgnoreCase(properties.getPageId());
+                FacebookUserDetailDTO facebookUser;
+                MessageDTO messageDTO;
 
-                //get or create new FacbookUser
-                FacebookUserDetailDTO facebookUser = senderId.equalsIgnoreCase(properties.getPageId()) ?
-                        getOrCreateFacebookUser(recipientId) : getOrCreateFacebookUser(senderId);
+                //if sender is employee => get existing ticket, if any -> add message
+                if (isSenderEmployee) {
+                    //TODO: get active ticket
+                    APIResultSet<TicketDetailDTO> result = ticketService.findExistingTicket(recipient);
 
-                //get pending or create new
-                TicketDetailDTO ticket = getOrCreateActiveTicket(facebookUser);
+                    if (result.isSuccess()) {
+                        //TODO: handle when ticket exists
+                        TicketDetailDTO ticket = result.getData();
+                        if (ticket.getAssignee() == null) {
+                            //TODO: try assign ticket
+                            autoAssign(ticket);
+                        }
+                        //TODO: try add message
+                        messageDTO = convertToMessageDTO(messaging);
+                        messageDTO.setTicketId(ticket.getId());
+                        ticket.getMessages().add(messageDTO);
+                        ticketService.updateTicket(ticket.getId(), ticket);
 
-                //add message
-                addMessageToTicket(ticket.getId(), senderId.equalsIgnoreCase(properties.getPageId()), messageText, timestamp);
+                    }
+
+                } else { // if sender is customer, get existing ticket, if any-> add message, else create.
+
+                    //TODO: get active ticket
+                    APIResultSet<TicketDetailDTO> result = ticketService.findExistingTicket(senderId);
+                    TicketDetailDTO ticket;
+                    if (result.isSuccess() && result.getData().getProgressStatus().getId() != 3) {
+                        ticket = result.getData();
+                    } else {
+                        //if no existign ticket, create, assign, add message -> save ticket to database;
+                        //TODO: create new
+                        facebookUser = getOrCreateFacebookUser(senderId);
+                        ticket = new TicketDetailDTO();
+                        ticket.setProgressStatus(progressStatusMapper.toDTO(cache.getProgress(1)));
+                        ticket.setFacebookUser(facebookUserMapper.toDTO(facebookUser));
+                        if (!autoAssign(ticket)) {
+                            //TODO: if no avaiable assignee, send facebook message to customer.
+                            //No assignee avaiable, send inform customer
+                            facebookGraphAPIService.notifyNoAssignee(senderId);
+                        }
+                        ticket = ticketService.createTicket(ticket).getData();
+                    }
+                    //TODO: add message;
+                    messageDTO = convertToMessageDTO(messaging);
+                    messageDTO.setTicketId(ticket.getId());
+                    log.info("test {}", messageDTO);
+                    messageService.addMessage(messageDTO);
+                }
             }
         }
     }
@@ -75,48 +114,41 @@ public class WebHookServiceImpl implements WebHookService {
         if (existing.getHttpCode() == 200) return existing.getData();
 
         //fetch if not exists
-        FacebookUserFetchDTO profile = facebookGraphAPIService.getUserProfile(facebookId);
-
+        FacebookUserProfileDTO profile = facebookGraphAPIService.getUserProfile(facebookId);
         //save after fetch
         APIResultSet<FacebookUserDetailDTO> result = facebookUserService.save(profile);
         return result.getData();
     }
 
-    private TicketDetailDTO getOrCreateActiveTicket(FacebookUserDetailDTO facebookUser) {
-        //retrieve latest ticket
-        APIResultSet<TicketDetailDTO> latestResult = ticketService.findLatestByFacebookUserId(facebookUser.getFacebookId());
 
-        //if ticket pending.. skip
-        if (latestResult.getHttpCode() != 200 || latestResult.getData() == null || latestResult.getData().getProgressStatus().getCode().equalsIgnoreCase("resolved")) {
-
-            //create new ticket
-            TicketDetailDTO dto = new TicketDetailDTO();
-            dto.setProgressStatus(progressStatusMapper.toDTO(cache.getProgress(1)));
-            dto.setFacebookUser(facebookUserMapper.toDTO(facebookUser));
-
-            //TODO: implement auto assign
-            autoAssign(dto);
-            return ticketService.createTicket(dto).getData();
-        }
-        return latestResult.getData();
-    }
-
-    private void addMessageToTicket(int ticketId, boolean senderEmployee, String text, Timestamp timestamp) {
+    private MessageDTO convertToMessageDTO(WebHookEventDTO.Messaging messaging) {
         MessageDTO message = new MessageDTO();
-        message.setTicketId(ticketId);
-        message.setText(text);
-        message.setSenderEmployee(senderEmployee);
-        message.setTimestamp(timestamp);
+        message.setText(messaging.getMessage().getText());
+        message.setSenderEmployee(messaging.getSender().getId().equalsIgnoreCase(properties.getPageId()));
+        message.setTimestamp(new Timestamp(messaging.getTimestamp()));
 
-        messageService.addMessage(message);
+        if (messaging.getMessage().getAttachments() != null) {
+            for (WebHookEventDTO.Attachment attachment: messaging.getMessage().getAttachments()) {
+                AttachmentDTO attachment1 = new AttachmentDTO();
+                attachment1.setType(attachment.getType());
+                attachment1.setUrl(attachment.getPayload().getUrl());
+                attachment1.setStickerId(attachment.getPayload().getStickerId());
+                message.getAttachments().add(attachment1);
+            }
+        }
+        return message;
     }
 
-    private void autoAssign(TicketDetailDTO ticket) {
+    private boolean autoAssign(TicketDetailDTO ticket) {
         //get employees with role staff and is online
         List<Employee> employeeList = cache.getAllEmployees().values().stream().filter(employee -> {
             return employee.getStatusLogs().get(employee.getStatusLogs().size()-1).getStatus().getId() == 1 &&
             employee.getUserGroup().getName().equalsIgnoreCase("staff");
         }).toList();
+
+        if (employeeList.isEmpty()) {
+            return false;
+        }
 
         //Least recently used first
         Employee least = employeeList.get(0);
@@ -135,5 +167,6 @@ public class WebHookServiceImpl implements WebHookService {
 
         ticket.setAssignee(employeeMapper.toDTO(least));
         log.info("Ticket: auto assigned OK, username: {}", least.getUsername());
+        return true;
     }
 }

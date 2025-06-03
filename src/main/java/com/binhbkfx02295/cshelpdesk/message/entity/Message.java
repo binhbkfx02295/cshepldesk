@@ -5,10 +5,10 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
-
+import java.util.ArrayList;
+import java.util.List;
 @Entity
 @Data
 @NoArgsConstructor
@@ -25,6 +25,10 @@ public class Message {
     @ManyToOne
     private Ticket ticket;
 
-    private String text;
+    @Column(length = 1024)
+    private String text = "";
+
+    @OneToMany(mappedBy = "message", orphanRemoval = true, cascade = CascadeType.ALL)
+    private List<Attachment> attachments = new ArrayList<>();
 
 }

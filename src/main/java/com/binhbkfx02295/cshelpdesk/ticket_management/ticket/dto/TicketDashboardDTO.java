@@ -20,5 +20,6 @@ public class TicketDashboardDTO {
     private EmployeeTicketDTO assignee;
     private FacebookUserListDTO facebookUser;
     private ProgressStatusDTO progressStatus;
+    private boolean hasNewMessage;
 
 }

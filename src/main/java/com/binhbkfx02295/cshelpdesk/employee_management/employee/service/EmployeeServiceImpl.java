@@ -15,14 +15,22 @@ import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroup;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupRepository;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.EmployeeRepository;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.mapper.TicketMapper;
+import com.binhbkfx02295.cshelpdesk.websocket.event.EmployeeEvent;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +45,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final MasterDataCache cache;
     private final EmployeeMapper mapper;
     private final StatusLogMapper statusLogMapper;
+    private final ApplicationEventPublisher publisher;
+    private final TicketMapper ticketMapper;
+    private final EntityManager entityManager;
 
     @Override
     public APIResultSet<EmployeeDTO> createUser(EmployeeDTO employeeDTO) {
@@ -68,6 +79,8 @@ public class EmployeeServiceImpl implements EmployeeService {
             user.getStatusLogs().add(newLog);
 
             user = employeeRepository.save(user);
+            entityManager.flush();
+            entityManager.clear();
             cache.updateEmployee(user);
             APIResultSet<EmployeeDTO> result = APIResultSet.ok(String.format("User %s created", user.getUsername()), mapper.toDTO(user));
             log.info(result.getMessage());
@@ -97,8 +110,12 @@ public class EmployeeServiceImpl implements EmployeeService {
             user.setName(employeeDTO.getName());
             user.setDescription(employeeDTO.getDescription());
             user.setUserGroup(groupOpt.get());
+            user.setEmail(employeeDTO.getEmail());
+            user.setPhone(employeeDTO.getPhone());
 
             Employee saved = employeeRepository.save(user);
+            entityManager.flush();
+            entityManager.clear();
             cache.updateEmployee(saved);
             log.info(String.format("Update employee %s: success", employeeDTO.getUsername()));
             return APIResultSet.ok("User updated", mapper.toDTO(saved));
@@ -172,9 +189,19 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public APIResultSet<List<EmployeeDashboardDTO>> getForDashboard() {
         try {
-            List<Employee> list = employeeRepository.findAllWithTop1EmployeeStatusLog();
-            APIResultSet<List<EmployeeDashboardDTO>> result = APIResultSet.ok("Lay nhan vien dashboard thanh cong", list.stream().map(mapper::toDashboardDTO).toList());
+            List<Ticket> tickets = cache.getDashboardTickets().values().stream().toList();
+            Map<String, EmployeeDashboardDTO> list = cache.getAllEmployees().values().stream().map(
+                    mapper::toDashboardDTO).collect(Collectors.toMap(EmployeeDashboardDTO::getUsername, Function.identity()));
+            for (Ticket ticket: tickets) {
+                if (ticket.getAssignee() != null) {
+                    EmployeeDashboardDTO target = list.get(ticket.getAssignee().getUsername());
+                    if (ticket.getProgressStatus().getId() != 3) {
+                        target.setTicketCount(target.getTicketCount() + 1);
+                    }
+                }
 
+            }
+            APIResultSet<List<EmployeeDashboardDTO>> result = APIResultSet.ok("Lay nhan vien dashboard thanh cong", list.values().stream().toList());
             log.info(result.getMessage());
 
             return result;
@@ -227,29 +254,37 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public APIResultSet<Void> updateOnlineStatus(String username, StatusLogDTO logDTO) {
+    public APIResultSet<Void> updateOnlineStatus(StatusLogDTO logDTO) {
 
         try {
-            Employee employee = cache.getEmployee(username);
-            StatusLog newLog;
-            Optional<StatusLog> latestLog;
-            if (employee != null) {
-                newLog = new StatusLog();
-                latestLog = statusLogRepository.findFirstByEmployee_UsernameOrderByTimestampDesc(username);
+            Optional<Employee> employeeOtp = employeeRepository.findWithTop1StatusLog(logDTO.getUsername());
+            StatusLog latestLog;
+            if (employeeOtp.isPresent()) {
+                Employee employee = employeeOtp.get();
                 //checking if duplicate status, then skip
-                if (latestLog.isPresent() && latestLog.get().getStatus().getId() != (logDTO.getStatus().getId())) {
-                    newLog.setStatus(cache.getStatus(logDTO.getStatus().getId()));
-                    newLog.setEmployee(employee);
-                    statusLogRepository.save(newLog);
-                    log.info(String.format("Cập nhật status của %s thành công", username));
-                    return APIResultSet.ok(String.format("Cập nhật status của %s thành công", username), null);
+                latestLog = employee.getStatusLogs().get(0);
+                if (latestLog.getStatus().getId() != (logDTO.getStatus().getId())) {
+                    StatusLog temp = statusLogMapper.toEntity(logDTO);
+                    employee.getStatusLogs().add(temp);
+                    employee = employeeRepository.save(employee);
+                    entityManager.flush();
+                    entityManager.clear();
+                    log.info(String.format("Cập nhật status của %s thành công", logDTO.getUsername()));
+                    log.info("truoc khi cap nhat cache: {}", mapper.toDashboardDTO(cache.getEmployee(logDTO.getUsername())));
+                    cache.updateAllEmployees();
+                    log.info("sau khi cap nhat cache: {}", mapper.toDashboardDTO(cache.getEmployee(logDTO.getUsername())));
+                    //TODO: broad cast event
+                    publisher.publishEvent(new EmployeeEvent(EmployeeEvent.Action.UPDATED, mapper.toDTO(cache.getEmployee(logDTO.getUsername()))));
+
+                    return APIResultSet.ok(String.format("Cập nhật status của %s thành công", logDTO.getUsername()), null);
                 } else {
                     return APIResultSet.badRequest("Trùng status, không cập nhật");
                 }
             } else {
-                return APIResultSet.ok(String.format("Lỗi username: %s không tồn tại", username), null);
+                return APIResultSet.ok(String.format("Lỗi username: %s không tồn tại", logDTO.getUsername()), null);
             }
         } catch (Exception e) {
+            log.info("Loi cap nhat online status", e);
             return APIResultSet.internalError();
         }
     }
@@ -277,6 +312,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     public APIResultSet<Void> deleteByUsername(String username) {
         try {
             employeeRepository.deleteByUsername(username);
+            entityManager.flush();
+            entityManager.clear();
             cache.getAllEmployees().remove(username);
             APIResultSet<Void> result = APIResultSet.ok(String.format("Xoa user %s thanh cong", username), null);
             log.info(result.getMessage());

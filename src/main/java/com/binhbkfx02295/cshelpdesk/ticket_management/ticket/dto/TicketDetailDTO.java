@@ -2,6 +2,8 @@ package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto;
 
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserListDTO;
+import com.binhbkfx02295.cshelpdesk.message.dto.MessageDTO;
+import com.binhbkfx02295.cshelpdesk.message.entity.Message;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.dto.CategoryDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.dto.EmotionDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.dto.NoteDTO;
@@ -30,6 +32,7 @@ public class TicketDetailDTO {
     private EmotionDTO emotion;
     private SatisfactionDTO satisfaction;
     private FacebookUserListDTO facebookUser;
+    private List<MessageDTO> messages;
     private List<TagDTO> tags;
     private List<NoteDTO> notes;
 }

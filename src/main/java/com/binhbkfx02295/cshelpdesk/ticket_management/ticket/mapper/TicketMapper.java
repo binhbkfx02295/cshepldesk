@@ -196,6 +196,9 @@ public class TicketMapper {
     }
 
     public TicketDashboardDTO toDashboardDTO(Ticket entity) {
+        if (entity == null) {
+            return null;
+        }
         TicketDashboardDTO dto = new TicketDashboardDTO();
         dto.setId(entity.getId());
         dto.setCreatedAt(entity.getCreatedAt());
@@ -203,6 +206,9 @@ public class TicketMapper {
         dto.setFacebookUser(entity.getFacebookUser() != null ? facebookUserMapper.toListDTO(entity.getFacebookUser()) : null);
         dto.setProgressStatus(progressStatusMapper.toDTO(entity.getProgressStatus()));
         dto.setTitle(entity.getTitle());
+        if (entity.getMessages() != null && !entity.getMessages().isEmpty() && entity.getProgressStatus().getId() != 3) {
+            dto.setHasNewMessage(!entity.getMessages().get(0).isSenderEmployee());
+        }
         return dto;
     }
 

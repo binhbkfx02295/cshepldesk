@@ -19,8 +19,12 @@ import com.binhbkfx02295.cshelpdesk.employee_management.employee.service.Employe
 import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupDTO;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.websocket.dto.NotificationDTO;
+import com.binhbkfx02295.cshelpdesk.websocket.event.EmployeeEvent;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -41,6 +45,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final MessageSource messageSource;
     private final MasterDataCache cache;
     private final EmployeeMapper employeeMapper;
+    private final EntityManager entityManager;
+    private final ApplicationEventPublisher publisher;
 
     @Override
     @Transactional
@@ -119,6 +125,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         });
         log.info(String.format("Login: saved new status log for %s", employee.getUsername()));
         employeeRepository.save(employee);
+        entityManager.flush();
+        entityManager.clear();
+        cache.updateAllEmployees();
         return APIResultSet.ok(messageSource.getMessage("auth.login.success", null, locale), response);
     }
 
@@ -128,7 +137,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String username = employeeDTO.getUsername();
         log.info("finding logss for {}", username);
         Optional<Employee> employeeOpt = employeeRepository.findWithAllStatusLog(employeeDTO.getUsername());
-//        Optional<Employee> employeeOpt = employeeRepository.findByUsername(username);
 
         if (employeeOpt.isPresent()) {
             Employee employee = employeeOpt.get();
@@ -142,10 +150,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 employee.getStatusLogs().add(newLog);
                 employeeRepository.saveAndFlush(employee);
                 log.info(String.format("%s log new status: %s", employeeDTO.getUsername(), status.getName()));
+                entityManager.flush();
+                entityManager.clear();
+                //TODO: phong event
+                cache.updateAllEmployees();
 
+                publisher.publishEvent(new EmployeeEvent(EmployeeEvent.Action.UPDATED,
+                        employeeMapper.toDTO(cache.getEmployee(employee.getUsername()))));
             }
         }
         log.info(String.format("%s logout success ", employeeDTO.getUsername()));
+
         return APIResultSet.ok(messageSource.getMessage("auth.logout.success", null, locale), null);
     }
 

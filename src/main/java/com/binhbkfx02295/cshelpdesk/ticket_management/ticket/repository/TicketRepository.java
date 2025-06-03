@@ -29,22 +29,33 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer>, JpaSpe
 
     @Query("SELECT DISTINCT t " +
             "FROM Ticket t " +
+            "LEFT JOIN FETCH t.assignee u " +
+            "LEFT JOIN FETCH u.userGroup " +
             "LEFT JOIN FETCH t.notes " +
             "WHERE t.id = :id")
     @EntityGraph(attributePaths = {
-            "assignee", "facebookUser", "emotion", "satisfaction",
+            "facebookUser", "emotion", "satisfaction",
             "progressStatus", "facebookUser", "category",
             "firstResponseRate", "overallResponseRate", "resolutionRate"
     })
     Optional<Ticket> findByIdWithDetails(@Param("id") int id);
 
     @Query("""
-    SELECT t FROM Ticket t
-    WHERE t.createdAt BETWEEN :startOfDay AND :endOfDay
-       OR t.progressStatus.id <> 3
+    SELECT t FROM Ticket t 
+    LEFT JOIN FETCH t.assignee u
+    LEFT JOIN FETCH u.userGroup 
+    LEFT JOIN FETCH t.messages m 
+    WHERE 
+        (m.timestamp = ( 
+            SELECT MAX(m2.timestamp) 
+            FROM Message m2 
+            WHERE m2.ticket = t 
+        ) OR m IS NULL) 
+        AND (t.createdAt BETWEEN :startOfDay AND :endOfDay 
+        OR t.progressStatus.id <> 3) 
 """)
     @EntityGraph(attributePaths = {
-            "assignee", "facebookUser", "progressStatus", "satisfaction",
+            "facebookUser", "progressStatus", "satisfaction",
             "progressStatus", "facebookUser", "category"
     })
     List<Ticket> findOpeningOrToday(@Param("startOfDay") Timestamp startOfDay,

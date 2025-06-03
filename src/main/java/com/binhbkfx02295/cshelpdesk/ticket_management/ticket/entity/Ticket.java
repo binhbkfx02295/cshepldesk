@@ -73,6 +73,7 @@ public class Ticket {
     @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     private List<Note> notes;
 
+
     @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     private List<Message> messages;
 

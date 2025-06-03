@@ -4,6 +4,7 @@ import com.binhbkfx02295.cshelpdesk.employee_management.authentication.dto.Login
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.*;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.service.EmployeeServiceImpl;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupService;
+import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.infrastructure.security.auth.UserPrincipal;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResponseEntityHelper;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
@@ -23,6 +24,7 @@ public class EmployeeController {
 
     private final EmployeeServiceImpl employeeService;
     private final UserGroupService userGroupService;
+    private final MasterDataCache cache;
 
 
     @PostMapping
@@ -36,8 +38,8 @@ public class EmployeeController {
         return APIResponseEntityHelper.from(APIResultSet.ok("ok", loginDTO));
     }
 
-    @GetMapping("/get-user")
-    public ResponseEntity<APIResultSet<EmployeeDTO>> getUserByUsername(@RequestParam(value = "user", required = false) String username) {
+    @GetMapping("")
+    public ResponseEntity<APIResultSet<EmployeeDTO>> getUserByUsername(@RequestParam(value = "username", required = false) String username) {
         return APIResponseEntityHelper.from(employeeService.getUserByUsername(username));
     }
 
@@ -94,11 +96,19 @@ public class EmployeeController {
         return APIResponseEntityHelper.from(employeeService.getLatestOnlineStatus(user.getUsername()));
     }
 
+    @GetMapping("/me/update-cache")
+    public ResponseEntity<APIResultSet<StatusLogDTO>> updatecache(
+            @AuthenticationPrincipal UserPrincipal user) {
+        cache.updateAllEmployees();
+        return APIResponseEntityHelper.from(employeeService.getLatestOnlineStatus(user.getUsername()));
+    }
+
     @PutMapping("/me/online-status")
     public ResponseEntity<APIResultSet<Void>> updateOnlineStatus(
             @AuthenticationPrincipal UserPrincipal user,
             @RequestBody StatusLogDTO logDTO ) {
-        return APIResponseEntityHelper.from(employeeService.updateOnlineStatus(user.getUsername(), logDTO));
+        logDTO.setUsername(user.getUsername());
+        return APIResponseEntityHelper.from(employeeService.updateOnlineStatus(logDTO));
     }
 
 }

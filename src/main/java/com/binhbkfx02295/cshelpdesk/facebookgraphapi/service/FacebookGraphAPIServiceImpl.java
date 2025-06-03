@@ -2,16 +2,23 @@ package com.binhbkfx02295.cshelpdesk.facebookgraphapi.service;
 
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.config.FacebookAPIProperties;
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.dto.FacebookTokenResponseDTO;
+import com.binhbkfx02295.cshelpdesk.facebookgraphapi.dto.FacebookUserProfileDTO;
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.entity.FacebookToken;
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.repository.FacebookTokenRepository;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserFetchDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -22,6 +29,7 @@ public class FacebookGraphAPIServiceImpl implements FacebookGraphAPIService {
     private final FacebookTokenRepository tokenRepository;
     private final FacebookAPIProperties facebookApiProperties;
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
     @Override
     public FacebookToken saveShortLivedToken(String shortLivedToken) {
@@ -87,24 +95,56 @@ public class FacebookGraphAPIServiceImpl implements FacebookGraphAPIService {
     }
 
     @Override
-    public FacebookUserFetchDTO getUserProfile(String userId) {
+    public FacebookUserProfileDTO getUserProfile(String userId) {
         log.info("📥 Đang lấy thông tin người dùng Facebook với ID: {}", userId);
 
         String token = getValidAccessToken();
         String url = buildProfileUrl(userId, token);
 
         try {
-            return restTemplate.getForObject(url, FacebookUserFetchDTO.class);
-        } catch (Exception ex) {
-            log.warn("⚠️ Gặp lỗi khi gọi API lấy profile: {}", ex.getMessage());
-            if (ex.getMessage().contains("code\":190")) {
+            return restTemplate.getForObject(url, FacebookUserProfileDTO.class);
+        } catch (Exception e) {
+            log.warn("⚠️ Gặp lỗi khi gọi API lấy profile: {}", e.getMessage());
+            if (e.getMessage().contains("code\":190")) {
                 log.info("🔄 Token có thể đã hết hạn. Đang làm mới token và thử lại...");
                 String newToken = saveShortLivedToken(token).getLongLivedAccessToken();
                 String retryUrl = buildProfileUrl(userId, newToken);
-                return restTemplate.getForObject(retryUrl, FacebookUserFetchDTO.class);
+                return restTemplate.getForObject(retryUrl, FacebookUserProfileDTO.class);
             }
-            log.error("❌ Lỗi không xử lý được khi lấy profile từ Facebook", ex);
-            throw ex;
+            log.error("❌ Lỗi không xử lý được khi lấy profile từ Facebook", e);
+            return null;
+        }
+    }
+
+    @Override
+    public void notifyNoAssignee(String senderId) {
+        log.info("🔔 Đang gửi thông báo cho khách hàng (senderId={}): không có nhân viên hỗ trợ.", senderId);
+
+        String token = getValidAccessToken();
+        String url = String.format("https://graph.facebook.com/v19.0/me/messages?access_token=%s", token);
+
+        // 1. Tạo HashMap cho recipient và message
+        Map<String, Object> payload = new HashMap<>();
+        Map<String, String> recipient = new HashMap<>();
+        recipient.put("id", senderId);
+        Map<String, String> message = new HashMap<>();
+        message.put("text", "Hi, hiện chưa có nhân viên hỗ trợ ngay lúc này. Chúng tôi sẽ liên hệ bạn sớm nhất có thể. Xin cảm ơn!");
+        payload.put("recipient", recipient);
+        payload.put("message", message);
+
+        try {
+            // 2. Chuyển HashMap thành JSON string
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+
+            // 3. Gửi POST request
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<String> request = new HttpEntity<>(jsonPayload, headers);
+
+            String response = restTemplate.postForObject(url, request, String.class);
+            log.info("✅ Đã gửi thông báo cho khách hàng thành công. Response: {}", response);
+        } catch (Exception e) {
+            log.error("❌ Gửi thông báo cho khách hàng thất bại", e);
         }
     }
 

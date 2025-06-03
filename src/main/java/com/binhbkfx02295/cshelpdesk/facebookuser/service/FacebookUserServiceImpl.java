@@ -1,5 +1,6 @@
 package com.binhbkfx02295.cshelpdesk.facebookuser.service;
 
+import com.binhbkfx02295.cshelpdesk.facebookgraphapi.dto.FacebookUserProfileDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.*;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.facebookuser.mapper.FacebookUserMapper;
@@ -40,6 +41,23 @@ public class FacebookUserServiceImpl implements FacebookUserService {
 
     @Override
     public APIResultSet<FacebookUserDetailDTO> save(FacebookUserFetchDTO userDTO) {
+        try {
+            FacebookUser user = facebookUserRepository.save(mapper.toEntity(userDTO));
+
+            if (user.getCreatedAt() == null) {
+                user.setCreatedAt(Instant.now());
+            }
+            APIResultSet<FacebookUserDetailDTO> result = APIResultSet.ok(MSG_SUCCESS, mapper.toDetailDTO(user));
+            log.info(result.getMessage());
+            return result;
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return APIResultSet.internalError(e.getMessage());
+        }
+    }
+
+    @Override
+    public APIResultSet<FacebookUserDetailDTO> save(FacebookUserProfileDTO userDTO) {
         try {
             FacebookUser user = facebookUserRepository.save(mapper.toEntity(userDTO));
 
@@ -169,6 +187,8 @@ public class FacebookUserServiceImpl implements FacebookUserService {
             return APIResultSet.internalError("Loi Xoa nhom id");
         }
     }
+
+
 
     public List<FacebookUserExportDTO> exportSearchUsers(FacebookUserSearchCriteria criteria, Pageable pageable) {
         try {

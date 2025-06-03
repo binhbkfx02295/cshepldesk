@@ -12,10 +12,10 @@ public class TicketSearchCriteria {
     private String facebookId;
     private String title;
     private String tag;
-    private String progressStatus;
+    private int progressStatus;
     private Long fromTime;
     private Long toTime;
-    private String category;
-    private String emotion;
-    private String satisfaction;
+    private int category;
+    private int emotion;
+    private int satisfaction;
 }

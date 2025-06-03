@@ -18,7 +18,7 @@ public interface EmployeeService {
     APIResultSet<List<EmployeeDashboardDTO>> getForDashboard();
     APIResultSet<StatusLogDTO> getLatestOnlineStatus(String username);
     APIResultSet<List<StatusLogDTO>> findWithAllLogs(EmployeeDTO employeeDTO);
-    APIResultSet<Void> updateOnlineStatus(String username, StatusLogDTO logDTO);
+    APIResultSet<Void> updateOnlineStatus(StatusLogDTO logDTO);
     APIResultSet<List<StatusDTO>> getAllOnlineStatus();
     APIResultSet<Void> deleteByUsername(String testaccount);
 }

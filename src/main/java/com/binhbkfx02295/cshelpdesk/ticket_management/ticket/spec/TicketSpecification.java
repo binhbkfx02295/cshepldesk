@@ -24,8 +24,8 @@ public class TicketSpecification  {
             if (criteria.getTitle() != null) {
                 predicates.add(cb.like(cb.lower(root.get("title")), "%" + criteria.getTitle().toLowerCase() + "%"));
             }
-            if (criteria.getProgressStatus() != null) {
-                predicates.add(cb.equal(root.get("progressStatus").get("code"), criteria.getProgressStatus()));
+            if (criteria.getProgressStatus() != 0) {
+                predicates.add(cb.equal(root.get("progressStatus").get("id"), criteria.getProgressStatus()));
             }
             if (criteria.getFromTime() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), criteria.getFromTime()));
@@ -33,14 +33,14 @@ public class TicketSpecification  {
             if (criteria.getToTime() != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), criteria.getToTime()));
             }
-            if (criteria.getCategory() != null) {
-                predicates.add(cb.equal(root.get("category").get("code"), criteria.getCategory()));
+            if (criteria.getCategory() != 0) {
+                predicates.add(cb.equal(root.get("category").get("id"), criteria.getCategory()));
             }
-            if (criteria.getEmotion() != null) {
-                predicates.add(cb.equal(root.get("emotion").get("code"), criteria.getEmotion()));
+            if (criteria.getEmotion() != 0) {
+                predicates.add(cb.equal(root.get("emotion").get("id"), criteria.getEmotion()));
             }
-            if (criteria.getSatisfaction() != null) {
-                predicates.add(cb.equal(root.get("satisfaction").get("code"), criteria.getSatisfaction()));
+            if (criteria.getSatisfaction() != 0) {
+                predicates.add(cb.equal(root.get("satisfaction").get("id"), criteria.getSatisfaction()));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

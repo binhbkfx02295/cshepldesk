@@ -56,17 +56,17 @@ public abstract class BaseGPTModelAdapter implements GPTModelAdapter {
         sb.append("Bạn là chuyên gia đánh giá CSKH, hãy phân tích hội thoại giữa Nhân viên(1) và Khách hàng(0) và trích xuất:\n");
 
         List<Category> categories = masterDataCache.getAllCategories().values().stream().toList();
-        sb.append("Category (id:name): (");
+        sb.append("- Category (id:name): (");
         sb.append(categories.stream().map(c -> c.getId() + ":" + c.getName()).collect(Collectors.joining(",")));
         sb.append(")\n");
 
         List<Emotion> emotions = masterDataCache.getAllEmotions().values().stream().toList();
-        sb.append("Emotion (id:name): (");
+        sb.append("- Emotion (id:name): (");
         sb.append(emotions.stream().map(e -> e.getId() + ":" + e.getName()).collect(Collectors.joining(",")));
         sb.append(")\n");
 
         List<Satisfaction> satisfactions = masterDataCache.getAllSatisfactions().values().stream().toList();
-        sb.append("Satisfaction (id:name): (");
+        sb.append("- Satisfaction (id:name): (");
         sb.append(satisfactions.stream().map(s -> s.getId() + ":" + s.getName()).collect(Collectors.joining(",")));
         sb.append(")\n");
 
@@ -78,7 +78,10 @@ public abstract class BaseGPTModelAdapter implements GPTModelAdapter {
                     .append("\n");
         }
         sb.append("\n\n");
-        sb.append("Yêu cầu: xác định chính xác theo nội dung được cho, nếu không xác định được, chọn Trung Lập hoặc Không xác định. Chỉ trả về 1 dòng JSON: {\"categoryId\":<id>,\"emotionId\":<id>,\"satisfactionId\":<id>}");
+        sb.append("Yêu cầu: ");
+        sb.append("- Xác định chính xác theo vào các dữ kiện được cho, nếu không xác định được, chọn Trung Lập hoặc Khác. \n");
+        sb.append("- Nếu đọc xong nội dung trò chuyện mà không xác định được nội dung tổng quan thì không được giả định hay đoán mò nội dung cuộc trò chuyện, chỉ cần chọn chọn Trung Lập hoặc Khác.\n");
+        sb.append("- Chỉ trả về 1 dòng JSON: {\"categoryId\":<id>,\"emotionId\":<id>,\"satisfactionId\":<id>}]\n");
         return sb.toString();
     }
 
