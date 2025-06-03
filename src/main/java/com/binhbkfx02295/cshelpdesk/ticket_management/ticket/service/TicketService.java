@@ -19,7 +19,7 @@ public interface TicketService {
     APIResultSet<Void> addTagToTicket(int ticketId, int hashtagId);
     APIResultSet<Void> removeTagFromTicket(int ticketId, int hashtagId);
     APIResultSet<PaginationResponse<TicketListDTO>> searchTickets(TicketSearchCriteria criteria, Pageable pageable);
-    APIResultSet<TicketDetailDTO> findLatestByFacebookUserId(String facebookId);
+    APIResultSet<TicketDetailDTO> findExistingTicket(String facebookId);
     APIResultSet<List<TicketListDTO>> findAllByFacebookUserId(String facebookId);
     APIResultSet<Void> addNoteToTicket(int ticketId, NoteDTO note);
     APIResultSet<Void> deleteNoteFromTicket(int ticketId, int noteId);

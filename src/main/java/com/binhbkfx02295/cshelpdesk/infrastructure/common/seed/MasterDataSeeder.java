@@ -73,9 +73,9 @@ public class MasterDataSeeder implements CommandLineRunner {
         seedCustomerEmotions();
         seedCustomerSatisfactions();
         seedCategory();
-        seedFacebookUsers(10);
-        seedTickets(250);
-        seedConversations(25);
+//        seedFacebookUsers(10);
+//        seedTickets(250);
+//        seedConversations(25);
         log.info("seeding done");
         cache.refresh();
     }
@@ -139,8 +139,8 @@ public class MasterDataSeeder implements CommandLineRunner {
         addCategoryIfMissing(category5);
 
         Category category6 = new Category();
-        category5.setCode("other");
-        category5.setName("Khác");
+        category6.setCode("other");
+        category6.setName("Khác");
         addCategoryIfMissing(category6);
     }
 

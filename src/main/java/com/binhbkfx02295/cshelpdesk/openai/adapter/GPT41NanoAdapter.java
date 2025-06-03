@@ -18,7 +18,7 @@ public class GPT41NanoAdapter extends BaseGPTModelAdapter {
     public GPT41NanoAdapter(ModelRegistryConfig config,
                             RestTemplate restTemplate,
                             ObjectMapper objectMapper,
-                            MasterDataCache masterDataCache, ModelRegistryConfig registry1) {
+                            MasterDataCache masterDataCache) {
         super(restTemplate, objectMapper, masterDataCache);
         this.modelSettings = config.getGpt41Nano();
     }

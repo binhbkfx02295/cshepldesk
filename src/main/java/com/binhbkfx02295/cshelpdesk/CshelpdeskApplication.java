@@ -6,10 +6,12 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.Locale;
 
 @SpringBootApplication
+@EnableScheduling
 public class CshelpdeskApplication {
 
 	public static void main(String[] args) {

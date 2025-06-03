@@ -14,4 +14,5 @@ import java.sql.Timestamp;
 public class StatusLogDTO {
     private StatusDTO status;
     private Timestamp from;
+    private String username;
 }

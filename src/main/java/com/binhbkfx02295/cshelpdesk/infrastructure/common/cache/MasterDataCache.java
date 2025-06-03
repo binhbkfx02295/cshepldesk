@@ -4,10 +4,8 @@ import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Status;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.EmployeeRepository;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.StatusRepository;
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.service.EmployeeServiceImpl;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroup;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupRepository;
-import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import com.binhbkfx02295.cshelpdesk.message.entity.Message;
 import com.binhbkfx02295.cshelpdesk.message.repository.MessageRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
@@ -20,13 +18,11 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.repository.Sa
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.repository.ProgressStatusRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.entity.Tag;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.repository.TagRepository;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.repository.TicketRepository;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.service.TicketServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.apache.bcel.util.ClassLoaderRepository;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
@@ -68,6 +64,7 @@ public class MasterDataCache {
     private Map<Integer, Ticket> openingTickets = new HashMap<>();
     private Map<Integer, Message> messages = new HashMap<>();
 
+
     public void refresh() {
         updateAllProgressStatus();
         updateAllEmotions();
@@ -82,6 +79,11 @@ public class MasterDataCache {
         log.info("caching successfully");
     }
 
+    @Scheduled(cron = "0 0 7 * * *", zone = "Asia/Ho_Chi_Minh")
+    public void refreshDaily() {
+        refresh();
+    }
+
     public void updateOpeningTickets() {
         try {
             LocalDate today = LocalDate.now();
@@ -91,9 +93,9 @@ public class MasterDataCache {
             Timestamp endOfDay = Timestamp.valueOf(endDateTime);
             List<Ticket> result = ticketRepository.findOpeningOrToday(startOfDay, endOfDay);
             openingTickets = result.stream().collect(Collectors.toMap(Ticket::getId, Function.identity()));
+            log.info("Updated opening tickets cache successfully");
         } catch (Exception e) {
-            e.printStackTrace();
-
+            log.error("Error while updating opening tickets", e);
         }
     }
 
@@ -228,6 +230,10 @@ public class MasterDataCache {
         } catch (Exception e) {
             log.error(Arrays.toString(e.getStackTrace()));
         }
+    }
+
+    public Message getMessage(int id) {
+        return messages.getOrDefault(id, null);
     }
 
     public Map<Integer, Message> getAllMessages() {

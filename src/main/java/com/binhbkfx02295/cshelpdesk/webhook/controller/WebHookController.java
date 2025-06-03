@@ -44,8 +44,9 @@ public class WebHookController {
         log.info("[Webhook] Raw body:\n{}", rawBody);
 
         WebHookEventDTO event = new ObjectMapper().readValue(rawBody, WebHookEventDTO.class);
-        webhookService.handleWebhook(event);
         log.info("[Webhook] Raw payload received: {}", event);
+        webhookService.handleWebhook(event);
+
         return ResponseEntity.ok("EVENT_RECEIVED");
     }
 }

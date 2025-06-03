@@ -16,4 +16,5 @@ public class EmployeeDashboardDTO {
     private String description;
     private StatusLogDTO statusLog;
     private UserGroupDTO userGroup;
+    private int ticketCount;
 }

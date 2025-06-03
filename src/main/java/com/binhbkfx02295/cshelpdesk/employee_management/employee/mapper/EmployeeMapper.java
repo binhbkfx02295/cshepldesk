@@ -30,6 +30,7 @@ public class EmployeeMapper {
         EmployeeTicketDTO dto = new EmployeeTicketDTO();
         dto.setUsername(employee.getUsername());
         dto.setName(employee.getName());
+        dto.setGroup(userGroupMapper.toDTO(employee.getUserGroup()));
         return dto;
     }
     public Employee toEntity(EmployeeDTO employeedto)  {

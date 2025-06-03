@@ -7,15 +7,11 @@ import com.binhbkfx02295.cshelpdesk.message.entity.Message;
 import com.binhbkfx02295.cshelpdesk.message.service.MessageServiceImpl;
 import com.binhbkfx02295.cshelpdesk.openai.model.GPTResult;
 import com.binhbkfx02295.cshelpdesk.openai.service.GPTTicketService;
-import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.CategoryRepository;
-import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.repository.EmotionRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.entity.Note;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.dto.NoteDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.repository.NoteRepository;
-import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.repository.ProgressStatusRepository;
-import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisfaction;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.repository.SatisfactionRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.dto.TagDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.*;
@@ -26,13 +22,16 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.mapper.TicketMapper
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.spec.TicketSpecification;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.PaginationResponse;
+import com.binhbkfx02295.cshelpdesk.websocket.event.TicketEvent;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Time;
+import javax.swing.text.html.parser.Entity;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,9 +54,10 @@ public class TicketServiceImpl implements TicketService {
     private final MessageServiceImpl messageService;
     private final GPTTicketService gptService;
     private final CategoryRepository categoryRepository;
-    private final ProgressStatusRepository progressStatusRepository;
     private final EmotionRepository emotionRepository;
     private final SatisfactionRepository satisfactionRepository;
+    private final ApplicationEventPublisher publisher;
+    private final EntityManager entityManager;
 
 
     @Override
@@ -82,14 +82,21 @@ public class TicketServiceImpl implements TicketService {
                 ticket.setCreatedAt(new Timestamp(System.currentTimeMillis()));
             }
             Ticket saved = ticketRepository.save(ticket);
-            APIResultSet<TicketDetailDTO> result = APIResultSet.ok("Created successfully", mapper.toDetailDTO(saved));
+
             //update cache
-            cache.putTicket(saved);
+            entityManager.flush();
+            entityManager.clear();
+            cache.updateOpeningTickets();
+            log.info("Kiem tra id cua ticket saved: {}", saved.getId());
+            log.info("kiem tra map to detail DTO cua ticket: {}", mapper.toDetailDTO(cache.getTicket(saved.getId())));
+            APIResultSet<TicketDetailDTO> result = APIResultSet.ok("Created successfully", mapper.toDetailDTO(cache.getTicket(saved.getId())));
             log.info(result.getMessage());
+            //TODO: publish event
+            publisher.publishEvent(new TicketEvent(mapper.toDashboardDTO(cache.getTicket(saved.getId())), TicketEvent.Action.CREATED));
             return result;
 
         } catch (Exception e) {
-            log.info(e.getMessage());
+            log.info("Loi khi tao moi ticket", e);
             return APIResultSet.internalError();
         }
     }
@@ -114,6 +121,7 @@ public class TicketServiceImpl implements TicketService {
                     (existing.getFirstResponseRate() == null ||
                             existing.getOverallResponseRate() == null ||
                             existing.getResolutionRate() == null)) {
+                existing.setClosedAt(new Timestamp(System.currentTimeMillis()));
                 calculateKPI(existing);
 
                 //TODO: goi analyse service
@@ -131,21 +139,39 @@ public class TicketServiceImpl implements TicketService {
                 existing.setPrice(gptResult.getPrice());
                 existing.setGptModelUsed(gptResult.getGptModelused());
                 existing.setTokenUsed(gptResult.getTokenUsed());
-                existing.setClosedAt(new Timestamp(System.currentTimeMillis()));
+
             }
             existing.setLastUpdateAt(new Timestamp(System.currentTimeMillis()));
             Ticket saved = ticketRepository.save(existing);
-            APIResultSet<TicketDetailDTO> result = APIResultSet.ok("Updated successfully", mapper.toDetailDTO(saved));
             //update cache
-            log.info("debug: {}", saved.getId());
+            entityManager.flush();
+            entityManager.clear();
+            cache.updateOpeningTickets();
+            //TODO: publish event
+            if (saved.getProgressStatus().getId() == 3) {
+                Ticket temp = cache.getTicket(existing.getId());
+                if (temp == null) {
+                    temp = ticketRepository.findByIdWithDetails(existing.getId()).get();
+                }
 
-            if (cache.getTicket(existing.getId()) != null) {
-                cache.putTicket(saved);
+                publisher.publishEvent(new TicketEvent(mapper.toDashboardDTO(temp), TicketEvent.Action.CLOSED));
             }
+            else {
+                publisher.publishEvent(new TicketEvent(mapper.toDashboardDTO(cache.getTicket(existing.getId())), TicketEvent.Action.UPDATED));
+            }
+
+            Ticket temp = cache.getTicket(existing.getId());
+
+
+            if (temp == null) {
+                temp = ticketRepository.findByIdWithDetails(existing.getId()).get();
+            }
+            //return result
+            APIResultSet<TicketDetailDTO> result = APIResultSet.ok("Updated successfully", mapper.toDetailDTO(temp));
             log.info(result.getMessage());
             return result;
         } catch (Exception e) {
-            log.info("Loi khong the update Ticket {}", e.getStackTrace());
+            log.info("Loi khong the update Ticket ", e);
             return APIResultSet.internalError();
         }
     }
@@ -182,7 +208,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public APIResultSet<TicketDetailDTO> findLatestByFacebookUserId(String facebookId) {
+    public APIResultSet<TicketDetailDTO> findExistingTicket(String facebookId) {
         try {
             Optional<Ticket> ticket = ticketRepository
                     .findFirstByFacebookUser_FacebookIdOrderByCreatedAtDesc(facebookId);
@@ -344,7 +370,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private void calculateKPI(Ticket existing) {
-        existing.setClosedAt(new Timestamp(System.currentTimeMillis()));
+
         long firstResponseRate = 0;
         long overallResponseRate = 0;
         long resolutionRate = (existing.getClosedAt().getTime() - existing.getCreatedAt().getTime())/1000;

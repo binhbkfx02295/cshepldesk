@@ -8,8 +8,11 @@ import com.binhbkfx02295.cshelpdesk.message.repository.MessageRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.repository.TicketRepository;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
+import com.binhbkfx02295.cshelpdesk.websocket.event.MessageEvent;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,29 +30,19 @@ public class MessageServiceImpl implements MessageService {
     private final TicketRepository ticketRepository;
     private final MasterDataCache cache;
     private final MessageMapper mapper;
+    private final ApplicationEventPublisher publisher;
+    private final EntityManager entityManager;
 
     @Override
     public APIResultSet<MessageDTO> addMessage(MessageDTO messageDTO) {
         try {
-            Ticket ticket = ticketRepository.findById(messageDTO.getTicketId())
-                    .orElse(null);
-            if (ticket == null) {
-                return APIResultSet.notFound("Ticket not found with ID: " + messageDTO.getTicketId());
-            }
-
-            Message message = new Message();
-            message.setText(messageDTO.getText());
-            message.setSenderEmployee(messageDTO.isSenderEmployee());
-            message.setTimestamp(messageDTO.getTimestamp());
-            message.setTicket(ticket);
-            if (message.getTimestamp() == null) {
-                message.setTimestamp(new Timestamp(System.currentTimeMillis()));
-            }
-
-            Message saved = messageRepository.save(message);
-            cache.putMessage(saved);
-            log.info("message saved: {}", messageDTO);
-            return APIResultSet.ok("Message added successfully", mapper.toDTO(saved));
+            Message saved = messageRepository.save(mapper.toEntity(messageDTO));
+            entityManager.flush();
+            entityManager.clear();
+            cache.putMessage(messageRepository.findById(saved.getId()).get());
+            //TODO: publish event
+            publisher.publishEvent(new MessageEvent(mapper.toEventDTO(cache.getMessage(saved.getId()))));
+            return APIResultSet.ok("Message added successfully", mapper.toDTO(cache.getMessage(saved.getId())));
         } catch (Exception e) {
             return APIResultSet.internalError("Failed to save message: " + e.getMessage());
         }

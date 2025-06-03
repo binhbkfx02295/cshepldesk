@@ -52,11 +52,11 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
             FROM Employee e
             LEFT JOIN FETCH e.statusLogs l
             LEFT JOIN FETCH l.status s
-            WHERE l.timestamp = (
+            WHERE (l.timestamp = (
                 SELECT MAX(l2.timestamp)
                 FROM StatusLog l2
                 WHERE l2.employee = e
-            ) AND e.username = :username
+            ) OR l IS NULL) AND e.username = :username
             """)
     Optional<Employee> findWithTop1StatusLog(@Param("username") String username);
 }

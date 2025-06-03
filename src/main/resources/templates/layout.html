@@ -89,6 +89,18 @@
     </div>
 </div>
 
+<!-- Modal để xem ảnh lớn -->
+<div class="modal fade" id="imgModal" tabindex="-1" aria-labelledby="imgModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark text-center">
+            <div class="modal-body p-0">
+                <img id="modal-img" src="" alt="image" style="max-width: 100%; max-height: 80vh; margin: auto;" />
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <!-- Modal: Settings -->
 <div class="modal fade" id="settingModal" tabindex="-1" aria-labelledby="settingModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -111,11 +123,19 @@
 <!-- Flatpickr JS -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
-<script th:src="@{/js/script.js}"></script>
 
 <!-- chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+<!--websocket-->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@5.4.4/bundles/stomp.umd.min.js"></script>
+
+
+<!--user defined-->
+<script th:src="@{/js/script.js}"></script>
+
 
 </body>
 </html>

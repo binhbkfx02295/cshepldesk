@@ -35,6 +35,7 @@ var ticketVolumeHourlyChart = null;
 var addDatasetCallback = null;
 var charts = {};
 var cache = {};
+var chatbox;
 
 const CHART_CONFIG = {
   padding: {
@@ -92,6 +93,8 @@ $(document).ready(() => {
     $(".sidebar-menu li").removeClass("active");
     $(".sidebar-menu li").get(5).classList.add("active");
   } else if (window.location.href.includes("setting")) {
+    //check coi co data table khong
+    initSetting();
     $(".sidebar-menu li").removeClass("active");
     $(".sidebar-menu li").get(6).classList.add("active");
   } else if (window.location.href.includes("user-group")) {
@@ -103,47 +106,53 @@ $(document).ready(() => {
 // today-staff.html
 function initTodayStaff() {
   loadDashboardEmployees()
-
   //Load employee2 list
   function loadDashboardEmployees() {
     const employeeList = document.getElementById("employeeList2");
     const url = `${API_EMPLOYEE}/dashboard`
     const countElem = document.querySelector(".employee-count");
     const callback = function (response) {
+      console.log("Kết quả trả về danh sách employee:", response);
       showLoadingElement(employeeList);
       populateData(response.data, employeeList, renderDashboardEmployeeItem);
       // Update employee count
       countElem.innerText = response.data.length;
 
       //add event interval
-      if (window.startElapsedTimerInterval) {
-        clearInterval(window.startElapsedTimerInterval);
-        console.log("cleared window.startElapsedTimerInterval");
-      }
-      window.startElapsedTimerInterval = setInterval(function () {
-        $(".time-elapse").each(function () {
-          const timestamp = $(this).attr("data-timestamp");
-          $(this).text(startElapsedTimer(timestamp));
-        })
-      })
+      bindDashboardEmployeeItem();
     }
-
     openAPIxhr(HTTP_GET_METHOD, url, callback);
 
   }
+
+}
+
+function bindDashboardEmployeeItem() {
+  if (window.startElapsedTimerInterval) {
+    clearInterval(window.startElapsedTimerInterval);
+    console.log("cleared window.startElapsedTimerInterval");
+  }
+
+  window.startElapsedTimerInterval = setInterval(function () {
+    $(".time-elapse").each(function () {
+      const timestamp = $(this).attr("data-timestamp");
+      $(this).text(startElapsedTimer(timestamp));
+    })
+  })
 }
 
 function renderDashboardEmployeeItem(employee) {
   console.log("..rendering items");
   const tr = document.createElement("tr");
   tr.classList.add("show");
+  tr.setAttribute("data-username", employee.username);
   tr.innerHTML = `
             <td>${sanitizeText(employee.name)}</td>
             <td>${sanitizeText(employee.userGroup.name)}</td>
-            <td>${employee.ticketCount || 0}/6</td>
+            <td class="ticket-count">${employee.ticketCount || 0}</td>
             <td style="text-transform: capitalize;">
               <span class="status-indicator ${employee.statusLog.status.name}"></span>
-              ${sanitizeText(employee.statusLog.status.name)}
+              <span class="status-text">${sanitizeText(employee.statusLog.status.name)}</span>
             </td>
             ${employee.statusLog.status == "offline" ? "" : `<td class="time-elapse" data-timestamp="${employee.statusLog.from}">${startElapsedTimer(employee.statusLog.from)}</td>`}
         `;
@@ -742,6 +751,31 @@ function initTicket() {
 
 
 function initHeader() {
+  //side-bar controller
+  const zz = document.querySelectorAll(".sidebar-heading .wrapper");
+  zz.forEach(item => {
+    item.addEventListener("click", function () {
+      console.log(this);
+      const inone = this.querySelector("i:not(.d-none)");
+      const idisplay = this.querySelector("i.d-none");
+      inone.classList.add("d-none");
+      idisplay.classList.remove("d-none");
+      if (!this.classList.contains("show")) {
+        this.classList.add("show");
+
+        this.parentElement.querySelector("ul").classList.remove("d-none");
+      } else {
+        this.classList.remove("show");
+        this.parentElement.querySelector("ul").classList.add("d-none");
+      }
+    })
+  })
+
+
+  // connect websocket
+  fetch(`${API_EMPLOYEE}/me`)
+    .then(response => response.json())
+    .then(data => initWeksocketConnection(data))
   //init current date
   const now = new Date()
   $("#currentDate").text(formatDate(now))
@@ -749,15 +783,15 @@ function initHeader() {
 
 
   // fetch online status
-    const statusIndicator = document.querySelector('.status-dropdown .status-indicator');
-    const statusText = document.querySelector('.status-dropdown #currentStatusText');
-    const url = `${API_EMPLOYEE}/me/online-status`;
-    console.log(url);
-    const callback = function(response) {
-      console.log(response);
-      statusIndicator.classList.add(response.data.status.name);
-      statusText.innerHTML = toCapital(sanitizeText(response.data.status.name))
-}
+  const statusIndicator = document.querySelector('.status-dropdown .status-indicator');
+  const statusText = document.querySelector('.status-dropdown #currentStatusText');
+  const url = `${API_EMPLOYEE}/me/online-status`;
+  console.log(url);
+  const callback = function (response) {
+    console.log(response);
+    statusIndicator.classList.add(response.data.status.name);
+    statusText.innerHTML = toCapital(sanitizeText(response.data.status.name))
+  }
   openAPIxhr(HTTP_GET_METHOD, url, callback);
 
   const userProfileModal = new bootstrap.Modal(document.getElementById("userProfileModal"));
@@ -842,7 +876,7 @@ function initHeader() {
       url: `${API_EMPLOYEE}/me/online-status`,
       method: 'PUT',
       contentType: 'application/json',
-      data: JSON.stringify({ status: {id: statusId}, from: new Date().getTime() }),
+      data: JSON.stringify({ status: { id: statusId }, from: new Date().getTime() }),
       success: function (res) {
         successToast(res.message);
         if (statusValue === 'online') {
@@ -867,7 +901,225 @@ function initHeader() {
   });
 }
 
+function initWeksocketConnection(data) {
+  const me = data.data;
+  console.log(me);
+  const socket = new SockJS('/ws');
+  const stompClient = new StompJs.Client({
+    webSocketFactory: () => socket,
+    reconnectDelay: 5000,
+    onConnect: (frame) => {
+      console.log(frame) // debug
+      // Đăng ký nhận tin nhắn trên topic /queue/messages
+      if (me.authorities.some(auth => auth.authority === "ROLE_SUPERVISOR")) {
+        subscribeForSupervisor(stompClient);
+      } else {
+        subscribeForStaff(stompClient);
+      }
+    },
+    onStompError: (frame) => console.error('STOMP error:', frame.headers['message'])
+  });
 
+  stompClient.activate();
+}
+
+function subscribeForSupervisor(stompClient) {
+  stompClient.subscribe('/topic/admin/tickets', handleWSTicket) //cho today's ticket+today's staff
+  stompClient.subscribe('/topic/admin/messages', handleWSMessage) // cho today's ticket
+  stompClient.subscribe('/topic/admin/employees', handleWSEmployee); //cho today staff
+}
+
+function subscribeForStaff(stompClient) {
+  stompClient.subscribe('/user/queue/tickets', handleWSTicket) //cho today's ticket
+  stompClient.subscribe('/user/queue/messages', handleWSMessage) //cho today's ticket
+  stompClient.subscribe('/topic/admin/employees', handleWSEmployee); //cho today staff
+}
+
+function handleWSTicket(response) {
+  response = JSON.parse(response.body);
+  console.log("..handling websocket ticket", response);
+  let ticket = response.data;
+
+  if (window.location.href.includes("today-ticket")) {
+    const container = document.getElementById("ticketList");
+    if (container != null) {
+      //1. renderDashboardTicketItem(ticket);
+      const item = renderDashboardTicketItem(ticket);
+      console.log("Hệ thống render ra item như sau:", item);
+      //2. put it on top of container
+      if (response.action == "CREATED") {
+        console.log("Event ticket Created!!");
+        //3.play sound notification or small popup
+        playNewTicketNotificationSound();
+        showPopupNotification("Có ticket mới! ID: ", ticket.id);
+        if (container.firstChild) {
+          container.insertBefore(item, container.firstChild);
+        } else {
+          container.appendChild(item);
+        }
+      } else if (response.action == "UPDATED") {
+        console.log("Event ticket Updated!!")
+        container.replaceChild(item, container.querySelector(`*[data-ticket-id="${ticket.id}"]`));
+      } else if (response.action == "CLOSED") {
+        console.log("Event ticket Closed!!");
+        const target = container.querySelector(`.progress-status.resolved`)?.closest(".item");
+        console.log("target ne", target);
+        if (target != null) {
+          let oldItem = container.querySelector(`*[data-ticket-id="${ticket.id}"]`);
+          container.removeChild(oldItem);
+          if (item != null) {
+            container.insertBefore(item, target);
+          }
+
+          //xóa luôn "Có tin nhắn" nếu đang hiển thị
+          const s = container.querySelector(".new-message");
+          if (s != null && !s.classList.contains("d-none")) {
+            s.classList.add("d-none");
+          }
+
+        } else {
+          let oldItem = container.querySelector(`*[data-ticket-id="${ticket.id}"]`);
+          container.appendChild(oldItem);
+        }
+      }
+
+      //rebind interval
+      bindDashboardTicketItem();
+    }
+
+  }
+
+  if (window.location.href.includes("today-staff")) {
+    const container = document.getElementById("employeeList2");
+    const employeeElem = container.querySelector(`*[data-username="${ticket.assignee.username}"]`)
+    if (employeeElem != null) {
+      const td = employeeElem.querySelector(".ticket-count");
+      if (response.action == "CREATED") {
+
+        td.innerText = parseInt(td.innerText.trim()) + 1;
+      } else if (response.action == "CLOSED") {
+        td.innerText = parseInt(td.innerText.trim()) - 1;
+      }
+    }
+
+  }
+}
+
+
+
+
+function handleWSMessage(response) {
+  response = JSON.parse(response.body);
+  console.log("..handling websocket message", response)
+  let message = response.data;
+  if (window.location.href.includes("today-ticket")) {
+    const ticketId = message.ticket.id;
+    const ticketElem = document.querySelector(`*[data-ticket-id="${ticketId}"]`);
+    //TODO:
+    //1. check message.senderEmployee: neu la false, render "Có tin nhắn" + bật âm thanh
+    if (message.senderEmployee == false) {
+      ticketElem.querySelector(".new-message").classList.remove("d-none");
+      playNewMessageNotificationSound()
+    } else {
+      //2. Nếu không phải, tắt thông báo "Có tin nhắn" (vì staff đã đọc và đã trả lời)
+      const classList = ticketElem.querySelector(".new-message").classList;
+      if (classList.contains("d-none") == false) {
+        classList.add("d-none");
+      }
+    }
+
+    //TODO: nếu detail modal đang mở, thì add tin nhắn vào đó, tự scroll xuống
+    handleIfModalOpen(message);
+
+
+  }
+}
+
+function handleIfModalOpen(message) {
+  if (window.fullModal._isShown == true) {
+    //try to append this message
+    const messageElement = renderMessageItem(message);
+    if (chatbox == null) {
+      chatbox = document.querySelector("#chatBox");
+    }
+    chatbox.querySelector("#messageList").append(messageElement);
+    scrollToBottomMessageList(chatbox.querySelector("#messageList"));
+  }
+}
+
+function handleWSEmployee(response) {
+  response = JSON.parse(response.body);
+  console.log("..handling websocket employee", response);
+  let employee = response.data;
+  if (window.location.href.includes("today-staff")) {
+    //1. Tìm row item chứa thằng employee
+    console.log(employee);
+    const container = document.getElementById("employeeList2");
+    const statusLog = employee.statusLogs[0];
+    console.log("This is container", container);
+    const tr = container.querySelector(`*[data-username=${employee.username}]`);
+    console.log("This is tr", tr);
+    const statusIndicator = tr.querySelector(`.status-indicator`);
+    const statusText = tr.querySelector(`.status-text`);
+    //2. sửa cột status log;
+    const oldStatus = statusIndicator.classList[1]
+    statusIndicator.classList.remove(oldStatus);
+    statusIndicator.classList.add(statusLog.status.name);
+    statusText.innerText = toCapital(statusLog.status.name);
+
+    //3. set timer cua no ve 00:00:00
+    const dataTimestamp = tr.querySelector("*[data-timestamp]");
+    dataTimestamp.setAttribute("data-timestamp", statusLog.from);
+    //4. unbind rồi bind lại timer;
+    bindDashboardEmployeeItem();
+
+  }
+}
+
+// Hàm popup thông báo nhỏ
+function showPopupNotification(title, content) {
+  const popup = document.createElement('div');
+  popup.className = 'ws-popup-notification';
+  popup.innerHTML = `<strong>${title}</strong><div>${content}</div>`;
+  Object.assign(popup.style, {
+    position: 'fixed',
+    right: '20px',
+    bottom: '20px',
+    background: '#333',
+    color: '#fff',
+    padding: '16px 24px',
+    borderRadius: '12px',
+    boxShadow: '0 4px 24px #0008',
+    zIndex: 9999,
+    opacity: 0.95,
+    fontSize: '1rem',
+    pointerEvents: 'none',
+    transition: 'all 0.4s'
+  });
+  document.body.appendChild(popup);
+  setTimeout(() => {
+    popup.style.opacity = 0;
+    setTimeout(() => popup.remove(), 500);
+  }, 3000);
+}
+
+// Hàm phát âm thanh
+function playNewMessageNotificationSound() {
+  // Dùng file mp3 ở public hoặc url bất kỳ
+  const audio = new Audio('/audio/new-message.wav');
+  audio.play().catch(e => {
+    console.log("Lỗi không thể phát âm thanh \"Có tin nhắn mới\"", e)
+  });
+}
+
+// Hàm phát âm thanh
+function playNewTicketNotificationSound() {
+  // Dùng file mp3 ở public hoặc url bất kỳ
+  const audio = new Audio('/audio/new-ticket.wav');
+  audio.play().catch(e => {
+    console.log("Lỗi không thể phát âm thanh \"Có Ticket mới\"", e)
+  });
+}
 // Refresh dashboard
 function refreshDashboardTicket() {
   // Show loading animation on refresh button
@@ -882,21 +1134,11 @@ function refreshDashboardTicket() {
   const callback = function (response) {
 
     data = sortDashboardTicket(response.data);
-    console.log(data);
     showLoadingElement(container);
     populateData(data, container, renderDashboardTicketItem)
 
     //after render tickets, start  event
-    if (window.startElapsedTimerTicketInterval) {
-      clearInterval(window.startElapsedTimerTicketInterval);
-      console.log("cleared ticket timer interval")
-    }
-    window.startElapsedTimerTicketInterval = setInterval(function () {
-      $(".time-elapse").each(function () {
-        const timestamp = $(this).attr("data-timestamp");
-        $(this).text(startElapsedTimer(timestamp));
-      })
-    });
+    bindDashboardTicketItem()
 
     //refreshing ticket metrics;
     refreshDashboardTicketMetrics(response.data);
@@ -909,6 +1151,18 @@ function refreshDashboardTicket() {
   //call API
   openAPIxhr(HTTP_GET_METHOD, url, callback);
 
+}
+function bindDashboardTicketItem() {
+  if (window.startElapsedTimerTicketInterval) {
+    clearInterval(window.startElapsedTimerTicketInterval);
+    console.log("cleared ticket timer interval")
+  }
+  window.startElapsedTimerTicketInterval = setInterval(function () {
+    $(".time-elapse").each(function () {
+      const timestamp = $(this).attr("data-timestamp");
+      $(this).text(startElapsedTimer(timestamp));
+    })
+  });
 }
 
 function refreshDashboardTicketMetrics(data) {
@@ -951,11 +1205,19 @@ function sortDashboardTicket(data) {
     const isA3 = a.progressStatus.id === 3;
     const isB3 = b.progressStatus.id === 3;
 
-    // Nếu chỉ A là 3 → A xuống dưới
+
+
+    // 1. Đầu tiên nếu chỉ A là 3 → A xuống dưới
     if (isA3 && !isB3) return 1;
 
-    // Nếu chỉ B là 3 → B xuống dưới
+    // 2. Nếu chỉ B là 3 → B xuống dưới
     if (!isA3 && isB3) return -1;
+
+    //3. Nếu A là Has new Mesage
+    if (a.hasNewMessage && !b.hasNewMessage) return -1;
+
+    //4. New B là Has new Message
+    if (!a.hasNewMessage && b.hasNewMessage) return 1;
 
     // Nếu cả hai đều != 3 → sort theo createdAt DESC
     return new Date(b.createdAt) - new Date(a.createdAt);
@@ -965,6 +1227,7 @@ function sortDashboardTicket(data) {
 
 //Populate Dashboard tick
 function renderDashboardTicketItem(ticket) {
+  if (ticket == null) return null;
   const div = document.createElement("div");
   div.innerHTML = `
         <div class="item mb-2" data-ticket-id="${ticket.id}">
@@ -973,6 +1236,9 @@ function renderDashboardTicketItem(ticket) {
                     <div class="messages mb-1"></div>
                     <div class="title mb-1">
                         <span class="ticket-id me-2">#${ticket.id}</span> - ${ticket.title || "Chưa có tiêu đề"}
+                        <span class="ms-2 text-white new-message bg-danger rounded br-sm py-1 px-2 ${ticket.hasNewMessage ? "" : "d-none"}" style="
+                              font-size: 13px;
+                          "> Có tin nhắn</span>
                     </div>
                     <div class="user">
                         <span class="avatar me-2 text-center">
@@ -987,7 +1253,7 @@ function renderDashboardTicketItem(ticket) {
                     </div>
                     <div class="assignee mb-1"><i class="bi bi-person-check me-2"></i>${ticket.assignee?.name || "Chưa có"}</div>
                     <div class="">
-                      <i class="bi bi-hourglass me-2"></i><span class="duration time-elapse" data-timestamp=${ticket.createdAt}>${startElapsedTimer(ticket.createAt)}</span>
+                      <i class="bi bi-hourglass me-2"></i><span class="duration ${ticket.progressStatus.id != 3 ? "time-elapse" : ""}" data-timestamp=${ticket.createdAt}>${ticket.progressStatus.id != 3 ? startElapsedTimer(ticket.createdAt) : "- -"}</span>
                     </div>
                 </div>
             </div>
@@ -999,7 +1265,6 @@ function renderDashboardTicketItem(ticket) {
   })
   setTimeout(function () {
     target.style.opacity = 1;
-    console.log(target);
   }, 300);
 
   return target;
@@ -1139,6 +1404,7 @@ function toTime(epochMillis) {
 
 function startElapsedTimer(startTimestamp) {
   const ms = Date.now() - startTimestamp;
+
   const totalSeconds = Math.floor(ms / 1000);
   const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
   const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
@@ -1364,10 +1630,11 @@ function initTicketDetailModal() {
 function updateTicketData(ticketData) {
   const url = `${API_TICKET}/${$("#editTicketId").val()}`;
   const callback = function (response) {
+    console.log("update ticket thahnf công, response nè:", response);
     successToast(response.message);
-    populateTicketDetail(response.data);
+    loadTicketDetail($("#editTicketId").val())
+
   }
-  console.log("Updated Ticket Data:", ticketData);
   disableEditButtons();
   openAPIxhr(HTTP_PUT_METHOD, url, callback, null, ticketData);
 }
@@ -1650,9 +1917,6 @@ function loadTicketDetail(ticketId) {
       populateTicketDetail(response.data);
       loadTicketMessages(response.data.id);
       loadTicketHistory(response.data.facebookUser.facebookId);
-    },
-    error: function (res) {
-      errorToast(rres.responseJSON.message);
     }
   });
 
@@ -1702,11 +1966,11 @@ function getTicketSearchData(page, size) {
     assignee: $("#ticket-search #assignee").attr("data-username") || null,          // assignee
     facebookId: $("#ticket-search #facebookuser").val() || null,
     title: $("#ticket-search #title").val() || null,
-    progressStatus: $("#ticket-search #progress-status").attr("data-progress-code") || null,
+    progressStatus: $("#ticket-search #progress-status").attr("data-progress-id") || null,
     fromTime: toTimestamp($("#fromDate").val()),
     toTime: toTimestamp($("#toDate").val()),
-    category: $("#ticket-search #category").attr("data-category-code") || null,
-    emotion: $("#ticket-search #emotion").attr("data-emotion-code") || null,
+    category: $("#ticket-search #category").attr("data-category-id") || null,
+    emotion: $("#ticket-search #emotion").attr("data-emotion-id") || null,
     satisfaction: $("#ticket-search #satisfaction").attr("satisfaction") || null,
     page: page,
     size: size,
@@ -2032,7 +2296,6 @@ function showToast(type, message) {
 
   const $container = $("#toastContainer");
   $container.append(toastHtml);
-  console.log($container)
 
   const toast = new bootstrap.Toast(document.getElementById(toastId));
   toast.show();
@@ -2067,17 +2330,59 @@ function loadTicketMessages(ticketId) {
   openAPIxhr(HTTP_GET_METHOD, url, callback);
 }
 
+function getExtension(filename) {
+  const pos = filename.lastIndexOf('.');
+  return pos > 0 ? filename.slice(pos + 1).toLowerCase() : '';
+}
 
 function renderMessageItem(msg) {
   const div = document.createElement("div");
+  const innerDiv = document.createElement("div");
+  let attachments = document.createElement("div");
+  attachments.className = "message-attachments"
+  if (msg.attachments.length != 0) {
+    for (let i = 0; i < msg.attachments.length; i++) {
+      let attachment = msg.attachments[i];
+      let element;
+      if (attachment.type == "audio") {
+        element = document.createElement("audio");
+        element.controls = true;
+        const source = document.createElement("source");
+        source.src = attachment.url;
+        element.appendChild(source);
+        element.append("Trình duyệt không hỗ trợ audio.");
+
+      } else if (attachment.type == "image") {
+        element = document.createElement("img");
+        element.className = "d-inline-block"
+        element.src = attachment.url;
+        element.style.maxWidth = attachment.stickerId == null ? "120px" : "240px";
+        element.style.cursor ="pointer";
+        element.addEventListener("click", function() {openImgModal(element)})
+      }
+      attachments.append(element);
+    }
+    innerDiv.append(attachments);
+  }
   div.innerHTML =
     `<div class="d-flex mb-2 ${msg.senderEmployee ? "justify-content-end" : "justify-content-start"}">
         <div class="chat-bubble ${msg.senderEmployee ? "staff" : "user"}">
+          ${innerDiv.innerHTML}
           <div class="message-text">${sanitizeText(msg.text)}</div>
           <div class="message-timestamp text-muted small mt-1" title="Timestamp: ${msg.timestamp}">${formatEpochTimestamp(msg.timestamp)}</div>
         </div>
       </div>`
   return div.firstElementChild;
+}
+
+function openImgModal(imgElement) {
+  return function () {
+    const modalImg = document.getElementById("modal-img");
+    modalImg.src = imgElement.src;
+
+    const modal = new bootstrap.Modal(document.getElementById('imgModal'));
+    modal.show();
+  };
 }
 
 // Auto scroll to bottom
@@ -2102,7 +2407,9 @@ function loadTicketHistory(facebookId) {
       // $('#loadingScreen').show();
     },
     success: function (response) {
-      const history = response.data;
+      const history = response.data.slice(1,);
+      history.sort((a,b) => a.createdAt > b.createdAt)
+      console.log("history:", history);
       history.forEach(hist => {
         const item = `
           <li class="list-group-item d-flex flex-column">
@@ -2113,8 +2420,6 @@ function loadTicketHistory(facebookId) {
         `;
         $("#historyList").append(item);
       });
-      scrollToBottomMessageList();
-
     },
     error: function (xhr, status, error) {
       alert("Đã xảy ra lỗi khi tải thông tin ticket.");
@@ -2717,4 +3022,13 @@ function updateDataset(chart, oldDataset, dataset) {
   }
   console.log(chart);
   chart.update();
+}
+
+//setting.html
+function initSetting() {
+  console.log("init settings");
+  const dataTable = document.querySelectorAll(".data-table");
+  if (dataTable.length > 0) {
+    dataTable.forEach(table => initSortingByIndex(table));
+  }
 }

@@ -1,6 +1,7 @@
 package com.binhbkfx02295.cshelpdesk.facebookuser.service;
 
 
+import com.binhbkfx02295.cshelpdesk.facebookgraphapi.dto.FacebookUserProfileDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserListDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserDetailDTO;
 import com.binhbkfx02295.cshelpdesk.facebookuser.dto.FacebookUserFetchDTO;
@@ -43,4 +44,6 @@ public interface FacebookUserService {
     APIResultSet<PaginationResponse<FacebookUserDetailDTO>> searchUsers(FacebookUserSearchCriteria criteria, Pageable pageable);
 
     APIResultSet<Void> deleteAll(ArrayList<String> ids);
+
+    APIResultSet<FacebookUserDetailDTO> save(FacebookUserProfileDTO profile);
 }

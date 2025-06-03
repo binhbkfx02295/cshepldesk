@@ -13,6 +13,8 @@ public class EmployeeDTO {
     private String username;
     private String password;
     private String description;
+    private String email;
+    private String phone;
     private boolean isActive;
     private int failedLoginCount;
     private List<StatusLogDTO> statusLogs = new ArrayList<>();
