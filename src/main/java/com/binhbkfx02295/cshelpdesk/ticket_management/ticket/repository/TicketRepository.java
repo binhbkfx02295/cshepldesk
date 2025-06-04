@@ -32,7 +32,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer>, JpaSpe
             "LEFT JOIN FETCH t.assignee u " +
             "LEFT JOIN FETCH u.userGroup " +
             "LEFT JOIN FETCH t.notes " +
-            "WHERE t.id = :id")
+            "WHERE t.id = :id ")
     @EntityGraph(attributePaths = {
             "facebookUser", "emotion", "satisfaction",
             "progressStatus", "facebookUser", "category",

@@ -26,6 +26,7 @@ public class NotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void onTicketEvent(TicketEvent event) {
+
         log.debug("Publishing TicketEvent {} for ticket {}", event.getAction(), event.getTicket().getId());
         EmployeeTicketDTO assignee = event.getTicket().getAssignee();
         if (assignee != null) {

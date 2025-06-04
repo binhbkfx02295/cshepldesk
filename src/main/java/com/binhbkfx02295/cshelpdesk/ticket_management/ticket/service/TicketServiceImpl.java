@@ -31,7 +31,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.swing.text.html.parser.Entity;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +81,6 @@ public class TicketServiceImpl implements TicketService {
                 ticket.setCreatedAt(new Timestamp(System.currentTimeMillis()));
             }
             Ticket saved = ticketRepository.save(ticket);
-
             //update cache
             entityManager.flush();
             entityManager.clear();

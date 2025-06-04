@@ -68,13 +68,9 @@ public class WebHookServiceImpl implements WebHookService {
                         //TODO: try add message
                         messageDTO = convertToMessageDTO(messaging);
                         messageDTO.setTicketId(ticket.getId());
-                        ticket.getMessages().add(messageDTO);
-                        ticketService.updateTicket(ticket.getId(), ticket);
-
+                        messageService.addMessage(messageDTO);
                     }
-
                 } else { // if sender is customer, get existing ticket, if any-> add message, else create.
-
                     //TODO: get active ticket
                     APIResultSet<TicketDetailDTO> result = ticketService.findExistingTicket(senderId);
                     TicketDetailDTO ticket;
@@ -97,7 +93,6 @@ public class WebHookServiceImpl implements WebHookService {
                     //TODO: add message;
                     messageDTO = convertToMessageDTO(messaging);
                     messageDTO.setTicketId(ticket.getId());
-                    log.info("test {}", messageDTO);
                     messageService.addMessage(messageDTO);
                 }
             }
