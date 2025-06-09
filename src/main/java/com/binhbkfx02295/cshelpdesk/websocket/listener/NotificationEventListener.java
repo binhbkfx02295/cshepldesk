@@ -28,20 +28,17 @@ public class NotificationEventListener {
     public void onTicketEvent(TicketEvent event) {
         EmployeeTicketDTO assignee = event.getTicket().getAssignee();
         if (assignee != null) {
-            //TODO 1. chi gui event cho nhan vien phu trach
             if (assignee.getGroup().getCode().equalsIgnoreCase("staff")) {
                 messagingTemplate.convertAndSendToUser(assignee.getUsername(), "/queue/tickets",
                         new NotificationDTO<>("TICKET", event.getAction().name(), event.getTicket()));
             }
         } else {
-            //TODO: 2. nếu chua co nhan vien phu trach thi gui cho toan bo nhan vien
             for (Employee employee: cache.getAllEmployees().values()) {
                 messagingTemplate.convertAndSendToUser(employee.getUsername(), "/queue/tickets",
                         new NotificationDTO<>("TICKET", event.getAction().name(), event.getTicket()));
             }
         }
 
-        //TODO: 3. sau do gui cho toan bo admin
         messagingTemplate.convertAndSend("/topic/admin/tickets",
                 new NotificationDTO<>("TICKET", event.getAction().name(), event.getTicket()));
 
@@ -53,19 +50,16 @@ public class NotificationEventListener {
 
         EmployeeTicketDTO assignee = event.getMessage().getTicket().getAssignee();
         if (assignee != null && assignee.getGroup() != null) {
-            //TODO 1. chi gui event cho nhan vien phu trach
             if (assignee.getGroup().getCode().equalsIgnoreCase("staff")) {
                 messagingTemplate.convertAndSendToUser(assignee.getUsername(), "/queue/messages",
                         new NotificationDTO<>("MESSAGE", "CREATED", event.getMessage()));
             }
         } else {
-            //TODO: 2. nếu chua co nhan vien phu trach thi gui cho toan bo nhan vien
             for (Employee employee: cache.getAllEmployees().values()) {
                 messagingTemplate.convertAndSendToUser(employee.getUsername(), "/queue/messages",
                         new NotificationDTO<>("MESSAGE", "CREATED", event.getMessage()));
             }
         }
-        //TODO: 3. sau do gui cho toan bo admin
         messagingTemplate.convertAndSend("/topic/admin/messages",
                 new NotificationDTO<>("MESSAGE","CREATED", event.getMessage()));
 

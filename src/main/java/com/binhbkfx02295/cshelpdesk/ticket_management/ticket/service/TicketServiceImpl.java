@@ -359,7 +359,6 @@ public class TicketServiceImpl implements TicketService {
             List<Ticket> tickets = cache.getDashboardTickets().values().stream().toList();
             Employee employee = cache.getEmployee(username);
 
-            //TODO: filter tickets assigned only to the staff
             if (employee != null && employee.getUserGroup().getCode().equalsIgnoreCase("staff")) {
                 tickets = tickets.stream().filter(ticket ->
                         ticket.getAssignee() == null || ticket.getAssignee().getUsername().equalsIgnoreCase(username)).toList();

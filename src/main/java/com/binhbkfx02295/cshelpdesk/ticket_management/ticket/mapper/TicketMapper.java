@@ -2,7 +2,6 @@ package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.mapper;
 
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.EmployeeRepository;
 import com.binhbkfx02295.cshelpdesk.facebookuser.repository.FacebookUserRepository;
-import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeMapper;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
@@ -13,7 +12,6 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.Catego
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.mapper.EmotionMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.repository.EmotionRepository;
-import com.binhbkfx02295.cshelpdesk.ticket_management.note.mapper.NoteMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.entity.ProgressStatus;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.mapper.ProgressStatusMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.repository.ProgressStatusRepository;
@@ -24,7 +22,6 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.tag.mapper.TagMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketListDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDetailDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketReportDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

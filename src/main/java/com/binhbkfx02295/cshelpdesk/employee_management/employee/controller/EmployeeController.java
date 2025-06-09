@@ -3,7 +3,6 @@ package com.binhbkfx02295.cshelpdesk.employee_management.employee.controller;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.*;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeDetailDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.service.EmployeeServiceImpl;
-import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupService;
 import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.infrastructure.security.auth.UserPrincipal;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResponseEntityHelper;

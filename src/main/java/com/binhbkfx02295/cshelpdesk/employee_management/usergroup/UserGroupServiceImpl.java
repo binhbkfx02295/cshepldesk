@@ -1,9 +1,7 @@
 package com.binhbkfx02295.cshelpdesk.employee_management.usergroup;
 
-import com.binhbkfx02295.cshelpdesk.employee_management.permission.Permission;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionMapper;
-import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionRepository;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.EmployeeRepository;
 import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
@@ -22,7 +20,6 @@ import java.util.stream.Collectors;
 public class UserGroupServiceImpl implements UserGroupService {
 
     private final UserGroupRepository userGroupRepository;
-    private final PermissionRepository permissionRepository;
     private final EmployeeRepository employeeRepository;
     private final UserGroupMapper mapper;
     private final PermissionMapper permissionMapper;

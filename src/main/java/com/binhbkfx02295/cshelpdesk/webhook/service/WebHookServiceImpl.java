@@ -54,20 +54,16 @@ public class WebHookServiceImpl implements WebHookService {
 
                 //if sender is employee => get existing ticket, if any -> add message
                 if (isSenderEmployee) {
-                    //TODO: get active ticket
                     APIResultSet<TicketDetailDTO> result = ticketService.findExistingTicket(recipient);
 
                     if (result.isSuccess()) {
-                        //TODO: handle when ticket exists
                         TicketDetailDTO ticket = result.getData();
                         if (ticket.getAssignee() == null) {
-                            //TODO: try assign ticket
                             if (autoAssign(ticket)) {
                                 ticketService.assignTicket(ticket.getId(), ticket);
                             }
 
                         }
-                        //TODO: try add message
                         messageDTO = convertToMessageDTO(messaging);
                         messageDTO.setSenderSystem(ticket.getAssignee() == null);
                         log.info("test isSenderSystem? ticket.getAssignee() == null: {} ,isSenderSystem: {}", ticket.getAssignee() == null, messageDTO.isSenderSystem());
@@ -75,23 +71,18 @@ public class WebHookServiceImpl implements WebHookService {
                         messageService.addMessage(messageDTO);
                     }
                 } else { // if sender is customer, get existing ticket, if any-> add message, else create.
-                    //TODO: get active ticket
                     APIResultSet<TicketDetailDTO> result = ticketService.findExistingTicket(senderId);
                     TicketDetailDTO ticket;
                     if (result.isSuccess() && result.getData().getProgressStatus().getId() != 3) {
                         ticket = result.getData();
                     } else {
                         //if no existign ticket, create, assign, add message -> save ticket to database;
-                        //TODO: create new
                         facebookUser = getOrCreateFacebookUser(senderId);
                         ticket = new TicketDetailDTO();
                         ticket.setProgressStatus(progressStatusMapper.toDTO(cache.getProgress(1)));
                         ticket.setFacebookUser(facebookUserMapper.toDTO(facebookUser));
 
                         if (!autoAssign(ticket)) {
-                            //TODO: if no avaiable assignee, send facebook message to customer.
-                            //No assignee avaiable, send inform customer
-
                             log.info("assign failed, now inform customer");
                             facebookGraphAPIService.notifyNoAssignee(senderId);
                         }
@@ -99,13 +90,11 @@ public class WebHookServiceImpl implements WebHookService {
                         ticket = ticketService.createTicket(ticket).getData();
                     }
                     if (ticket.getAssignee() == null) {
-                        //TODO: if no avaiable assignee, send facebook message to customer.
                         if (autoAssign(ticket)) {
                             ticketService.assignTicket(ticket.getId(), ticket);
                         }
                     }
 
-                    //TODO: add message;
                     messageDTO = convertToMessageDTO(messaging);
                     messageDTO.setTicketId(ticket.getId());
                     messageDTO.setSenderSystem(false);

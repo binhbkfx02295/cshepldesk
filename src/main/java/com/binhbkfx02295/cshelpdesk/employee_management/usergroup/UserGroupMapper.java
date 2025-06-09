@@ -1,6 +1,5 @@
 package com.binhbkfx02295.cshelpdesk.employee_management.usergroup;
 
-import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
