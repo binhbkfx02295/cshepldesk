@@ -2,6 +2,7 @@ package com.binhbkfx02295.cshelpdesk.employee_management.employee.controller;
 
 import com.binhbkfx02295.cshelpdesk.employee_management.authentication.dto.LoginResponseDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.*;
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeDetailDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.service.EmployeeServiceImpl;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupService;
 import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
@@ -29,13 +30,8 @@ public class EmployeeController {
 
     @PostMapping
     public ResponseEntity<APIResultSet<EmployeeDTO>> createUser(@RequestBody EmployeeDTO employeeDTO) {
+
         return APIResponseEntityHelper.from(employeeService.createUser(employeeDTO));
-    }
-
-    @GetMapping("/")
-    public ResponseEntity<APIResultSet<LoginResponseDTO>> getUserProfile(@AuthenticationPrincipal LoginResponseDTO loginDTO) {
-
-        return APIResponseEntityHelper.from(APIResultSet.ok("ok", loginDTO));
     }
 
     @GetMapping("")
@@ -61,16 +57,17 @@ public class EmployeeController {
     }
 
     @PutMapping("/me")
-    public ResponseEntity<APIResultSet<EmployeeDTO>> updateProfile(
+    public ResponseEntity<APIResultSet<EmployeeDetailDTO>> updateProfile(
             @AuthenticationPrincipal UserPrincipal user,
             @RequestBody EmployeeDTO employeeDTO) {
         return APIResponseEntityHelper.from(employeeService.updateUser(user.getUsername(), employeeDTO));
     }
 
     @PutMapping
-    public ResponseEntity<APIResultSet<EmployeeDTO>> updateUser(
+    public ResponseEntity<APIResultSet<EmployeeDetailDTO>> updateUser(
             @RequestBody EmployeeDTO dto
     ) {
+        log.info("update user: {}", dto);
         return APIResponseEntityHelper.from(employeeService.updateUser(dto.getUsername(), dto));
     }
 
@@ -109,6 +106,21 @@ public class EmployeeController {
             @RequestBody StatusLogDTO logDTO ) {
         logDTO.setUsername(user.getUsername());
         return APIResponseEntityHelper.from(employeeService.updateOnlineStatus(logDTO));
+    }
+
+    @PutMapping("/reset-password")
+    public ResponseEntity<APIResultSet<Void>> resetPassword(
+            @RequestBody ResetPasswordDTO resetPasswordDTO
+    ) {
+        return APIResponseEntityHelper.from(employeeService.resetPassword(resetPasswordDTO));
+    }
+
+    @DeleteMapping()
+    public ResponseEntity<APIResultSet<Void>> deleteUser(
+            @RequestBody EmployeeDTO employeeDTO
+    ) {
+        log.info("delete user {}", employeeDTO);
+        return APIResponseEntityHelper.from(employeeService.deleteByUsername(employeeDTO.getUsername()));
     }
 
 }

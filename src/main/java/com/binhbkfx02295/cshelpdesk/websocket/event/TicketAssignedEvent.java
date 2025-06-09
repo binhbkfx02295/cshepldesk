@@ -6,8 +6,6 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public class TicketEvent {
-    public enum Action {CREATED, ASSIGNED, UPDATED, CLOSED}
+public class TicketAssignedEvent {
     private final TicketDashboardDTO ticket;
-    private final Action action;
 }

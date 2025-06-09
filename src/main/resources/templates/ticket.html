@@ -1,5 +1,5 @@
 <!DOCTYPE html >
-<html lang="en" th:replace="~{layout:: layout(~{::title}, ~{}, ~{::div.page-content})}"
+<html lang="en" th:replace="~{layout:: layout(~{::title}, ~{}, ~{::div.page-content}, ~{})}"
       xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <title>CSHelpDesk | Quản Lý Thẻ</title>
@@ -135,17 +135,17 @@
             <!-- Header -->
             <div class="page-list-header data-header container-fluid fw-bold border-bottom">
                 <div class="row">
-                    <div class="col resizable" data-sort="id" data-sort-direction="none">#ID</div>
-                    <div class="col resizable" data-sort="title" data-sort-direction="none">Tiêu đề</div>
-                    <div class="col resizable" data-sort="assignee" data-sort-direction="none">Nhân viên</div>
-                    <div class="col resizable" data-sort="facebookUser" data-sort-direction="none">Facebook User
+                    <div class="col resizable sortable" data-sort="id" data-sort-direction="none">#ID</div>
+                    <div class="col resizable sortable" data-sort="title" data-sort-direction="none">Tiêu đề</div>
+                    <div class="col resizable sortable" data-sort="assignee" data-sort-direction="none">Nhân viên</div>
+                    <div class="col resizable sortable" data-sort="facebookUser" data-sort-direction="none">Facebook User
                     </div>
-                    <div class="col resizable" data-sort="progress-status" data-sort-direction="none">Trạng thái
+                    <div class="col resizable sortable" data-sort="progress-status" data-sort-direction="none">Trạng thái
                     </div>
-                    <div class="col resizable" datCa-sort="category" data-sort-direction="none">Danh mục</div>
-                    <div class="col resizable" data-sort="createdA" data-sort-direction="none">Ngày tạo</div>
-                    <div class="col resizable" data-sort="emotion" data-sort-direction="none">Cảm xúc</div>
-                    <div class="col resizable" data-sort="satisfaction" data-sort-direction="none">Mức hài lòng
+                    <div class="col resizable sortable" datCa-sort="category" data-sort-direction="none">Danh mục</div>
+                    <div class="col resizable sortable" data-sort="createdA" data-sort-direction="none">Ngày tạo</div>
+                    <div class="col resizable sortable" data-sort="emotion" data-sort-direction="none">Cảm xúc</div>
+                    <div class="col resizable sortable" data-sort="satisfaction" data-sort-direction="none">Mức hài lòng
                     </div>
                 </div>
             </div>
@@ -165,25 +165,6 @@
                 </div>
                 <nav>
                     <ul id="pagination-menu" class="pagination pagination-sm mb-0">
-                        <li class="page-item  disabled">
-                            <a class="page-link" href="#">Prev</a>
-                        </li>
-                        <li class="page-item active ">
-                            <a class="page-link" href="#">1</a>
-                        </li>
-                        <li class="page-item  ">
-                            <a class="page-link" href="#">2</a>
-                        </li>
-                        <li class="page-item  ">
-                            <a class="page-link" href="#">3</a>
-                        </li>
-                        <li class="page-item disabled"><span class="page-link">...</span></li>
-                        <li class="page-item  ">
-                            <a class="page-link" href="#">7</a>
-                        </li>
-                        <li class="page-item  ">
-                            <a class="page-link" href="#">Next</a>
-                        </li>
                     </ul>
                 </nav>
             </div>

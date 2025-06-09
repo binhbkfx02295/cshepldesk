@@ -22,6 +22,8 @@ public class Message {
 
     private boolean senderEmployee;
 
+    private boolean senderSystem;
+
     @ManyToOne
     private Ticket ticket;
 

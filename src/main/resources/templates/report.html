@@ -1,5 +1,5 @@
 <!DOCTYPE html >
-<html lang="en" th:replace="~{layout:: layout(~{::title}, ~{}, ~{::div.page-content})}"
+<html lang="en" th:replace="~{layout:: layout(~{::title}, ~{}, ~{::div.page-content}, ~{::scripts})}"
       xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <title>CSHelpDesk | Báo Cáo</title>
@@ -15,67 +15,61 @@
     <div class="report page-main-content g-0 d-flex flex-column ">
         <div class="page-list">
             <div class="page-list-body container-fluid">
-                <!-- chart -->
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <div class="chart-container bg-white shadow-sm" id="ticket-by-hour">
-                            <div class="chart-header">
-                                <!-- //filter -->
-                                <div class="d-flex flex-row justify-content-start align-items-center p-3">
-                                    <!-- //header -->
-                                    <div class="section-title d-flex align-items-center gap-2 me-auto">
-                                        <i class="bi bi-graph-up-arrow fs-5 text-primary"></i>
-                                        <div class="chart-title">Ticket Theo Giờ</div>
-                                    </div>
+                <div class="row">
+                    <!-- chart item-->
+                    <div class="col-6">
+                        <div class="chart-item" id="ticketByHour">
 
+                            <div
+                                    class="chart-header d-flex flex-row justify-content-start align-items-center p-3">
+                                <!-- //header -->
+                                <div class="chart-title d-flex align-items-center gap-2 me-auto">
+                                    <i class="bi bi-graph-up-arrow fs-5 text-primary"></i>
+                                    <div class="chart-title">Ticket Mỗi Giờ</div>
+                                </div>
 
-                                    <!-- add dataset -->
-                                    <div class="field-group datasets position-relative">
-                                        <div class="dropdown">
-                                            <a class="" type="button" data-bs-toggle="dropdown"
-                                               aria-expanded="false">
-                                                <i class="bi bi-plus-circle"></i>
-                                            </a>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item add-dataset" href="#">Thêm
-                                                    dữ liệu</a></li>
-                                                <div class="dropdown-divider"></div>
-                                            </ul>
-                                        </div>
-                                    </div>
+                                <div class="field-group dateOption" data-dateoption="1w" data-label="1 Tuần">
+                                    1W
+                                </div>
+                                <div class="field-group dateOption" data-dateoption="1m" data-label="1 Tháng">
+                                    1M
+                                </div>
+                                <div class="field-group dateOption" data-dateoption="3m" data-label="3 Tháng">
+                                    3M
+                                </div>
 
+                                <!-- date range option -->
+                                <div class="field-group dateRange">
+                                    <!-- <input type="text" id="dateRange" placeholder="Chọn ngày..." /> -->
+                                    <div type="text" class="dateRangeOption" placeholder="Chọn ngày..."><i
+                                            class="bi bi-calendar"></i></div>
+                                </div>
 
-                                    <!-- pick metric type -->
-                                    <div class="field-group metric-type">
-                                        <div class="dropdown">
-                                            <a class="" type="button" data-bs-toggle="dropdown"
-                                               aria-expanded="false" data-value="num">
-                                                <i class="bi bi-123 me-2"></i>
-                                            </a>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="#" data-value="percentage"><i
-                                                        class="bi bi-percent me-2"></i>Dạng phần trăm</a>
-                                                </li>
-                                                <li><a class="dropdown-item" href="#" data-value="num"><i
-                                                        class="bi bi-123 me-2"></i>Dạng số</a></li>
-                                            </ul>
-                                        </div>
-                                    </div>
-
-                                    <!-- refresh chart -->
-                                    <div class="field-group refresh-chart">
-                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                <!-- add dataset -->
+                                <div class="field-group datasets">
+                                    <div class="dropdown">
+                                        <a class="" type="button" data-bs-toggle="dropdown"
+                                           aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item add-dataset" href="#">Thêm
+                                                dữ liệu</a></li>
+                                            <div class="dropdown-divider"></div>
+                                        </ul>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="chart-metrics container-fluid">
                                 <!-- //metrics -->
                                 <div class="row mb-3 g-3">
                                     <div class="col-md-4">
-                                        <div class="widget widget-sm stat-card text-center">
+                                        <div class="widget stat-card text-center">
 
                                             <div class="stat-title"><i
                                                     class="bi bi-bar-chart-fill stat-icon me-2"></i>Trung
                                                 bình</div>
-                                            <div class="stat-value" id="avgTicketPerHour">- -</div>
+                                            <div class="stat-value avgTicketPerHour">- -</div>
                                             <div class="stat-label">Ticket / Giờ</div>
                                         </div>
                                     </div>
@@ -85,7 +79,7 @@
                                             <div class="stat-title"><i
                                                     class="bi bi-arrow-up-right-circle-fill stat-icon me-2"></i>Nhiều
                                                 nhất</div>
-                                            <div class="stat-value" id="maxTicketPerHour">- -</div>
+                                            <div class="stat-value maxTicketPerHour">- -</div>
                                             <div class="stat-label">Ticket / Giờ</div>
                                         </div>
                                     </div>
@@ -95,207 +89,212 @@
                                             <div class="stat-title"><i
                                                     class="bi bi-arrow-down-right-circle-fill me-2 stat-icon"></i>
                                                 Thấp nhất</div>
-                                            <div class="stat-value" id="minTicketPerHour">- -</div>
+                                            <div class="stat-value minTicketPerHour">- -</div>
                                             <div class="stat-label">Ticket / Giờ</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="chart-body">
-                                <canvas id="my-chart-canvas">
+                                <canvas width="993" height="330"
+                                        style="display: block; box-sizing: border-box; height: 300px; width: 903px;">
                                 </canvas>
                             </div>
-
-                        </div>
-
-                    </div>
-                </div>
-                <!-- tabular data -->
-                <div class="row mb-3">
-                    <div class="col-6">
-                        <div class="widget widget-table text-start shadow-sm">
-                            <div class="widget-header"></div>
-                            <div class="widget-body">
-                                <div class="header container-fluid">
-                                    <div class="row">
-                                        <div class="col">#</div>
-                                        <div class="col">Khung giờ</div>
-                                        <div class="col">Lượng Ticket</div>
-                                        <div class="col">Phần trăm</div>
-                                    </div>
-                                </div>
-                                <div class="body container-fluid">
-                                    <div class="row">
-                                        <div class="col">1</div>
-                                        <div class="col">01:00</div>
-                                        <div class="col">21</div>
-                                        <div class="col">5.7%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">2</div>
-                                        <div class="col">01:00</div>
-                                        <div class="col">21</div>
-                                        <div class="col">5.7%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">3</div>
-                                        <div class="col">02:00</div>
-                                        <div class="col">15</div>
-                                        <div class="col">5.1%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">4</div>
-                                        <div class="col">03:00</div>
-                                        <div class="col">12</div>
-                                        <div class="col">4.8%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">5</div>
-                                        <div class="col">04:00</div>
-                                        <div class="col">8</div>
-                                        <div class="col">3.2%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">6</div>
-                                        <div class="col">05:00</div>
-                                        <div class="col">10</div>
-                                        <div class="col">3.9%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">7</div>
-                                        <div class="col">06:00</div>
-                                        <div class="col">14</div>
-                                        <div class="col">4.5%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">8</div>
-                                        <div class="col">07:00</div>
-                                        <div class="col">20</div>
-                                        <div class="col">6.1%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">9</div>
-                                        <div class="col">08:00</div>
-                                        <div class="col">24</div>
-                                        <div class="col">7.0%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">10</div>
-                                        <div class="col">09:00</div>
-                                        <div class="col">28</div>
-                                        <div class="col">7.6%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">11</div>
-                                        <div class="col">10:00</div>
-                                        <div class="col">32</div>
-                                        <div class="col">8.2%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">12</div>
-                                        <div class="col">11:00</div>
-                                        <div class="col">35</div>
-                                        <div class="col">8.7%</div>
-                                    </div>
-
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="widget widget-table text-start shadow-sm">
-                            <div class="widget-header"></div>
-                            <div class="widget-body">
-                                <div class="header container-fluid">
-                                    <div class="row">
-                                        <div class="col">#</div>
-                                        <div class="col">Khung giờ</div>
-                                        <div class="col">Lượng Ticket</div>
-                                        <div class="col">Phần trăm</div>
-                                    </div>
-                                </div>
-                                <div class="body container-fluid">
-
-                                    <div class="row">
-                                        <div class="col">13</div>
-                                        <div class="col">12:00</div>
-                                        <div class="col">30</div>
-                                        <div class="col">8.0%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">14</div>
-                                        <div class="col">13:00</div>
-                                        <div class="col">26</div>
-                                        <div class="col">7.4%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">15</div>
-                                        <div class="col">14:00</div>
-                                        <div class="col">22</div>
-                                        <div class="col">6.6%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">16</div>
-                                        <div class="col">15:00</div>
-                                        <div class="col">18</div>
-                                        <div class="col">5.9%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">17</div>
-                                        <div class="col">16:00</div>
-                                        <div class="col">16</div>
-                                        <div class="col">5.3%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">18</div>
-                                        <div class="col">17:00</div>
-                                        <div class="col">19</div>
-                                        <div class="col">5.6%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">19</div>
-                                        <div class="col">18:00</div>
-                                        <div class="col">23</div>
-                                        <div class="col">6.2%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">20</div>
-                                        <div class="col">19:00</div>
-                                        <div class="col">27</div>
-                                        <div class="col">7.0%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">21</div>
-                                        <div class="col">20:00</div>
-                                        <div class="col">25</div>
-                                        <div class="col">6.8%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">22</div>
-                                        <div class="col">21:00</div>
-                                        <div class="col">22</div>
-                                        <div class="col">6.0%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">23</div>
-                                        <div class="col">22:00</div>
-                                        <div class="col">17</div>
-                                        <div class="col">5.2%</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">24</div>
-                                        <div class="col">23:00</div>
-                                        <div class="col">13</div>
-                                        <div class="col">4.7%</div>
-                                    </div>
-
+                            <div class="chart-tabular-data data-table container-fluid">
+                                <div class="wrapper">
+                                    <div class="data-header"></div>
+                                    <div class="data-body"></div>
                                 </div>
                             </div>
+
+                        </div>
+                    </div>
+                    <!-- chart item-->
+                    <div class="col-6">
+                        <div class="chart-item" id="ticketByWeekday">
+
+                            <div
+                                    class="chart-header d-flex flex-row justify-content-start align-items-center p-3">
+                                <!-- //header -->
+                                <div class="chart-title d-flex align-items-center gap-2 me-auto">
+                                    <i class="bi bi-graph-up-arrow fs-5 text-primary"></i>
+                                    <div class="chart-title">Ticket Mỗi Tuần</div>
+                                </div>
+
+                                <div class="field-group dateOption" data-dateoption="1w" data-label="1 Tuần">
+                                    1W
+                                </div>
+                                <div class="field-group dateOption" data-dateoption="4w" data-label="4 Tuần">
+                                    4W
+                                </div>
+                                <div class="field-group dateOption" data-dateoption="12w" data-label="12 Tuần">
+                                    12W
+                                </div>
+
+                                <!-- date range option -->
+                                <div class="field-group dateRange">
+                                    <!-- <input type="text" id="dateRange" placeholder="Chọn ngày..." /> -->
+                                    <div type="text" class="dateRangeOption" placeholder="Chọn ngày..."><i
+                                            class="bi bi-calendar"></i></div>
+                                </div>
+
+                                <!-- add dataset -->
+                                <div class="field-group datasets">
+                                    <div class="dropdown">
+                                        <a class="" type="button" data-bs-toggle="dropdown"
+                                           aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item add-dataset" href="#">Thêm
+                                                dữ liệu</a></li>
+                                            <div class="dropdown-divider"></div>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-metrics container-fluid">
+                                <!-- //metrics -->
+                                <div class="row mb-3 g-3">
+                                    <div class="col-md-4">
+                                        <div class="widget stat-card text-center">
+
+                                            <div class="stat-title"><i
+                                                    class="bi bi-bar-chart-fill stat-icon me-2"></i>Trung
+                                                bình</div>
+                                            <div class="stat-value avgTicketPerHour">- -</div>
+                                            <div class="stat-label">Ticket / Giờ</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="widget widget-sm stat-card text-center">
+                                            <div class="stat-title"><i
+                                                    class="bi bi-arrow-up-right-circle-fill stat-icon me-2"></i>Nhiều
+                                                nhất</div>
+                                            <div class="stat-value maxTicketPerHour">- -</div>
+                                            <div class="stat-label">Ticket / Giờ</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="widget widget-sm stat-card text-center">
+                                            <div class="stat-title"><i
+                                                    class="bi bi-arrow-down-right-circle-fill me-2 stat-icon"></i>
+                                                Thấp nhất</div>
+                                            <div class="stat-value minTicketPerHour">- -</div>
+                                            <div class="stat-label">Ticket / Giờ</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-body">
+                                <canvas width="993" height="330"
+                                        style="display: block; box-sizing: border-box; height: 300px; width: 903px;">
+                                </canvas>
+                            </div>
+                            <div class="chart-tabular-data data-table container-fluid">
+                                <div class="wrapper">
+                                    <div class="data-header"></div>
+                                    <div class="data-body"></div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <!-- chart item-->
+                    <div class="col-12">
+                        <div class="chart-item" id="ticketByDay">
+                            <div
+                                    class="chart-header d-flex flex-row justify-content-start align-items-center p-3">
+                                <!-- //header -->
+                                <div class="chart-title d-flex align-items-center gap-2 me-auto">
+                                    <i class="bi bi-graph-up-arrow fs-5 text-primary"></i>
+                                    <div class="chart-title">Ticket Mỗi Ngày</div>
+                                </div>
+
+                                <div class="field-group dateOption" data-dateoption="1m" data-label="1 Tháng">
+                                    1M
+                                </div>
+                                <div class="field-group dateOption" data-dateoption="3m" data-label="3 Tháng">
+                                    3M
+                                </div>
+                                <div class="field-group dateOption" data-dateoption="6m" data-label="6 Tháng">
+                                    6M
+                                </div>
+
+                                <!-- date range option -->
+                                <div class="field-group dateRange">
+                                    <!-- <input type="text" id="dateRange" placeholder="Chọn ngày..." /> -->
+                                    <div type="text" class="dateRangeOption" placeholder="Chọn ngày..."><i
+                                            class="bi bi-calendar"></i></div>
+                                </div>
+
+                                <!-- add dataset -->
+                                <div class="field-group datasets">
+                                    <div class="dropdown">
+                                        <a class="" type="button" data-bs-toggle="dropdown"
+                                           aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item add-dataset" href="#">Thêm
+                                                dữ liệu</a></li>
+                                            <div class="dropdown-divider"></div>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-metrics container-fluid">
+                                <!-- //metrics -->
+                                <div class="row mb-3 g-3">
+                                    <div class="col-md-4">
+                                        <div class="widget stat-card text-center">
+
+                                            <div class="stat-title"><i
+                                                    class="bi bi-bar-chart-fill stat-icon me-2"></i>Trung
+                                                bình</div>
+                                            <div class="stat-value avgTicketPerHour">- -</div>
+                                            <div class="stat-label">Ticket / Giờ</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="widget widget-sm stat-card text-center">
+                                            <div class="stat-title"><i
+                                                    class="bi bi-arrow-up-right-circle-fill stat-icon me-2"></i>Nhiều
+                                                nhất</div>
+                                            <div class="stat-value maxTicketPerHour">- -</div>
+                                            <div class="stat-label">Ticket / Giờ</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="widget widget-sm stat-card text-center">
+                                            <div class="stat-title"><i
+                                                    class="bi bi-arrow-down-right-circle-fill me-2 stat-icon"></i>
+                                                Thấp nhất</div>
+                                            <div class="stat-value minTicketPerHour">- -</div>
+                                            <div class="stat-label">Ticket / Giờ</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-body">
+                                <canvas width="993" height="330"
+                                        style="display: block; box-sizing: border-box; height: 300px; width: 903px;">
+                                </canvas>
+                            </div>
+                            <div class="chart-tabular-data data-table container-fluid">
+                                <div class="wrapper">
+                                    <div class="data-header"></div>
+                                    <div class="data-body"></div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
         <!-- template cho cai add dataset -->
@@ -304,14 +303,15 @@
             <div class="dataset d-flex -flex-row align-items-center bg-white position-absolute movable">
                 <!-- dataset-name -->
                 <div class="field-group">
-                    <input type="text" id="dataset-name" placeholder="Tên dữ liệu">
+                    <input type="text" class="dataset-name" placeholder="Tên dữ liệu">
                 </div>
                 <!-- pick date range -->
                 <div class="field-group date-range ms-auto">
                     <!-- <label for="" class="d-inline-block fw-normal me-2">Thời gian:
-                                        </label> -->
-                    <select class="form-select d-inline-block" aria-label="Default select example">
-                        <option value="1" selected>Hôm nay</option>
+                                </label> -->
+                    <select class="form-select d-inline-block" id="dateRangeOption"
+                            aria-label="Default select example">
+                        <option value="1" selected="">Hôm nay</option>
                         <option value="2">Tuần này</option>
                         <option value="3">Tuần trước</option>
                         <option value="4">4 tuần</option>
@@ -357,8 +357,20 @@
             </div>
         </template>
     </div>
-    <div th:replace="~{fragments/footer :: footer}"></div>
+    <div th:replace="~{fragments/footer :: footer}">
+
+    </div>
+
 </div>
 
 </body>
+<th:block th:fragment="scripts">
+    <!-- chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair"></script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
+</th:block>
 </html>

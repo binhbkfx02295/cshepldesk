@@ -3,9 +3,12 @@ package com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.*;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.StatusLog;
+import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupMapper;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.sql.Timestamp;
 
 @Data
 @Component
@@ -21,8 +24,11 @@ public class EmployeeMapper {
         dto.setDescription(employee.getDescription());
         dto.setName(employee.getName());
         dto.setActive(employee.isActive());
+        dto.setPhone(employee.getPhone());
+        dto.setEmail(employee.getEmail());
         dto.setUserGroup(userGroupMapper.toDTO(employee.getUserGroup()));
         dto.setStatusLogs(employee.getStatusLogs().stream().map(statusLogMapper::toDTO).toList());
+        dto.setCreatedAt(Timestamp.from(employee.getCreatedAt()));
         return dto;
     }
 
@@ -33,8 +39,17 @@ public class EmployeeMapper {
         dto.setGroup(userGroupMapper.toDTO(employee.getUserGroup()));
         return dto;
     }
-    public Employee toEntity(EmployeeDTO employeedto)  {
-        return null;
+    public Employee toEntity(EmployeeDTO dto)  {
+        Employee entity = new Employee();
+        entity.setUsername(dto.getUsername());
+        entity.setPassword(dto.getPassword());
+        entity.setUserGroup(userGroupMapper.toEntity(dto.getUserGroup()));
+        entity.setActive(dto.isActive());
+        entity.setName(dto.getName());
+        entity.setEmail(dto.getEmail());
+        entity.setPhone(dto.getPhone());
+        entity.setDescription(dto.getDescription());
+        return entity;
     }
 
     public Employee toEntity(EmployeeStatusDTO dto) {
@@ -62,4 +77,16 @@ public class EmployeeMapper {
     }
 
 
+    public EmployeeDetailDTO toDetailDTO(Employee entity) {
+        EmployeeDetailDTO dto = new EmployeeDetailDTO();
+        dto.setDescription(entity.getDescription());
+        dto.setName(entity.getName());
+        dto.setUsername(entity.getUsername());
+        dto.setUserGroup(userGroupMapper.toDTO(entity.getUserGroup()));
+        dto.setEmail(entity.getEmail());
+        dto.setPhone(entity.getPhone());
+        dto.setActive(entity.isActive());
+        dto.setCreatedAt(Timestamp.from(entity.getCreatedAt()));
+        return dto;
+    }
 }

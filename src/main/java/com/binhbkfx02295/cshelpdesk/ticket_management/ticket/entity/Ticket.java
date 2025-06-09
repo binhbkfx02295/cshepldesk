@@ -58,7 +58,7 @@ public class Ticket {
     @JoinColumn(name = "emotion_id")
     private Emotion emotion;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "satisfaction_id")
     private Satisfaction satisfaction;
 

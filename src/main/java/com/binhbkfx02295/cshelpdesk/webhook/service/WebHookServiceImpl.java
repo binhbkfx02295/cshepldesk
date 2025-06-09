@@ -63,10 +63,15 @@ public class WebHookServiceImpl implements WebHookService {
                         TicketDetailDTO ticket = result.getData();
                         if (ticket.getAssignee() == null) {
                             //TODO: try assign ticket
-                            autoAssign(ticket);
+                            if (autoAssign(ticket)) {
+                                ticketService.assignTicket(ticket.getId(), ticket);
+                            };
+
                         }
                         //TODO: try add message
                         messageDTO = convertToMessageDTO(messaging);
+                        messageDTO.setSenderSystem(ticket.getAssignee() == null);
+                        log.info("test isSenderSystem? ticket.getAssignee() == null: {} ,isSenderSystem: {}", ticket.getAssignee() == null, messageDTO.isSenderSystem());
                         messageDTO.setTicketId(ticket.getId());
                         messageService.addMessage(messageDTO);
                     }
@@ -83,17 +88,36 @@ public class WebHookServiceImpl implements WebHookService {
                         ticket = new TicketDetailDTO();
                         ticket.setProgressStatus(progressStatusMapper.toDTO(cache.getProgress(1)));
                         ticket.setFacebookUser(facebookUserMapper.toDTO(facebookUser));
+
                         if (!autoAssign(ticket)) {
                             //TODO: if no avaiable assignee, send facebook message to customer.
                             //No assignee avaiable, send inform customer
+
+                            log.info("assign failed, now inform customer");
                             facebookGraphAPIService.notifyNoAssignee(senderId);
                         }
+
                         ticket = ticketService.createTicket(ticket).getData();
                     }
+                    if (ticket.getAssignee() == null) {
+                        //TODO: if no avaiable assignee, send facebook message to customer.
+                        if (autoAssign(ticket)) {
+                            ticketService.assignTicket(ticket.getId(), ticket);
+                        }
+                    }
+
                     //TODO: add message;
                     messageDTO = convertToMessageDTO(messaging);
                     messageDTO.setTicketId(ticket.getId());
+                    messageDTO.setSenderSystem(false);
                     messageService.addMessage(messageDTO);
+
+                    if (ticket.getAssignee() == null) {
+                        log.info("assign failed, now inform customer");
+                        facebookGraphAPIService.notifyNoAssignee(senderId);
+                    }
+
+
                 }
             }
         }
@@ -138,10 +162,11 @@ public class WebHookServiceImpl implements WebHookService {
         //get employees with role staff and is online
         List<Employee> employeeList = cache.getAllEmployees().values().stream().filter(employee -> {
             return employee.getStatusLogs().get(employee.getStatusLogs().size()-1).getStatus().getId() == 1 &&
-            employee.getUserGroup().getName().equalsIgnoreCase("staff");
+            employee.getUserGroup().getCode().equalsIgnoreCase("staff");
         }).toList();
 
         if (employeeList.isEmpty()) {
+            log.info("no online employee");
             return false;
         }
 

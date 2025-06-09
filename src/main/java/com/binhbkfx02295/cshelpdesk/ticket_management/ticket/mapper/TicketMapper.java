@@ -188,7 +188,8 @@ public class TicketMapper {
         dto.setProgressStatus(progressStatusMapper.toDTO(entity.getProgressStatus()));
         dto.setTitle(entity.getTitle());
         if (entity.getMessages() != null && !entity.getMessages().isEmpty() && entity.getProgressStatus().getId() != 3) {
-            dto.setHasNewMessage(!entity.getMessages().get(entity.getMessages().size()-1).isSenderEmployee());
+            dto.setHasNewMessage(!entity.getMessages().get(entity.getMessages().size() - 1).isSenderEmployee()
+                    || entity.getMessages().get(entity.getMessages().size() - 1).isSenderSystem());
         }
         return dto;
     }

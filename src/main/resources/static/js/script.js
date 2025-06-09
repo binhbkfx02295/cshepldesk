@@ -17,6 +17,7 @@ const CATEGORIES = []
 const PROGRESS_STATUS = [];
 const EMOTIONS = [];
 const SATISFACTIONS = [];
+const USERGROUPS = []
 const GLOBAL_API_HEADERS = {
   "Content-Type": "application/json",
   "Accept": "application/json",
@@ -32,7 +33,7 @@ var debounceKeyup = null;
 var deleteCustomerHandler = null;
 var customerViewDetailModal = null;
 var ticketVolumeHourlyChart = null;
-var addDatasetCallback = null;
+var appendDatasetCallback = null;
 var charts = {};
 var cache = {};
 var chatbox;
@@ -50,8 +51,8 @@ const CHART_CONFIG = {
   },
   colors: {
     font: '#6c757d',
-    mainColors: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'], // dùng làm borderColor cho line, backgroundColor cho bar
-    hoverColors: ['#2e59d9', '#17a673', '#2c9faf', '#f4b619'], // dùng hover cho cả line và bar nếu cần
+    mainColors: ['#4e73df89', '#ff0000b0', '#36b9cc', '#f6c23e'], // dùng làm borderColor cho line, backgroundColor cho bar
+    hoverColors: ['#2e59d9', '#ff0000', '#2c9faf', '#f4b619'], // dùng hover cho cả line và bar nếu cần
   },
   fontSize: {
     axis: 14,
@@ -101,6 +102,7 @@ $(document).ready(() => {
     $(".sidebar-menu li").removeClass("active");
     $(".sidebar-menu li").get(7).classList.add("active");
   }
+
 })
 
 // today-staff.html
@@ -194,7 +196,9 @@ function initTodayTicket() {
     }, 500);
   })
 
-
+  openAPIxhr(HTTP_GET_METHOD, `${API_EMPLOYEE}/me`, function (response) {
+    window.me = response.data;
+  })
 
 }
 
@@ -209,7 +213,7 @@ function initCustomer() {
   initCustomerDeleteModal();
   initCustomerExport();
   initCustomerViewModal();
-  bindItemClickEvents(); //TODO: delete after testing
+  bindItemClickEvents();
   window.customerViewDetailModal = new bootstrap.Modal(document.getElementById("customerDetailModal"));
 
   document.querySelector(".select-all input[type=checkbox]").addEventListener("click", function (e) {
@@ -230,15 +234,11 @@ function initCustomer() {
       window.customerDeleteModal.show();
       confirmBtn.removeEventListener("click", deleteCustomerHandler);
       deleteCustomerHandler = function () {
-        console.log("hehe");
         //get array of ids
         const checkboxes = document.querySelectorAll("input[type=checkbox]");
         arr = []
         checkboxes.forEach(checkbox => {
           if (checkbox != confirmBtn) {
-            console.log(checkbox);
-            console.log(checkbox.closest(".row[data-id]"))
-            console.log("============")
             value = checkbox.closest(".row[data-id]")?.getAttribute("data-id");
             if (checkbox.checked == true && value != "" && value != null) {
               arr.push(value);
@@ -247,14 +247,13 @@ function initCustomer() {
         })
         console.log("arr ", arr);
         openAPIxhr(HTTP_DELETE_METHOD, `${API_FACEBOOK_USER}/delete-all`, function () {
-          console.log("clean up");
           window.customerDeleteModal.hide();
           setTimeout(function () {
             checkboxes.forEach(checkbox => {
               checkbox.checked = false;
               checkbox.dispatchEvent(new Event("change", { bubbles: true }));
             })
-            performSearchCustomer();
+            performSearchCustomer(page = 0, size = $("#pageSize").val());
           }, 500)
         }
           , null, arr);
@@ -291,7 +290,6 @@ function initCustomer() {
     const container = document.getElementById("customer-list-body");
     const loading = $($("#loading-result"));
     const _url = `${API_FACEBOOK_USER}/search?${buildQueryParam(data)}`;
-    console.log(_url)
     loading.show();
     openAPIxhr(HTTP_GET_METHOD, _url, function (response) {
       parseCustomerSearchResult(response, loading, container)
@@ -303,8 +301,10 @@ function initCustomer() {
     successToast(response.message);
     container.innerHTML = "";
     let data = response.data
+    console.log(response.data);
     if (data.content != 0) {
-      renderCustomerDetail(data.content, container)
+      renderCustomerDetail(data.content, container);
+
       bindItemClickEvents()
       renderPagination(
         data.page,
@@ -469,18 +469,18 @@ function initCustomer() {
         <div class="col selected d-flex justify-content-center align-items-center">
             <input type="checkbox">
         </div>
-        <div class="col facebookId">${item.facebookId || "- -"}</div>
+        <div class="col facebookId" title="${sanitizeText(item.facebookId)}>${item.facebookId || "- -"}</div>
         <div class="col facebookProfile">
           <img class="avt" src="${item.facebookProfilePic || "- -"}">
           ${item.facebookName || "- -"}</div>
-        <div class="col">${sanitizeText(item.facebookName) || "- -"}</div>
-        <div class="col">${sanitizeText(item.phone) || "- -"}</div>
-        <div class="col">${sanitizeText(item.email) || "- -"}</div>
-        <div class="col">${sanitizeText(item.zalo) || "- -"}</div>
+        <div class="col" title="${sanitizeText(item.facebookName)}">${sanitizeText(item.facebookName) || "- -"}</div>
+        <div class="col" title="${sanitizeText(item.phone)}">${sanitizeText(item.phone) || "- -"}</div>
+        <div class="col" title="${sanitizeText(item.email)}">${sanitizeText(item.email) || "- -"}</div>
+        <div class="col" title="${sanitizeText(item.zalo)}">${sanitizeText(item.zalo) || "- -"}</div>
         <div class="col options overflow-visible">
             <div class="customer-dropdown">
                 <i class="bi bi-three-dots-vertical"></i>
-                <ul class="dropdown-menu">
+                <ul class="dropdown-menu" style="right: 0">
                     <li><a class="customer-view-detail dropdown-item" href="#"><i class="bi bi-eye me-2"></i></i>Xem chi tiết</a></li>
                     <li><a class="customer-edit dropdown-item" href="#"><i class="bi bi-pencil-square me-2"></i>Chỉnh sửa</a></li>
                     <li><a class="customer-delete dropdown-item" href="#"><i class="bi bi-trash3 me-2"></i>Xóa</a></li>
@@ -520,7 +520,7 @@ function initCustomer() {
 
     const checkboxes = $("input[type=checkbox");
     const searchCommon = $(".search-common");
-    const deleteButton = $(".delete-checkbox");
+    const deleteButton = $("#delete-checkbox");
     const btnGroup = $(".customer-search-btn-group");
     checkboxes.on("change", function () {
       const anyChecked = checkboxes.is(":checked");
@@ -937,52 +937,46 @@ function subscribeForStaff(stompClient) {
 
 function handleWSTicket(response) {
   response = JSON.parse(response.body);
-  console.log("..handling websocket ticket", response);
   let ticket = response.data;
 
   if (window.location.href.includes("today-ticket")) {
     const container = document.getElementById("ticketList");
     if (container != null) {
-      //1. renderDashboardTicketItem(ticket);
       const item = renderDashboardTicketItem(ticket);
-      console.log("Hệ thống render ra item như sau:", item);
-      //2. put it on top of container
-      if (response.action == "CREATED") {
-        console.log("Event ticket Created!!");
-        //3.play sound notification or small popup
-        playNewTicketNotificationSound();
-        showPopupNotification("Có ticket mới! ID: ", ticket.id);
-        if (container.firstChild) {
-          container.insertBefore(item, container.firstChild);
-        } else {
-          container.appendChild(item);
-        }
-      } else if (response.action == "UPDATED") {
-        console.log("Event ticket Updated!!")
-        container.replaceChild(item, container.querySelector(`*[data-ticket-id="${ticket.id}"]`));
-      } else if (response.action == "CLOSED") {
-        console.log("Event ticket Closed!!");
-        const target = container.querySelector(`.progress-status.resolved`)?.closest(".item");
-        console.log("target ne", target);
-        if (target != null) {
+      switch (response.action) {
+        case "CREATED":
+          playNewTicketNotificationSound();
+          showPopupNotification("Có ticket mới! ID: ", ticket.id);
+          container.firstChild != null
+            ? container.insertBefore(item, container.firstChild)
+            : container.appendChild(item);
+          break;
+        case "UPDATED":
+          container.replaceChild(item, container.querySelector(`*[data-ticket-id="${ticket.id}"]`));
+          break;
+        case "ASSIGNED":
+          if (ticket.assignee != null && ticket.assignee.username != me.username) {
+            let ticketElem = container.querySelector(`*[data-ticket-id="${ticket.id}"]`);
+            container.removeChild(ticketElem);
+          }
+          break;
+        case "CLOSED":
+          const target = container.querySelector(`.progress-status.resolved`)?.closest(".item");
           let oldItem = container.querySelector(`*[data-ticket-id="${ticket.id}"]`);
           container.removeChild(oldItem);
-          if (item != null) {
+          if (target != null) {
             container.insertBefore(item, target);
-          }
+            //xóa luôn "Có tin nhắn" nếu đang hiển thị
+            const s = container.querySelector(".new-message");
+            if (s != null && !s.classList.contains("d-none")) {
+              s.classList.add("d-none");
+            }
 
-          //xóa luôn "Có tin nhắn" nếu đang hiển thị
-          const s = container.querySelector(".new-message");
-          if (s != null && !s.classList.contains("d-none")) {
-            s.classList.add("d-none");
+          } else {
+            container.appendChild(item);
           }
-
-        } else {
-          let oldItem = container.querySelector(`*[data-ticket-id="${ticket.id}"]`);
-          container.appendChild(oldItem);
-        }
+          break;
       }
-
       //rebind interval
       bindDashboardTicketItem();
     }
@@ -1017,7 +1011,7 @@ function handleWSMessage(response) {
     const ticketElem = document.querySelector(`*[data-ticket-id="${ticketId}"]`);
     //TODO:
     //1. check message.senderEmployee: neu la false, render "Có tin nhắn" + bật âm thanh
-    if (message.senderEmployee == false) {
+    if (message.senderEmployee == false || message.senderSystem == true) {
       ticketElem.querySelector(".new-message").classList.remove("d-none");
       playNewMessageNotificationSound()
     } else {
@@ -1342,6 +1336,14 @@ function formatDate(date) {
   return `${day}/${month}/${year}`
 }
 
+function formatTimestampToDate(timestamp) {
+  let date = new Date(timestamp);
+  const day = date.getDate().toString().padStart(2, "0")
+  const month = (date.getMonth() + 1).toString().padStart(2, "0")
+  const year = date.getFullYear()
+  return `${day}/${month}/${year}`
+}
+
 // Format time
 function formatTime(date) {
   const hours = date.getHours().toString().padStart(2, "0")
@@ -1403,7 +1405,8 @@ function toTime(epochMillis) {
 }
 
 function startElapsedTimer(startTimestamp) {
-  const ms = Date.now() - startTimestamp;
+  let ms = Date.now() - startTimestamp;
+  ms = ms < 0 ? 0 : ms;
 
   const totalSeconds = Math.floor(ms / 1000);
   const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
@@ -1589,8 +1592,6 @@ function initTicketDetailModal() {
         "id"
       );
     }
-
-
   })
 
   $("#ticketInfoColumn").on("input change", "input, select, textarea", function () {
@@ -1759,17 +1760,6 @@ function loadDatetimePickerField() {
   });
 
   resetDateField();
-
-  flatpickr("#customDateRange", {
-    mode: "range",
-    dateFormat: "Y-m-d",
-    locale: "vn",
-    onClose: function (selectedDates) {
-      if (selectedDates.length === 2) {
-        setDateRange(selectedDates[0], new Date(selectedDates[1].getTime() + 24 * 60 * 60 * 1000), "Tùy chỉnh");
-      }
-    }
-  });
 }
 
 function resetDateField() {
@@ -1924,12 +1914,13 @@ function loadTicketDetail(ticketId) {
   $('[data-bs-toggle="tooltip"]').tooltip?.();
 }
 function loadTicketSearch(page = null, pageSize = null) {
+
   const container = document.getElementById("ticket-list-body");
   const data = getTicketSearchData(page, pageSize);
   const url = `${API_TICKET}/search?${buildQueryParam(data)}`;
+  showLoadingElement(container);
   callback = function (response) {
     //TODO: populate list
-    showLoadingElement(container);
     populateData(response.data.content, container, renderTicketSearchItem);
     renderPagination(response.data.page,
       response.data.totalElements,
@@ -1967,8 +1958,8 @@ function getTicketSearchData(page, size) {
     facebookId: $("#ticket-search #facebookuser").val() || null,
     title: $("#ticket-search #title").val() || null,
     progressStatus: $("#ticket-search #progress-status").attr("data-progress-id") || null,
-    fromTime: toTimestamp($("#fromDate").val()),
-    toTime: toTimestamp($("#toDate").val()),
+    fromTime: toTimestampLocal($("#fromDate").val()),
+    toTime: toTimestampLocal($("#toDate").val()),
     category: $("#ticket-search #category").attr("data-category-id") || null,
     emotion: $("#ticket-search #emotion").attr("data-emotion-id") || null,
     satisfaction: $("#ticket-search #satisfaction").attr("satisfaction") || null,
@@ -1982,10 +1973,10 @@ function getTicketSearchData(page, size) {
 
 function renderTicketSearchItem(ticket) {
   const div = document.createElement("div");
+  div.className = "row border-bottom item";
+  div.setAttribute("data-ticket-id", ticket.id);
+  div.setAttribute("data-facebookId", ticket.facebookUser.id);
   div.innerHTML = `
-      <div class="row border-bottom item"
-           data-ticket-id="${ticket.id}"
-           data-facebookId="${ticket.facebookUser.facebookId}">
         <div class="col text-truncate" title="${ticket.id}">${ticket.id}</div>
         <div class="col text-truncate" title="${ticket.title || ""}">${ticket.title || "- -"}</div>
         <div class="col text-truncate" title="${ticket.assignee?.name || ticket.assignee?.username}">
@@ -2000,26 +1991,24 @@ function renderTicketSearchItem(ticket) {
         </div>
         <div class="col text-truncate category-${ticket.category?.code || ''}"
              title="${ticket.category?.name || ''}">
-          ${ticket.category?.name || ''}
+          ${ticket.category?.name || '- -'}
         </div>
         <div class="col text-truncate" title="${formatEpochTimestamp(ticket.createdAt)}" data-timestamp="${ticket.createdAt}">
           ${formatEpochTimestamp(ticket.createdAt)}
         </div>
         <div class="col text-truncate emotion-${ticket.emotion?.code || ''}"
              title="${ticket.emotion?.name || ''}">
-          ${ticket.emotion?.name || ''}
+          ${ticket.emotion?.name || '- -'}
         </div>
         <div class="col text-truncate satisfaction-${ticket.satisfaction?.code || ''}"
              title="${ticket.satisfaction?.name || ''}">
-          ${ticket.satisfaction?.name || ''}
+          ${ticket.satisfaction?.name || '- -'}
         </div>
-      </div>
     `;
-  const target = div.firstElementChild;
-  target.addEventListener("click", function () {
+  div.addEventListener("click", function () {
     loadTicketDetail($(this).data("ticket-id"));
   })
-  return target;
+  return div;
 }
 
 function renderPagination(currentPageZeroBased, totalElements, pageSize, callback) {
@@ -2088,9 +2077,12 @@ function renderPagination(currentPageZeroBased, totalElements, pageSize, callbac
 }
 
 
+
+
 function initSortingByIndex(container) {
-  const headerSelector = ".page-list-header .col.resizable";
-  const bodySelector = ".page-list-body";
+  console.log("test");
+  const headerSelector = ".col.sortable";
+  const bodySelector = ".data-body";
 
   const headers = container.querySelectorAll(headerSelector);
   const body = container.querySelector(bodySelector);
@@ -2101,13 +2093,12 @@ function initSortingByIndex(container) {
     // Tạo icon nếu chưa có
     if (!col.querySelector(".sort-icons")) {
       const iconWrapper = document.createElement("div");
-      iconWrapper.className = "sort-icons d-flex flex-column justify-content-center align-items-center position-absolute end-0 top-50 translate-middle-y me-1";
+      iconWrapper.className = "sort-icons d-flex flex-column";
       iconWrapper.style.fontSize = "12px";
       iconWrapper.innerHTML = `
         <i class="bi bi-caret-up-fill arrow-up text-gray-400"></i>
-        <i class="bi bi-caret-down-fill arrow-down text-gray-400" style="margin-top: -4px;"></i>
+        <i class="bi bi-caret-down-fill arrow-down text-gray-400"></i>
       `;
-      col.style.position = "relative";
       col.appendChild(iconWrapper);
     }
 
@@ -2202,8 +2193,8 @@ function initDataExport() {
       facebookId: $("#ticket-search #facebookuser").val() || null,
       title: $("#ticket-search #title").val() || null,
       progressStatus: $("#ticket-search #progress-status").attr("data-progress-status-code") || null,
-      fromTime: toTimestamp($("#fromDate").val()),
-      toTime: toTimestamp($("#toDate").val()),
+      fromTime: toTimestampLocal($("#fromDate").val()),
+      toTime: toTimestampLocal($("#toDate").val()),
       category: $("#ticket-search #category").attr("data-category-code") || null,
       emotion: $("#ticket-search #emotion").attr("data-emotion-code") || null,
       satisfaction: $("#ticket-search #satisfaction").attr("satisfaction") || null,
@@ -2233,9 +2224,15 @@ function initDataExport() {
   });
 }
 
-function toTimestamp(dateString) {
+function toTimestampLocal(dateString) {
   return new Date(dateString).getTime();
 }
+function toTimestampLocal(dateString) {
+  let date = new Date(dateString);
+  date.getTime() + date.getTimezoneOffset()*60*1000;
+  return new Date(dateString).getTime();
+}
+
 // Load ticket list
 function loadDashboardTickets() {
   $.ajax({
@@ -2357,8 +2354,8 @@ function renderMessageItem(msg) {
         element.className = "d-inline-block"
         element.src = attachment.url;
         element.style.maxWidth = attachment.stickerId == null ? "120px" : "240px";
-        element.style.cursor ="pointer";
-        element.addEventListener("click", function() {openImgModal(element)})
+        element.style.cursor = "pointer";
+        element.addEventListener("click", function () { openImgModal(element) })
       }
       attachments.append(element);
     }
@@ -2396,39 +2393,26 @@ function scrollToBottomMessageList(container) {
 
 // Load ticket history
 function loadTicketHistory(facebookId) {
-  $("#historyList").empty();
+  const container = document.getElementById("historyList");
+  const url = `${API_TICKET}/get-by-facebook-id?id=${facebookId}`;
+  const callback = function (response) {
+    populateData(response.data, container, renderTicketHistoryItem)
+  }
+  openAPIxhr(HTTP_GET_METHOD, url, callback);
+}
 
-  $.ajax({
-    url: `${API_TICKET}/get-by-facebook-id`,
-    method: 'GET',
-    data: { id: facebookId },
-    beforeSend: function () {
-      console.log("loading screen.show")
-      // $('#loadingScreen').show();
-    },
-    success: function (response) {
-      const history = response.data.slice(1,);
-      history.sort((a,b) => a.createdAt > b.createdAt)
-      console.log("history:", history);
-      history.forEach(hist => {
-        const item = `
-          <li class="list-group-item d-flex flex-column">
-            <strong>#${hist.id}</strong>
-            <small>${hist.title || "Chưa có tiêu đề"}</small>
-            <small>${formatEpochTimestamp(hist.createdAt)}</small>
-          </li>
-        `;
-        $("#historyList").append(item);
-      });
-    },
-    error: function (xhr, status, error) {
-      alert("Đã xảy ra lỗi khi tải thông tin ticket.");
-    },
-    complete: function () {
-      // $('#loadingScreen').hide();
-      console.log("loading screen.off")
-    }
-  });
+function renderTicketHistoryItem(item) {
+  const li = document.createElement("li");
+  li.className = "list-group-item d-flex flex-column"
+  li.innerHTML =
+    `
+  <strong>#${item.id}</strong>
+  <small>${item.title || "Chưa có tiêu đề"}</small>
+  <small>${formatEpochTimestamp(item.createdAt)}</small>
+  `
+  li.style.cursor = "pointer";
+  li.addEventListener("click", function () { loadTicketDetail(item.id) });
+  return li;
 }
 
 
@@ -2460,123 +2444,240 @@ function sanitizeText(text) {
 }
 
 function initReport() {
+  //init some button
+  setDateOptionRanges();
+  const tables = document.querySelectorAll(".data-table");
+  tables.forEach(table => initSortingByIndex(table))
 
-  initChart();
-  initMockChart();
-  function initChart() {
-    const id = "ticket-by-hour";
-    const api = `${API_REPORT}/ticket-hourly`
-    const chartContainer = document.getElementById(id);
-    const canvas = chartContainer.querySelector("canvas").getContext("2d");
+  const ticketByHourContainer = document.querySelector(".chart-item#ticketByHour")
+  const ticketByWeekdayContainer = document.querySelector(".chart-item#ticketByWeekday")
+  const ticketByDayContainer = document.querySelector(".chart-item#ticketByDay")
+  initChart(ticketByHourContainer, `${API_REPORT}/ticket-by-hour`);
+  initChart(ticketByWeekdayContainer, `${API_REPORT}/ticket-by-weekday`);
+  initChart(ticketByDayContainer, `${API_REPORT}/ticket-by-day`);
+
+
+
+  function initChart(container, api) {
+    console.log(container)
+    const id = container.id;
+    const canvas = container.querySelector("canvas").getContext("2d");
     const chart = createDefaultChart(canvas);
     window.charts[id] = chart;
-    window.cache[id] = {}
-    window.cache[id].datasets = {}
-    initController(chartContainer, api);
+    initChartController(container, api);
   }
 
-  function initMockChart() {
-    const dataset = {
-      label: "Hôm nay",
-      type: "line",
-      data: {
-        labels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 1, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
-        data: [0, 0, 0, 0, 0, 0, 0, 0, 20, 15, 25, 22, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-      },
-      nonce: "e"
+  function initChartController(container, api) {
+    // ========= DATE RANGE OPTION ====
+    flatpickr(".dateRangeOption", {
+      mode: "range",
+      dateFormat: "Y-m-d",
+      onChange: function (selectedDates, dateStr, instance) {
 
-    };
+        if (selectedDates.length === 2) {
+          const startTimestamp = selectedDates[0].getTime();
+          const endTimestamp = selectedDates[1].getTime();
 
-
-    const newData = {
-      label: "3 Tháng",
-      type: "bar",
-      data: {
-        labels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 21, 22, 23],
-        data: [0, 0, 0, 0, 0, 0, 0, 0, 16, 17, 23, 19, 6, 9, 15, 19, 20, 33, 39, 47, 25, 19, 5, 67]
-      },
-      nonce: "g"
-    };
-    // Initialize chart
-    chart = charts["ticket-by-hour"];
-    addDataset(chart, dataset);
-    addDataset(chart, newData);
-    cache["ticket-by-hour"]["datasets"][dataset.nonce] = {};
-    cache["ticket-by-hour"]["datasets"][newData.nonce] = {};
-    cache["ticket-by-hour"]["datasets"][dataset.nonce]["origin"] = dataset;
-    cache["ticket-by-hour"]["datasets"][newData.nonce]["origin"] = newData;
-  }
-
-  function initController(container, api) {
-    //init metric-type
-    const metricBtnList = container.querySelectorAll(".field-group.metric-type ul a")
-
-    metricBtnList.forEach(btn => {
-      btn.addEventListener("click", function () {
-        const i = btn.firstElementChild.cloneNode(true);
-        const target = btn.closest("ul").previousElementSibling;
-        const currentMetric = target.getAttribute("data-value");
-        const newMetric = btn.getAttribute("data-value");
-        if (!changeChartToMetric(container, newMetric)) {
-          return;
-        }
-
-        target.replaceChildren(i);
-        target.setAttribute("data-value", newMetric);
-      })
-    });
-
-    //init reload type;
-    const refreshBtn = container.querySelector(".field-group.refresh-chart");
-    refreshBtn.addEventListener("click", function () {
-      //TODO: finish later
-      console.log("...reloading chart");
-    })
-
-    // init add dataset button
-    const addDatasetBtn = container.querySelector(".add-dataset");
-    addDatasetBtn.addEventListener("click", function () {
-      initAddDataset(container, api);
-    })
-  }
-  function changeChartToMetric(container, newMetric) {
-    const cachedDatasets = cache[container.id]["datasets"];
-    const datasets = charts[container.id].data.datasets;
-    try {
-      for (let index in datasets) {
-        let dataset = datasets[index];
-        let nonce = dataset.nonce;
-        let cachedMetrics = cachedDatasets[nonce];
-        if (cachedMetrics[newMetric] != null) {
-          dataset.data = cachedMetrics[newMetric].data.data;
-        } else {
-          let originDataset = cachedMetrics["origin"];
-          let clone = JSON.parse(JSON.stringify(originDataset));
-          clone.data.data = computeToMetric(clone.data.data, newMetric);
-          dataset.data = clone.data.data;
-          cachedMetrics[newMetric] = clone;
+          console.log("Start:", startTimestamp, "End:", endTimestamp);
+          instance.element.setAttribute("data-fromTime", startTimestamp);
+          instance.element.setAttribute("data-toTime", endTimestamp);
         }
       }
-      chart.update();
-      return true;
+    });
 
-    } catch (err) {
-      console.log(err);
-      return false;
-    }
+    // ========== INIT DATE RANGE OPTION =======
+    container.querySelectorAll(".dateOption").forEach(option => {
+      option.addEventListener("click", function () {
+        // ==== styling ===
+        container.querySelectorAll(".dateOption").forEach(item => {
+          item.classList.remove("active");
+        })
+        option.classList.add("active");
+        // === calling fetch dataset
+        params = {
+          label: option.getAttribute("data-label"),
+          fromTime: option.getAttribute("data-fromTime"),
+          toTime: option.getAttribute("data-toTime"),
+          type: "bar",
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        }
+        fetchMainDataset(container, params, api);
+      })
+    })
+
+
+    // ========== ADD DATASET BUTTON =============
+    const appendDatasetBtn = container.querySelector(".add-dataset");
+    appendDatasetBtn.addEventListener("click", function () {
+      createDatasetModal(container, api);
+    })
+
+    // ========== FETCH DEFAULT DATASET ==========
+    setTimeout(function () {
+      // appendDatasetBtn.dispatchEvent(new Event("click"));
+      container.querySelector(".dateOption").dispatchEvent(new Event("click"));
+
+    }, 100)
+
+
+    setTimeout(function () {
+      const id = container.id;
+      appendDatasetBtn.dispatchEvent(new Event("click"));
+      let dataset = container.querySelector(".dataset");
+      dataset.querySelector(".chart-type a[data-value=\"line\"]").dispatchEvent(new Event("click"));
+      if (id == "ticketByHour") {
+        dataset.querySelector(".dataset-name").value = "Hôm nay";
+        dataset.querySelector("#dateRangeOption").value = "1";
+      } else if (id == "ticketByWeekday") {
+        dataset.querySelector(".dataset-name").value = "Tuần này";
+        dataset.querySelector("#dateRangeOption").value = "2";
+      } else if (id == "ticketByDay") {
+        dataset.querySelector(".dataset-name").value = "Tháng này";
+        dataset.querySelector("#dateRangeOption").value = "5";
+      }
+      dataset.querySelector(".confirm-add").dispatchEvent(new Event("click"));
+    }, 300)
+
+
   }
 
-  function initAddDataset(container, api) {
-    console.log("add daatset..");
-    const nonce = crypto.randomUUID();
-    const template = document.querySelector(".template-add-dataset");
-    const datasetModal = template.content.cloneNode(true).children[0];
-    datasetModal.setAttribute("data-nonce", nonce);
-    datasetModal.setAttribute("data-draft", true);
-    const chart = window.charts[container.id];
-    container.querySelector(".datasets").append(datasetModal);
+  function fetchMainDataset(container, params, api) {
+    if (params.main == null) {
+      params.main = true;
+    }
+    fetchDataset(container, params, api);
+  }
+  function setDateOptionRanges() {
+    console.log("heer");
 
-    //init chart-type
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // reset về đầu ngày
+
+    document.querySelectorAll('.dateOption').forEach(option => {
+      const type = option.getAttribute('data-dateoption');
+      let from, to;
+      console.log("hello")
+      to = new Date(now);
+
+      switch (type) {
+        case '1w':
+          lastWeekMonday = getMonday(now);
+          lastWeekMonday.setDate(lastWeekMonday.getDate() - 7);
+          from = new Date(lastWeekMonday);
+          to = new Date(from);
+          to.setDate(from.getDate() + 6);
+          to = setEndOfDay(to);
+          break;
+        case '4w':
+          lastWeekMonday = getMonday(now);
+          lastWeekMonday.setDate(lastWeekMonday.getDate() - 7 * 4);
+          from = new Date(lastWeekMonday);
+          to = new Date(from);
+          to.setDate(from.getDate() + 7 * 4 - 1);
+          to = setEndOfDay(to);
+          break;
+        case '12w':
+          lastWeekMonday = getMonday(now);
+          lastWeekMonday.setDate(lastWeekMonday.getDate() - 7 * 12);
+          from = new Date(lastWeekMonday);
+          to = new Date(from);
+          to.setDate(from.getDate() + 7 * 12 - 1);
+          to = setEndOfDay(to);
+          break;
+        case '1m':
+          to.setDate(to.getDate() - to.getDate());
+          from = new Date(to);
+          from.setDate(from.getDate() - from.getDate() + 1)
+          to.setHours(23, 59, 59);
+          break;
+        case '3m':
+          to.setDate(to.getDate() - to.getDate());
+          from = new Date(to);
+          for (let i = 0; i < 3; i++) {
+            if (i == 2) {
+              from.setDate(from.getDate() - from.getDate() + 1);
+            } else {
+              from.setDate(from.getDate() - from.getDate());
+            }
+          }
+          to.setHours(23, 59, 59);
+          break;
+        case '6m':
+          to.setDate(to.getDate() - to.getDate());
+          from = new Date(to);
+          for (let i = 0; i < 6; i++) {
+            if (i == 5) {
+              from.setDate(from.getDate() - from.getDate() + 1);
+            } else {
+              from.setDate(from.getDate() - from.getDate());
+            }
+          }
+          to.setHours(23, 59, 59);
+          break;
+        default:
+          return;
+      }
+
+      // set lại attribute: lưu dạng timestamp ms
+      option.setAttribute('data-fromtime', from.getTime());
+      option.setAttribute('data-totime', to.getTime());
+    });
+  }
+
+
+  function createDatasetModal(container, api) {
+    console.log("..creating dataset modal..");
+    const template = document.querySelector(".template-add-dataset");
+    let datasetModal = template.content.cloneNode(true).children[0];
+    datasetModal.setAttribute("data-draft", true);
+    container.querySelector(".datasets").append(datasetModal);
+    enableMovable(datasetModal);
+    const chart = window.charts[container.id];
+
+    //bind confirm add dataset;
+    datasetModal.querySelector(".confirm-add").addEventListener("click", function () {
+      const params = getDatasetProperty(datasetModal);
+      const url = `${api}?${buildQueryParam(params)}`
+      console.log("...calling report api", url);
+      callback = function (response) {
+        console.log(response);
+        //populate datasets
+        const dataset = response.data.dataset;
+
+        if (datasetModal.getAttribute("data-draft") == "true") {
+          //set nonce when first call
+          const nonce = crypto.randomUUID();
+          datasetModal.setAttribute("data-nonce", nonce);
+          dataset.nonce = nonce;
+
+          const result = appendDataset(chart, dataset);
+          if (!result) return;
+          renderDatasetController(datasetModal, params.label);
+          datasetModal.removeAttribute("data-draft");
+        } else {
+          //update dataset
+          //update controller
+          const nonce = datasetModal.getAttribute("data-nonce");
+          dataset.nonce = nonce;
+          datasetModal.closest(".chart-item").querySelector(`ul li[data-nonce="${nonce}"] a`).innerText = dataset.label;
+
+          updateDataset(chart, dataset);
+        }
+        datasetModal.classList.add("d-none");
+      }
+      openAPIxhr(HTTP_GET_METHOD, url, callback);
+    });
+
+    //bind choosing chart-type
+    bindDatasetChartTypeBtn(datasetModal);
+    //bind canceling-datasetModal
+    bindCandelDatasetModal(datasetModal)
+
+    return datasetModal;
+
+  }
+
+  function bindDatasetChartTypeBtn(datasetModal) {
     datasetModal.querySelectorAll(".chart-type ul a").forEach(function (item) {
       item.addEventListener("click", function () {
         const child = item.firstElementChild;
@@ -2585,104 +2686,33 @@ function initReport() {
         target.closest(".chart-type").setAttribute("data-value", item.getAttribute("data-value"));
       })
     })
-
-    //bind events
-    datasetModal.querySelector(".confirm-add").addEventListener("click", function () {
-      const params = getDatasetProperty(datasetModal);
-      const url = `${api}?fromDate=${params.fromDate.getTime()}&toDate=${params.toDate.getTime()}`
-      callback = function (response) {
-        const dataset = buildDataset(response.data, params.name, params.type);
-        const comptedDataset = JSON.parse(JSON.stringify(dataset));
-        comptedDataset.data.data = computeToMetric(comptedDataset.data.data, params.metricType);
-        comptedDataset.nonce = nonce;
-        if (datasetModal.getAttribute("data-draft") == "true") {
-          const result = addDataset(chart, comptedDataset);
-          if (!result) return;
-          renderDatasetController(datasetModal, params.name);
-          datasetModal.removeAttribute("data-draft");
-        } else {
-          updateDataset(chart, cache[container.id].datasets.nonce, comptedDataset);
-        }
-        cache[container.id]["datasets"][nonce] = {};
-        cache[container.id]["datasets"][nonce]["origin"] = dataset;
-        datasetModal.classList.add("d-none");
-      }
-      openAPIxhr(HTTP_GET_METHOD, url, callback);
-    });
-
+  }
+  function bindCandelDatasetModal(datasetModal) {
     datasetModal.querySelector(".cancel-add").addEventListener("click", function () {
-      console.log("..cancel-add");
       if (datasetModal.getAttribute("data-draft") == true) {
         datasetModal.parentElement.removeChild(datasetModal);
-
       } else {
         datasetModal.classList.add("d-none");
-        //remove cache
-        cache[container.id]["datasets"][nonce] = null;
       }
 
     });
-
   }
 
-  function computeToMetric(data, metricType) {
-    if (metricType == "percentage") {
-      data = computeToPercentage(data);
-    }
-    return data;
-  }
-
-  function computeToPercentage(data) {
-    const max = data.reduce((a, b) => (a + b));
-    return data.map(value => {
-      return (value / max * 100).toFixed(1);
-    });
-  }
 
   function getDatasetProperty(datasetModal) {
-    const name = datasetModal.querySelector("input").value;
+    const label = datasetModal.querySelector("input").value;
     const type = datasetModal.querySelector(".chart-type").getAttribute("data-value");
     const dateRange = datasetModal.querySelector("select").value;
-    const metricType = datasetModal.parentElement.parentElement.querySelector(".metric-type *[data-value]").getAttribute("data-value");
-    const [fromDate, toDate] = getDateRangeFromOption(dateRange);
+    const [fromTime, toTime] = getDateRangeFromOption(dateRange);
     return {
-      name: name,
-      type: type,
-      fromDate: fromDate,
-      toDate: toDate,
-      metricType: metricType
+      label: label || "Không có tiêu đề",
+      type: type || "bar",
+      fromTime: fromTime.getTime(),
+      toTime: toTime.getTime(),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     }
 
   }
-
-  function renderDatasetController(datasetModal, datasetName) {
-    const ul = datasetModal.parentElement.firstElementChild.querySelector("ul");
-    const li = document.createElement("li");
-    li.className = "d-flex flex-row align-items-center"
-    li.innerHTML = `
-                        <a class="dropdown-item d-flex align-items-center" href="#">${datasetName || "Không tên"} </a>
-                        <i class="me-2 bi bi-trash3"></i>
-                    `
-    //bind the a to reopen this datasetModal
-    li.querySelector("a").addEventListener("click", function () {
-      //repoen this datasetModal
-      datasetModal.classList.remove("d-none");
-    })
-    //add event remove
-    li.querySelector("i").addEventListener("click", function () {
-
-      //remove cache
-      cache[datasetModal.closest(".chart-container").id]["datasets"][datasetModal.getAttribute("data-nonce")] = null;
-      ul.removeChild(li); //remove button from controller
-      datasetModal.parentElement.removeChild(datasetModal); //removing datasets from chart
-      removeDataset(datasetName); //completely delete this modal
-    });
-
-    //add to ul
-    ul.appendChild(li)
-  }
-
-
   function getDateRangeFromOption(optionValue) {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // reset về 00:00:00
@@ -2690,16 +2720,7 @@ function initReport() {
     let fromDate = new Date(today);
     let toDate = new Date(today);
 
-    const setEndOfDay = (date) => {
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-    };
 
-    const getMonday = (date) => {
-      const d = new Date(date);
-      const day = d.getDay();
-      const diff = d.getDate() - (day === 0 ? 6 : day - 1); // T2 = 1, CN = 0
-      return new Date(d.setDate(diff));
-    };
 
     switch (parseInt(optionValue)) {
       case 1: // Hôm nay
@@ -2766,75 +2787,195 @@ function initReport() {
     }
     return [fromDate, toDate];
   }
-}
 
-function fetchDataset(url, callback) {
-  //fetch dataz1
-  openAPIxhr(HTTP_GET_METHOD, url, function (response) {
-    successToast(response.message);
-    callback(response.data);
-  });
-  xhr = createXHR();
-  xhr.open("GET", url)
-  handleResponse(xhr, function (response) {
-    //build data
-    const dataset = buildDataset(response.data.content, label = name || "Unnamed", type = "line");
-    addDataset(ticketVolumeHourlyChart, dataset)
-
-    //refreshChartMetrics
-    const avgTickerPerHour = document.getElementById("avgTicketPerHour");
-    const maxTickerPerHour = document.getElementById("maxTicketPerHour");
-    const minTickerPerHour = document.getElementById("minTicketPerHour");
-
-    arr = new Array(24).fill(0);
-    response.data.content.map((ticket) => {
-      createdAt = new Date(ticket.createdAt);
-      index = createdAt.getHours();
-      arr[index] += 1;
+  function renderDatasetController(datasetModal, datasetName) {
+    const id = datasetModal.closest(".chart-item").id;
+    const chart = charts[id]
+    const ul = datasetModal.parentElement.firstElementChild.querySelector("ul");
+    const li = document.createElement("li");
+    const nonce = datasetModal.getAttribute("data-nonce");
+    li.setAttribute("data-nonce", nonce);
+    li.className = "d-flex flex-row align-items-center"
+    li.innerHTML = `
+                        <a class="dropdown-item d-flex align-items-center" href="#">${datasetName || "Không tên"} </a>
+                        <i class="me-2 bi bi-trash3"></i>
+                    `
+    //bind the a to reopen this datasetModal
+    li.querySelector("a").addEventListener("click", function () {
+      //repoen this datasetModal
+      datasetModal.classList.remove("d-none");
     })
-    avg = arr.reduce((a, b) => a + b) / 24
-    max = arr.reduce((a, b) => Math.max(a, b), arr[0])
-    min = arr.reduce((a, b) => Math.min(a, b), arr[0])
-    console.log("avg, max, min: ", avg, max, min);
-    console.log(arr);
-
-    animateCount(avgTickerPerHour, avg.toFixed(2), 500, 2);
-    animateCount(maxTickerPerHour, max, 500, 0);
-    animateCount(minTickerPerHour, min, 500, 0);
 
 
+    //add event remove
+    li.querySelector("i").addEventListener("click", function () {
+      datasetModal.parentElement.removeChild(datasetModal); //removing datasets from chart
+      removeDataset(chart, nonce); //completely delete this modal
+      ul.removeChild(li); //remove button from controller
+
+    });
+
+    //add to ul
+    ul.appendChild(li)
+  }
+
+}
+
+function fetchDataset(container, params, api) {
+  //fetch dataz1
+  const url = `${api}?${buildQueryParam(params)}`
+  const chart = charts[container.id];
+  const metricContainer = container.querySelector(".chart-metrics");
+  const tableContainer = container.querySelector(".chart-tabular-data");
+  const callback = function (response) {
+    console.log(response);
+    if (params.main == true) {
+      //update or add new?
+      populateDataset(chart, response.data.dataset);
+      populateMetrics(metricContainer, response.data.summary);
+      populateTabularData(tableContainer, response.data.tabularData);
+    } else {
+      appendDataset(chart, response.data.dataset);
+    }
+  }
+
+  openAPIxhr(HTTP_GET_METHOD, url, callback)
+}
+function populateDataset(chart, dataset) {
+  console.log("populate dataset", dataset);
+  if (chart.data.datasets.length > 0) {
+    chart.data.datasets.forEach(ds => {
+      if (ds.main == true) {
+        //replace
+        let index = chart.data.datasets.indexOf(ds);
+        chart.data.datasets.splice(index, 1, formatDataset(dataset, 0));
+      }
+    })
+  } else {
+    chart.data.labels = dataset.labels;
+    chart.data.datasets.push(formatDataset(dataset, 0));
+  }
+  chart.update()
+}
+
+function populateMetrics(container, metrics) {
+  let avg = metrics.avg;
+  let max = metrics.max.value;
+  let min = metrics.min.value;
+
+  animateCount(container.querySelector(".avgTicketPerHour"), avg, 500, 2);
+  animateCount(container.querySelector(".maxTicketPerHour"), max, 500, 2);
+  animateCount(container.querySelector(".minTicketPerHour"), min, 500, 2);
+}
+
+function populateTabularData(container, tabularData) {
+  let header = container.querySelector(".data-header")
+  let row = document.createElement("div");
+  row.className = "row"
+  tabularData.columns.forEach(column => {
+    let div = document.createElement("div");
+    div.className = "col sortable";
+    div.textContent = column
+    row.append(div);
   })
-  xhr.send();
+  header.innerHTML = "";
+  header.append(row);
+  let body = container.querySelector(".data-body");
+  body.innerHTML = "";
+  tabularData.rows.forEach(row => {
+    let rowElem = document.createElement("div");
+    rowElem.className = "row";
+    row.forEach(col => {
+      let div = document.createElement("div");
+      div.className = "col";
+      let value = col
+      if (typeof col === "number" && isFinite(col) && !Number.isInteger(col)) {
+        value = col.toFixed(2);
+      }
+      div.textContent = value;
+      rowElem.append(div);
+    })
+    body.append(rowElem);
+  })
+
+
+
 }
 
-function buildDataset(data, label, type = "line") {
-  dataset = {};
-  dataset.data = data
-  dataset.type = type
-  dataset.label = label
-  return dataset;
+function enableMovable(movable) {
+  // Tìm phần tử con với class 'move-trigger'
+  const trigger = movable.querySelector('.move-trigger');
+  movable.style.zIndex = 9999;
+  const parent = movable.closest(".chart-item");
+  console.log(movable, parent, movable.closest(".chart-item"));
+  if (!trigger) return;
+
+  let offsetX = 0, offsetY = 0, isDragging = false;
+
+  // Mouse down on trigger
+  trigger.addEventListener('mousedown', function (e) {
+    e.preventDefault();
+    isDragging = true;
+
+    // Đưa phần tử về position: absolute (nếu chưa có)
+    movable.style.position = 'absolute';
+
+    // Tính vị trí tương đối của chuột trong movable
+    const rect = movable.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    // Đưa lên trên cùng (optional)
+    movable.style.zIndex = 9999;
+  });
+
+  // Mouse move trên document
+  document.addEventListener('mousemove', function (e) {
+    if (!isDragging) return;
+    // Cập nhật vị trí mới
+    movable.style.left = (e.clientX - offsetX - parent.getBoundingClientRect().left) + 'px';
+    movable.style.top = (e.clientY - offsetY - parent.getBoundingClientRect().top) + 'px';
+  });
+
+  // Mouse up trên document
+  document.addEventListener('mouseup', function () {
+    if (isDragging) {
+      isDragging = false;
+    }
+  });
 }
 
-function addDataset(chart, dataset) {
-  console.log(chart);
+
+function appendDataset(chart, dataset) {
   if (chart.data.datasets.length >= CHART_CONFIG.MAX_DATASETS) {
     errorToast("Chỉ được so sánh tối đa 4 kỳ!");
     return false;
   }
+
   //append to chart.js
+  if (chart.data.labels.length == 0 && dataset.data.length > 0) {
+    console.log("... thay labels");
+    chart.data.labels = dataset.labels;
+  }
+
   const index = chart.data.datasets.length;
+  chart.data.datasets.splice(0, 0, formatDataset(dataset, index));
+  chart.update();
+  return true;
+}
+
+function formatDataset(dataset, index) {
+
   const mainColor = CHART_CONFIG.colors.mainColors[index % CHART_CONFIG.colors.mainColors.length];
   const hoverColor = CHART_CONFIG.colors.hoverColors[index % CHART_CONFIG.colors.hoverColors.length];
   const isLine = dataset.type == "line";
 
-  if (chart.data.labels.length === 0 && dataset.data.data.length > 0) {
-    chart.data.labels = dataset.data.labels;
-  }
-  chart.data.datasets.push({
+  let formattedDataset = {
+    main: dataset.main,
     nonce: dataset.nonce,
-    label: dataset.label,
+    label: dataset.label || "Không có tiêu đề",
     type: dataset.type,
-    data: dataset.data.data,
+    data: dataset.data,
     backgroundColor: isLine ? 'transparent' : mainColor,
     hoverBackgroundColor: hoverColor,
     borderColor: isLine ? mainColor : undefined,
@@ -2842,21 +2983,34 @@ function addDataset(chart, dataset) {
     borderWidth: isLine ? 2 : undefined,
     barPercentage: isLine ? undefined : CHART_CONFIG.barPercentage,
     fill: false,
-    tension: 0.3,
-  });
+    // tension: 0.3,
+    pointRadius: 2
+  }
 
-  chart.update();
-
-
-  return true;
+  return formattedDataset
 }
-function removeDataset(label) {
-  if (!myChart) return;
+function updateDataset(chart, dataset) {
+  //replace dataset
+  for (index in chart.data.datasets) {
+    let current = chart.data.datasets[index];
+    if (current.nonce == dataset.nonce) {
+      // console.log("..replacing index", index, current.nonce, dataset.nonce)
+      // chart.data.datasets.splice(index, 1) //remove the "index"th place;
+      chart.data.datasets.splice(index, 1, formatDataset(dataset, chart.data.datasets.length - 1)) //add element in the "index"th place
+      break;
+    }
+  }
+  console.log(chart);
+  chart.update();
+}
 
-  const index = myChart.data.datasets.findIndex(ds => ds.label === label);
+function removeDataset(chart, nonce) {
+  if (!chart) return;
+
+  const index = chart.data.datasets.findIndex(ds => ds.nonce === nonce);
   if (index !== -1) {
-    myChart.data.datasets.splice(index, 1);
-    myChart.update();
+    chart.data.datasets.splice(index, 1);
+    chart.update();
   }
 }
 
@@ -2872,6 +3026,10 @@ function createDefaultChart(ctx) {
       layout: {
         padding: CHART_CONFIG.padding.lg
       },
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
       plugins: {
         legend: {
           display: true,
@@ -2884,7 +3042,10 @@ function createDefaultChart(ctx) {
           }
         },
         tooltip: {
-          enabled: true
+          enabled: true,
+          mode: 'index',
+          intersect: false,
+          axis: 'x'
         }
       },
       animations: {
@@ -2894,6 +3055,7 @@ function createDefaultChart(ctx) {
       },
       scales: {
         x: {
+          type: "category",
           offset: true,
           grid: {
             drawOnChartArea: false,
@@ -2990,45 +3152,385 @@ function renderAddDadasetModal(nonce) {
   })
 }
 
-function bindAddDataset(elem) {
-  elem.removeEventListener("click", addDatasetCallback)
-  //check if modal is open.. return
 
-  //generate nonce
-  const nonce = crypto.randomUUID();
-  //render modal with nonce
-  renderAddDadasetModal(nonce);
-  //bind nonce modal's confirm button with following callback
-  //..get dateRamge, get type, get name.
-  //.. fetchData with that callback
-  elem.addEventListener("click", function () {
-    //get name
-    //get date
-    //get chart type
-
-    fetchDataset(url, parseDataset);
-  })
-}
-
-function updateDataset(chart, oldDataset, dataset) {
-
-
-  //replace dataset
-  for (index in chart.data.datasets) {
-    let current = chart.data.datasets[index];
-    if (current.label == oldDataset.label) {
-      current.data = dataset.data.data;
-    }
-  }
-  console.log(chart);
-  chart.update();
-}
 
 //setting.html
 function initSetting() {
   console.log("init settings");
+  const employeeDetailModal = new bootstrap.Modal(document.getElementById('employeeDetailModal'));
+  const modalId = document.getElementById('confirmResetPwModal');
+  const confirmResetPwModal = new bootstrap.Modal(modalId);
+  const defaultPWInput = modalId.querySelector("#defaultPassword")
+  const defaultPwError = modalId.querySelector(".error");
+  const exportBtn = document.getElementById("employee-export-excel");
+  const employeeAddModal = new bootstrap.Modal(document.getElementById('addEmployeeModal'));
+  initCreateEmployeeModal();
+  initViewEmployeeDetailModal();
+
+  modalId.querySelector("button[type=\"submit\"]").addEventListener("click", (e) => {
+    e.preventDefault();
+    let username = modalId.getAttribute("data-username");
+    console.log(`Submit reset password for ${username}`);
+    let defaultPassword = defaultPWInput.value;
+    let validateResult = validateDefaultPassword(defaultPassword);
+    if (validateResult == null) {
+      resetPasswordEmployee({
+        username: username,
+        defaultPassword: defaultPassword,
+      })
+      defaultPWInput.style.border = '';
+      defaultPwError.classList.add("d-none");
+
+    } else {
+      defaultPWInput.style.border = "1px solid red";
+      defaultPwError.classList.remove("d-none");
+      defaultPwError.innerText = validateResult;
+    }
+
+
+
+  })
   const dataTable = document.querySelectorAll(".data-table");
   if (dataTable.length > 0) {
     dataTable.forEach(table => initSortingByIndex(table));
   }
+
+  const searchBtn = document.querySelector("#search-keyword").nextElementSibling;
+  searchBtn.addEventListener("click", searchEmployees);
+
+
+  exportBtn.addEventListener("click", exportEmployeeData);
+
+  function searchEmployees() {
+    const container = document.getElementById("employee-list");
+    showLoadingElement(container);
+    openAPIxhr(HTTP_GET_METHOD, `${API_EMPLOYEE}/get-all-user`, function (response) {
+      console.log("fetch all employees", response);
+      successToast(response.message);
+      if (response.data.length != 0) {
+        populateData(response.data, container, renderEmployeeItem);
+      } else {
+        showNoResult(container);
+      }
+
+    });
+  }
+  function initViewEmployeeDetailModal() {
+    console.log("init view detail modal");
+    const modalId = document.getElementById("employeeDetailModal");
+    const cancelEdit = modalId.querySelector("#cancel-edit");
+    const submitEdit = modalId.querySelector("#submit-edited");
+    const userGroupField = modalId.querySelector(".field-group.userGroup");
+    const activeField = modalId.querySelector(".field-group.active");
+    userGroupField.querySelector("i").addEventListener("click", function () {
+      loadUsergroupField(userGroupField);
+    })
+    activeField.querySelector("i").addEventListener("click", function () {
+      console.log("...chose active");
+      this.nextElementSibling.style.display == "block" ?
+        this.nextElementSibling.style.display = "none" :
+        this.nextElementSibling.style.display = "block";
+    })
+    activeField.querySelectorAll("[data-active]").forEach(item => {
+      item.addEventListener("click", function () {
+        let input = activeField.querySelector("input");
+        let value = item.getAttribute("data-active");
+        input.value = value == "true" ? "Hoạt động" : "Hủy kích hoạt";
+        input.setAttribute("data-active", value);
+        item.parentElement.style.display = "none";
+
+      })
+
+    })
+
+
+
+    cancelEdit.addEventListener("click", function () {
+      console.log("...cancel edit employee");
+      modalId.querySelectorAll("input:not(disabled)").forEach(item => {
+        item.value = item.getAttribute("data-original");
+        employeeDetailModal.hide();
+      })
+    })
+
+    submitEdit.addEventListener("click", function () {
+      console.log("...submit edit employee");
+      let data = getUpdateEmployeeDataField(modalId);
+      updateEmployee(data);
+      fetchDetailEmployee(modalId.getAttribute("data-username"));
+    })
+
+    modalId.querySelectorAll("input:not(disabled)").forEach(item => {
+      item.addEventListener("keyup", function () {
+        if (item.value != "" && item.value != item.getAttribute("data-original")) {
+          modalId.querySelector("#submit-edited").disabled = false;
+        } else {
+          modalId.querySelector("#submit-edited").disabled = true;
+        }
+      })
+    })
+
+
+  }
+  function getUpdateEmployeeDataField(container) {
+    return {
+      username: container.querySelector("#username").value,
+      userGroup: { groupId: container.querySelector(".userGroup").getAttribute("data-usergroup-id") },
+      active: container.querySelector("#edit_active").getAttribute("data-active"),
+      name: container.querySelector("#name").value || null,
+      email: container.querySelector("#email").value || null,
+      phone: container.querySelector("#phone").value || null,
+      description: container.querySelector("#description").value || null,
+    }
+  }
+
+  function initCreateEmployeeModal() {
+    const modalId = document.getElementById("addEmployeeModal")
+    const addBtn = document.getElementById("employee-create");
+    const submitCreateEmployee = modalId.querySelector("#submit-create-employee");
+    const userGroupField = modalId.querySelector(".field-group.userGroup");
+    userGroupField.querySelector("i").addEventListener("click", function () {
+      console.log("..fetching field-group userGroup");
+      loadUsergroupField(userGroupField);
+    })
+
+    addBtn.addEventListener("click", () => {
+      employeeAddModal.show();
+      modalId.querySelectorAll("input").forEach(item => {
+        item.value = "";
+      })
+    })
+    submitCreateEmployee.addEventListener("click", function () {
+      data = {
+        username: modalId.querySelector("#create-username").value || null,
+        password: modalId.querySelector("#create-password").value || null,
+        userGroup: { groupId: userGroupField.getAttribute("data-usergroup-id") },
+        name: modalId.querySelector("#create-name").value || null,
+        phone: modalId.querySelector("#create-phone").value || null,
+        email: modalId.querySelector("#create-email").value || null,
+        description: modalId.querySelector("#create-description").value || null,
+        active: true
+      }
+      createEmployee(data);
+    })
+  }
+
+  function loadUsergroupField(userGroupField) {
+    console.log("..loading usergroup field", userGroupField);
+    let ul = userGroupField.querySelector("ul");
+    if (USERGROUPS.length == 0) {
+      openAPIxhr(HTTP_GET_METHOD, `${API_USERGROUP}`, function (response) {
+        response.data.forEach(item => { USERGROUPS.push(item) });
+        console.log(response.message);
+        populateUsergroupField(userGroupField);
+      })
+    } else if (ul.children.length == 0) {
+      populateUsergroupField(userGroupField);
+    } else {
+      ul.style.display == "block" ? ul.style.display = "none" :
+        ul.style.display = "block";
+    }
+  }
+
+  function populateUsergroupField(userGroupField) {
+    let ul = userGroupField.querySelector("ul");
+    let liDivider = document.createElement("li");
+    let liRemove = document.createElement("li");
+    let input = userGroupField.querySelector("input");
+    liRemove.innerHTML = `<a class="dropdown-item">Xóa</a>`;
+    liDivider.innerHTML = `<hr class="dropdown-divider">`;
+    liRemove.addEventListener("click", function () {
+      console.log("xoas");
+      input.value = "";
+      userGroupField.removeAttribute("data-usergroup-id");
+      ul.style.display = "none";
+    })
+    ul.append(liRemove);
+    ul.append(liDivider);
+    USERGROUPS.forEach(usergroup => {
+      let li = document.createElement("li");
+      li.setAttribute("data-usergroup-id", usergroup.groupId);
+      li.innerHTML = `<a class="dropdown-item">${usergroup.name}</a>`
+      li.addEventListener("click", function () {
+        console.log(".. chọn cái này");
+        input.value = usergroup.name;
+        userGroupField.setAttribute("data-usergroup-id", usergroup.groupId);
+        ul.style.display = "none";
+      })
+      ul.append(li);
+    })
+    ul.style.display = "block";
+  }
+  function renderEmployeeItem(employee) {
+    console.log("render employee:", employee);
+    const div = document.createElement("div");
+    div.className = "row item border-bottom align-items-center";
+    div.setAttribute("data-username", employee.username);
+    div.innerHTML =
+      `
+    <div class="col" title=${employee.username}>${employee.username}</div>
+    <div class="col" title=${employee.userGroup?.name}>${employee.userGroup?.name || "- -"}</div>
+    <div class="col active-true">${employee.active ? "Hoạt động" : "Chưa kích hoạt"}</div>
+    <div class="col" title=${employee.email}>${employee.email || "- -"}</div>
+    <div class="col" title=${employee.phone}>${employee.phone || "- -"}</div>
+    <div class="col" title=${formatTimestampToDate(employee.createdAt)}>${formatTimestampToDate(employee.createdAt) || "- -"}</div>
+    <div class="col options overflow-visible">
+        <div class="employee-dropdown">
+            <i class="bi bi-three-dots-vertical"></i>
+            <ul class="dropdown-menu" style="right: 0">
+                <li><a class="employee-view-detail dropdown-item" href="#"><i class="bi bi-eye me-2"></i>Xem chi tiết</a></li>
+                <li><a class="employee-activate dropdown-item" href="#"><i class="bi-slash-circle me-2"></i>${employee.active ? "Hủy kích hoạt" : "Kích hoạt"}</a></li>
+                <li><a class="employee-reset-password dropdown-item" href="#"><i class="bi-arrow-repeat me-2"></i>Đặt lại mật khẩu</a></li>
+                <li><a class="employee-delete dropdown-item" href="#"><i class="bi bi-trash3 me-2"></i>Xóa nhân viên</a></li>
+            </ul>
+        </div>
+    </div>
+    `;
+    div.querySelector(".employee-dropdown > i").addEventListener("click", function () {
+      let ul = div.querySelector("ul");
+      ul.classList.contains("d-block") ? ul.classList.remove("d-block") : ul.classList.add("d-block");
+    })
+    div.querySelector(".employee-view-detail").addEventListener("click", function () {
+      fetchDetailEmployee(employee.username);
+      div.querySelector("ul").classList.remove("d-block");
+    });
+
+    div.querySelector(".employee-activate")?.addEventListener("click", () => {
+      updateEmployee({
+        username: employee.username,
+        active: !employee.active
+      })
+      div.querySelector("ul").classList.remove("d-block");
+    });
+    div.querySelector(".employee-delete")?.addEventListener("click", () => {
+      deleteEmployee(employee.username);
+      div.querySelector("ul").classList.remove("d-block");
+    });
+
+    div.querySelector(".employee-reset-password").addEventListener("click", () => {
+      openResetPasswordModal(employee.username);
+      div.querySelector("ul").classList.remove("d-block");
+    });
+
+    return div;
+  }
+
+  function fetchDetailEmployee(username) {
+    console.log("..fetching employee details");
+    openAPIxhr(HTTP_GET_METHOD, `${API_EMPLOYEE}?username=${username}`, function (response) {
+      successToast(response.message);
+      console.log("... employee detail here: ", response.data)
+      employeeDetailModal.show();
+      const container = document.getElementById("employeeDetailModal")
+      const usernameField = container.querySelector(".username input");
+      const usergroupField = container.querySelector(".userGroup input");
+      const activeField = container.querySelector(".active input");
+      const nameField = container.querySelector("#name");
+      const phoneField = container.querySelector("#phone");
+      const emailField = container.querySelector("#email");
+      const descriptionField = container.querySelector("#description");
+      const createdAtField = container.querySelector("#createdAt");
+
+      container.setAttribute("data-username", username);
+      usernameField.value = response.data.username;
+      createdAtField.value = formatEpochTimestamp(response.data.createdAt);
+
+      usergroupField.value = response.data.userGroup.name;
+      usergroupField.closest(".userGroup").setAttribute("data-usergroup-id", response.data.userGroup.groupId);
+      usergroupField.setAttribute("data-original", response.data.userGroup.groupId);
+
+      activeField.value = response.data.active == true ? "Hoạt động" : "Hủy kích hoạt";
+      activeField.setAttribute("data-active", response.data.active);
+      activeField.setAttribute("data-original", response.data.active);
+
+      nameField.value = response.data.name;
+      nameField.setAttribute("data-original", response.data.name);
+
+      phoneField.value = response.data.phone;
+      phoneField.setAttribute("data-original", response.data.phone);
+
+      emailField.value = response.data.email;
+      emailField.setAttribute("data-original", response.data.email);
+
+      descriptionField.value = response.data.description;
+      descriptionField.setAttribute("data-original", response.data.description)
+
+    })
+  }
+  function createEmployee(data) {
+    console.log("..creating employee", data);
+    openAPIxhr(HTTP_POST_METHOD, `${API_EMPLOYEE}`, function (response) {
+      successToast(response.message);
+      console.log("create employee succesfully", response);
+      employeeAddModal.hide();
+      let employeeElem = renderEmployeeItem(response.data);
+      let container = document.getElementById("employee-list");
+      container.append(employeeElem);
+    }, null, data)
+  }
+  function updateEmployee(data) {
+    console.log("..updating following employee:", data);
+    openAPIxhr(HTTP_PUT_METHOD, `${API_EMPLOYEE}`, function (response) {
+      console.log("..update thanh cong", response);
+      successToast(response.message);
+      const container = document.getElementById("employee-list");
+      const oldChild = container.querySelector(`.row[data-username=\"${response.data.username}\"]`);
+      //render lai, replaceChild
+      console.log("oldchild", oldChild);
+      let item = renderEmployeeItem(response.data);
+      container.replaceChild(item, oldChild);
+
+    }, null, data)
+  }
+  function deleteEmployee(username) {
+    console.log("..deleting employee");
+    let data = {
+      username: username
+    }
+    openAPIxhr(HTTP_DELETE_METHOD, `${API_EMPLOYEE}`, function (response) {
+      successToast(response.message);
+      const container = document.getElementById("employee-list");
+      container.removeChild(container.querySelector(`.row[data-username=\"${username}\"]`));
+    }, null, data)
+  }
+
+  function openResetPasswordModal(username) {
+    confirmResetPwModal.show();
+    modalId.setAttribute("data-username", username);
+
+  }
+  function validateDefaultPassword(defaultPassword) {
+    console.log("validate reset pw");
+    if (defaultPassword.trim() === "") {
+      return "Không được để trống";
+    }
+
+    if (!/^.*(?=.{6,})(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).*$/.test(defaultPassword)) {
+      return "Mật khẩu phải từ 6 ký tự, gồm A-Z, a-z, 0-9 và ký tự đặc biệt (!@#$%^&*...)";
+    }
+  }
+  function resetPasswordEmployee(data) {
+    console.log("...resetting password...")
+    openAPIxhr(HTTP_PUT_METHOD, `${API_EMPLOYEE}/reset-password`, function (response) {
+      console.log(response);
+      successToast(response.message);
+      confirmResetPwModal.hide();
+    }, null, data)
+  }
+
+  function exportEmployeeData() {
+    console.log("..exporting employee data");
+  }
+
+
 }
+const setEndOfDay = (date) => {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+};
+
+const getMonday = (date) => {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - (day === 0 ? 6 : day - 1); // T2 = 1, CN = 0
+  return new Date(d.setDate(diff));
+};

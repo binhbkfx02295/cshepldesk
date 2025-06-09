@@ -1,5 +1,5 @@
 <!DOCTYPE html >
-<html lang="en" th:replace="~{layout:: layout(~{::title}, ~{}, ~{::div.page-content})}"
+<html lang="en" th:replace="~{layout:: layout(~{::title}, ~{}, ~{::div.page-content}, ~{})}"
       xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <title>CSHelpDesk | Khách Hàng</title>
@@ -51,20 +51,20 @@
             <div class="page-list-header data-header container-fluid fw-bold border-bottom">
                 <div class="row">
                     <div class="col"></div>
-                    <div class="col resizable" data-sort="facebookId" data-sort-direction="none">Facebook ID
+                    <div class="col resizable sortable" data-sort="facebookId" data-sort-direction="none">Facebook ID
                     </div>
-                    <div class="col resizable" data-sort="title" data-sort-direction="none">Tên Facebook</div>
-                    <div class="col resizable" data-sort="assignee" data-sort-direction="none">Họ Tên</div>
-                    <div class="col resizable" data-sort="facebookUser" data-sort-direction="none">Số Điện Thoại
+                    <div class="col resizable sortable" data-sort="title" data-sort-direction="none">Tên Facebook</div>
+                    <div class="col resizable sortable" data-sort="assignee" data-sort-direction="none">Họ Tên</div>
+                    <div class="col resizable sortable" data-sort="facebookUser" data-sort-direction="none">Số Điện Thoại
                     </div>
-                    <div class="col resizable" data-sort="progress-status" data-sort-direction="none">Email
+                    <div class="col resizable sortable" data-sort="progress-status" data-sort-direction="none">Email
                     </div>
-                    <div class="col resizable" data-sort="category" data-sort-direction="none">Zalo</div>
+                    <div class="col resizable sortable" data-sort="category" data-sort-direction="none">Zalo</div>
                     <div class="col"></div>
                 </div>
             </div>
 
-            <div class="page-list-body container-fluid" id="customer-list-body">
+            <div class="page-list-body data-body container-fluid" id="customer-list-body">
                 <div id="loading-result" class="row loading-row justify-content-center text-muted py-3" style="display: none">
                     <div class="col-auto">
                         <div class="spinner-border spinner-border-sm me-2 text-primary" role="status"></div>

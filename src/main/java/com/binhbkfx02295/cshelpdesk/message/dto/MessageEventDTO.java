@@ -15,5 +15,6 @@ public class MessageEventDTO {
     public String text;
     public boolean senderEmployee;
     public Timestamp timestamp;
+    public boolean senderSystem;
     public List<AttachmentDTO> attachments = new ArrayList<>();
 }

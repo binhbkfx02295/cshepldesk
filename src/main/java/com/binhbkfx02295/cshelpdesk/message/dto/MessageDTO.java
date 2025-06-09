@@ -14,5 +14,6 @@ public class MessageDTO {
     private String text = "";
     private boolean senderEmployee;
     private int ticketId;
+    private boolean senderSystem;
     private List<AttachmentDTO> attachments = new ArrayList<>();
 }

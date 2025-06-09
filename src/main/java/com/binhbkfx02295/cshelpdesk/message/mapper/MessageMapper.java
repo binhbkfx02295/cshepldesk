@@ -27,6 +27,7 @@ public class MessageMapper {
         entity.setTicket(ticket);
         entity.setText(dto.getText() == null ? "" : dto.getText());
         entity.setSenderEmployee(dto.isSenderEmployee());
+        entity.setSenderSystem(dto.isSenderSystem());
         if (dto.getAttachments() != null && !dto.getAttachments().isEmpty()) {
             for (AttachmentDTO attachmentDTO: dto.getAttachments()) {
                 Attachment attachment = attachmentMapper.toEntity(attachmentDTO);
@@ -44,6 +45,7 @@ public class MessageMapper {
         dto.setTicketId(entity.getTicket().getId());
         dto.setText(entity.getText());
         dto.setSenderEmployee(entity.isSenderEmployee());
+        dto.setSenderSystem(entity.isSenderSystem());
 
         if (entity.getAttachments() != null && !entity.getAttachments().isEmpty()) {
             for (Attachment attachment: entity.getAttachments()) {
@@ -61,6 +63,7 @@ public class MessageMapper {
         dto.setTicket(ticketMapper.toDashboardDTO(entity.getTicket()));
         dto.setText(entity.getText());
         dto.setSenderEmployee(entity.isSenderEmployee());
+        dto.setSenderSystem(entity.isSenderSystem());
 
         if (entity.getAttachments() != null && !entity.getAttachments().isEmpty()) {
             for (Attachment attachment: entity.getAttachments()) {

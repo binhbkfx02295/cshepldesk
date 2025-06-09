@@ -1,5 +1,6 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.controller;
 
+import com.binhbkfx02295.cshelpdesk.infrastructure.security.auth.UserPrincipal;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.dto.NoteDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketListDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
@@ -19,6 +20,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
@@ -86,8 +89,10 @@ public class TicketController {
     }
 
     @GetMapping("/dashboard")
-    public ResponseEntity<APIResultSet<List<TicketDashboardDTO>>> dashboard() {
-        return APIResponseEntityHelper.from(ticketService.getForDashboard());
+    public ResponseEntity<APIResultSet<List<TicketDashboardDTO>>> dashboard(
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+            ) {
+        return APIResponseEntityHelper.from(ticketService.getForDashboard(userPrincipal.getUsername()));
     }
 
     @PostMapping("/export-excel")

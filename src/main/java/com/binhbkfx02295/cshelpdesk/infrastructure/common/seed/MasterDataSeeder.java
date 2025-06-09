@@ -73,9 +73,9 @@ public class MasterDataSeeder implements CommandLineRunner {
         seedCustomerEmotions();
         seedCustomerSatisfactions();
         seedCategory();
-//        seedFacebookUsers(10);
-//        seedTickets(250);
-//        seedConversations(25);
+        seedFacebookUsers(50);
+//        seedTickets(6720);
+//        seedConversations(20);
         log.info("seeding done");
         cache.refresh();
     }
@@ -166,8 +166,8 @@ public class MasterDataSeeder implements CommandLineRunner {
         permissions.add(new Permission(3, "", ""));
         permissions.add(new Permission(4, "", ""));
         permissions.add(new Permission(5, "", ""));
-        addGroupIfMissing("staff", permissions);
-        addGroupIfMissing("supervisor", permissions);
+        addGroupIfMissing("Nhân Viên", "staff", permissions);
+        addGroupIfMissing("Quản Lý", "supervisor", permissions);
     }
 
 
@@ -273,9 +273,9 @@ public class MasterDataSeeder implements CommandLineRunner {
         }
     }
 
-    private void addGroupIfMissing(String name, Set<Permission> permissions) {
+    private void addGroupIfMissing(String name, String code, Set<Permission> permissions) {
         if (!userGroupRepository.existsByName(name)) {
-            userGroupRepository.saveAndFlush(new UserGroup(0, name, "test", null, permissions));
+            userGroupRepository.saveAndFlush(new UserGroup(0, name, code, "test", null, permissions));
         }
     }
 
@@ -286,8 +286,7 @@ public class MasterDataSeeder implements CommandLineRunner {
         }
         Faker faker = new Faker(new Locale("vi")); // Vietnamese locale
         Random random = new Random();
-        num = num - list.size();
-        for (int i = 0; i < num; i++) {
+        for (int i = list.size();i  < num; i++) {
             FacebookUser user = new FacebookUser();
 
             String facebookId = String.format(String.format("1234567890123%d", i));

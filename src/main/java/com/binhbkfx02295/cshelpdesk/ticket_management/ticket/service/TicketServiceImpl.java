@@ -1,5 +1,6 @@
 package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.service;
 
+import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.facebookuser.service.FacebookUserServiceImpl;
 import com.binhbkfx02295.cshelpdesk.message.dto.MessageDTO;
@@ -22,12 +23,15 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.mapper.TicketMapper
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.spec.TicketSpecification;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.PaginationResponse;
+import com.binhbkfx02295.cshelpdesk.websocket.event.MessageEvent;
+import com.binhbkfx02295.cshelpdesk.websocket.event.TicketAssignedEvent;
 import com.binhbkfx02295.cshelpdesk.websocket.event.TicketEvent;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -355,10 +359,20 @@ public class TicketServiceImpl implements TicketService {
 
 
     @Override
-    public APIResultSet<List<TicketDashboardDTO>> getForDashboard() {
+    public APIResultSet<List<TicketDashboardDTO>> getForDashboard(String username) {
         try {
+            List<Ticket> tickets = cache.getDashboardTickets().values().stream().toList();
+            Employee employee = cache.getEmployee(username);
+
+            //TODO: filter tickets assigned only to the staff
+            if (employee != null && employee.getUserGroup().getCode().equalsIgnoreCase("staff")) {
+                tickets = tickets.stream().filter(ticket ->
+                        ticket.getAssignee() == null || ticket.getAssignee().getUsername().equalsIgnoreCase(username)).toList();
+            }
+
             APIResultSet<List<TicketDashboardDTO>> result = APIResultSet.ok("Lay ticket cho dashboard thanh cong",
-                    cache.getDashboardTickets().values().stream().map(mapper::toDashboardDTO).toList());
+                    tickets.stream().map(mapper::toDashboardDTO).toList());
+
             log.info(result.getMessage());
             return result;
         } catch(Exception e) {
@@ -445,7 +459,7 @@ public class TicketServiceImpl implements TicketService {
     public APIResultSet<List<TicketVolumeReportDTO>> searchTicketsForVolumeReport(Timestamp fromTime, Timestamp toTime) {
         try {
             List<TicketVolumeReportDTO> tickets = ticketRepository.findTicketsForHourlyReport(fromTime, toTime);
-            APIResultSet<List<TicketVolumeReportDTO>> result = APIResultSet.ok("Lấy ticket cho report thành công", tickets);
+            APIResultSet<List<TicketVolumeReportDTO>> result = APIResultSet.ok(String.format("Lấy ticket cho report thành công, tổng cộng %s", tickets.size()), tickets);
             log.info(result.getMessage());
             return result;
         } catch (Exception e) {
@@ -453,5 +467,25 @@ public class TicketServiceImpl implements TicketService {
             return APIResultSet.internalError();
         }
     }
+
+    @Override
+    public APIResultSet<TicketDetailDTO> assignTicket(int id, TicketDetailDTO dto) {
+        APIResultSet<TicketDetailDTO> result = null;
+        try {
+            if (dto.getAssignee() == null) {
+                result = APIResultSet.badRequest("Lỗi chưa gán assignee");
+            } else {
+                result = updateTicket(id, dto);
+                publisher.publishEvent(new TicketAssignedEvent(mapper.toDashboardDTO(cache.getTicket(id))));
+            }
+        } catch (Exception e) {
+            log.error("TicketServiceImpl.assignTicket: loi server", e);
+            result = APIResultSet.internalError("Lỗi không thể assign ticket");
+        }
+        log.info(result.getMessage());
+        return result;
+    }
+
+
 }
 

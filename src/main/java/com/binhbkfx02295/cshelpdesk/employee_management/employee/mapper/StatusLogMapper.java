@@ -4,6 +4,7 @@ import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.StatusLogDT
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.StatusLog;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.EmployeeRepository;
+import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ public class StatusLogMapper {
 
     private final StatusMapper statusMapper;
     private final EmployeeRepository employeeRepository;
+    private final MasterDataCache cache;
 
     public StatusLogDTO toDTO(StatusLog entity) {
         StatusLogDTO statusLogDTO = new StatusLogDTO();
@@ -32,7 +34,8 @@ public class StatusLogMapper {
             entity.setTimestamp(new Timestamp(System.currentTimeMillis()));
         }
         if (dto.getUsername() != null) {
-            Employee employee = employeeRepository.getReferenceById(dto.getUsername());
+            Employee employee = cache.getEmployee(dto.getUsername());
+//            Employee employee = employeeRepository.getReferenceById(dto.getUsername());
             entity.setEmployee(employee);
         }
         return entity;
