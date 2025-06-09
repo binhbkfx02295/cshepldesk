@@ -1,16 +1,11 @@
-package com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper;
+package com.binhbkfx02295.cshelpdesk.employee_management.usergroup;
 
-import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionMapper;
-import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroup;
-import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class UserGroupMapper {
-
-    private final PermissionMapper permissionMapper;
 
     public UserGroup toEntity(UserGroupDTO dto) {
         if (dto == null) {
@@ -19,6 +14,7 @@ public class UserGroupMapper {
         UserGroup entity = new UserGroup();
         entity.setGroupId(entity.getGroupId());
         entity.setName(dto.getName());
+        entity.setCode(dto.getCode());
         entity.setDescription(dto.getDescription());
 
         return entity;
@@ -28,6 +24,7 @@ public class UserGroupMapper {
         if (entity == null) return null;
         UserGroupDTO dto = new UserGroupDTO();
         dto.setName(entity.getName());
+        dto.setCode(entity.getCode());
         dto.setDescription(entity.getDescription());
         dto.setGroupId(entity.getGroupId());
         return dto;

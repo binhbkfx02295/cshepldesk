@@ -25,6 +25,7 @@ public interface TicketService {
     APIResultSet<Void> deleteNoteFromTicket(int ticketId, int noteId);
     APIResultSet<Set<NoteDTO>> getNotes(int ticketId);
     APIResultSet<Void> deleteById(int ticketId);
-    APIResultSet<List<TicketDashboardDTO>> getForDashboard();
+    APIResultSet<List<TicketDashboardDTO>> getForDashboard(String username);
     APIResultSet<List<TicketVolumeReportDTO>> searchTicketsForVolumeReport(Timestamp fromTime, Timestamp toTime);
+    APIResultSet<TicketDetailDTO> assignTicket(int id, TicketDetailDTO dto);
 }

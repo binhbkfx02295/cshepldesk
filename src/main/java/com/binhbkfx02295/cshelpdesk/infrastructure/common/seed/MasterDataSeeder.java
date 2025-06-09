@@ -1,23 +1,19 @@
 package com.binhbkfx02295.cshelpdesk.infrastructure.common.seed;
 
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeDTO;
 import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Status;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.StatusLog;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.EmployeeRepository;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.StatusRepository;
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.service.EmployeeServiceImpl;
 import com.binhbkfx02295.cshelpdesk.employee_management.permission.Permission;
 import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionRepository;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroup;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupRepository;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.facebookuser.repository.FacebookUserRepository;
-import com.binhbkfx02295.cshelpdesk.message.dto.MessageDTO;
 import com.binhbkfx02295.cshelpdesk.message.entity.Message;
 import com.binhbkfx02295.cshelpdesk.message.repository.MessageRepository;
-import com.binhbkfx02295.cshelpdesk.message.service.MessageServiceImpl;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.CategoryRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
@@ -28,8 +24,6 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.repository.Sa
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.repository.ProgressStatusRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.repository.TicketRepository;
-import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.service.TicketServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -73,9 +67,9 @@ public class MasterDataSeeder implements CommandLineRunner {
         seedCustomerEmotions();
         seedCustomerSatisfactions();
         seedCategory();
-        seedFacebookUsers(10);
-        seedTickets(250);
-        seedConversations(25);
+//        seedFacebookUsers(50);
+//        seedTickets(6720);
+//        seedConversations(20);
         log.info("seeding done");
         cache.refresh();
     }
@@ -166,8 +160,8 @@ public class MasterDataSeeder implements CommandLineRunner {
         permissions.add(new Permission(3, "", ""));
         permissions.add(new Permission(4, "", ""));
         permissions.add(new Permission(5, "", ""));
-        addGroupIfMissing("staff", permissions);
-        addGroupIfMissing("supervisor", permissions);
+        addGroupIfMissing("Nhân Viên", "staff", permissions);
+        addGroupIfMissing("Quản Lý", "supervisor", permissions);
     }
 
 
@@ -273,9 +267,9 @@ public class MasterDataSeeder implements CommandLineRunner {
         }
     }
 
-    private void addGroupIfMissing(String name, Set<Permission> permissions) {
+    private void addGroupIfMissing(String name, String code, Set<Permission> permissions) {
         if (!userGroupRepository.existsByName(name)) {
-            userGroupRepository.saveAndFlush(new UserGroup(0, name, "test", null, permissions));
+            userGroupRepository.saveAndFlush(new UserGroup(0, name, code, "test", null, permissions));
         }
     }
 
@@ -286,8 +280,7 @@ public class MasterDataSeeder implements CommandLineRunner {
         }
         Faker faker = new Faker(new Locale("vi")); // Vietnamese locale
         Random random = new Random();
-        num = num - list.size();
-        for (int i = 0; i < num; i++) {
+        for (int i = list.size();i  < num; i++) {
             FacebookUser user = new FacebookUser();
 
             String facebookId = String.format(String.format("1234567890123%d", i));

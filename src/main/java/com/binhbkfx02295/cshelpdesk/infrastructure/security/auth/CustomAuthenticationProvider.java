@@ -55,7 +55,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         Set<GrantedAuthority> authorities = response.getEmployeeDTO().getUserGroup().getPermissions().stream()
                 .map(p -> new SimpleGrantedAuthority(p.getName()))
                 .collect(Collectors.toSet());
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + response.getEmployeeDTO().getUserGroup().getName().toUpperCase()));
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + response.getEmployeeDTO().getUserGroup().getCode().toUpperCase()));
         log.info("✅ Xác thực thành công: {}", username);
         log.info(authorities.toString());
         UserPrincipal principal = UserPrincipal.builder()

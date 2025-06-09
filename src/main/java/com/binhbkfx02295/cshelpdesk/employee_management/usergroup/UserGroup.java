@@ -20,6 +20,7 @@ public class UserGroup {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int groupId;
     private String name;
+    private String code;
     private String description;
     @OneToMany(mappedBy = "userGroup")
     private List<Employee> users;

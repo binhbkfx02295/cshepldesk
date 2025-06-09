@@ -1,6 +1,5 @@
 package com.binhbkfx02295.cshelpdesk.message.dto;
 
-import com.binhbkfx02295.cshelpdesk.message.entity.Attachment;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
 import lombok.Data;
 
@@ -15,5 +14,6 @@ public class MessageEventDTO {
     public String text;
     public boolean senderEmployee;
     public Timestamp timestamp;
+    public boolean senderSystem;
     public List<AttachmentDTO> attachments = new ArrayList<>();
 }

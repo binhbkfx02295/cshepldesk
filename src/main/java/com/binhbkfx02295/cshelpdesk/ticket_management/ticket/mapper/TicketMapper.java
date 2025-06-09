@@ -2,7 +2,6 @@ package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.mapper;
 
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.EmployeeRepository;
 import com.binhbkfx02295.cshelpdesk.facebookuser.repository.FacebookUserRepository;
-import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeMapper;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
@@ -13,35 +12,27 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.Catego
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.mapper.EmotionMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.repository.EmotionRepository;
-import com.binhbkfx02295.cshelpdesk.ticket_management.note.dto.NoteDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.note.entity.Note;
-import com.binhbkfx02295.cshelpdesk.ticket_management.note.mapper.NoteMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.entity.ProgressStatus;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.mapper.ProgressStatusMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.repository.ProgressStatusRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisfaction;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.mapper.SatisfactionMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.repository.SatisfactionRepository;
-import com.binhbkfx02295.cshelpdesk.ticket_management.tag.dto.TagDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.tag.entity.Tag;
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.mapper.TagMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketListDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDetailDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketReportDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class TicketMapper {
 
-    private final MasterDataCache cache;
     private final ProgressStatusMapper progressStatusMapper;
     private final EmployeeMapper employeeMapper;
     private final FacebookUserMapper facebookUserMapper;
@@ -49,7 +40,6 @@ public class TicketMapper {
     private final TagMapper tagMapper;
     private final EmotionMapper emotionMapper;
     private final SatisfactionMapper satisfactionMapper;
-    private final NoteMapper noteMapper;
 
     private final CategoryRepository categoryRepository;
     private final EmotionRepository emotionRepository;
@@ -121,25 +111,8 @@ public class TicketMapper {
         return ticket;
     }
 
-    public Ticket toDashboardDTO(TicketDashboardDTO dto) {
-        if (dto == null) return null;
-        Ticket ticket = new Ticket();
-
-        ticket.setTitle(dto.getTitle());
-
-        ticket.setAssignee(dto.getAssignee() != null ? cache.getEmployee(dto.getAssignee().getUsername()) : null);
-        ticket.setProgressStatus(cache.getProgress(dto.getProgressStatus().getId()));
-        if (dto.getFacebookUser() != null) {
-            FacebookUser facebookUser = new FacebookUser();
-            facebookUser.setFacebookId(dto.getFacebookUser().getFacebookId());
-            ticket.setFacebookUser(facebookUser);
-        }
-
-        return ticket;
-    }
-
-    public Ticket mergeToEntity(TicketDetailDTO dto, Ticket entity) {
-        if (dto == null || entity == null) return entity;
+    public void mergeToEntity(TicketDetailDTO dto, Ticket entity) {
+        if (dto == null || entity == null) return;
 
         // 1. Title
         if (dto.getTitle() != null && !dto.getTitle().equals(entity.getTitle())) {
@@ -192,7 +165,6 @@ public class TicketMapper {
 
         // 10.Notes
         //TODO: implement later
-        return entity;
     }
 
     public TicketDashboardDTO toDashboardDTO(Ticket entity) {
@@ -207,18 +179,9 @@ public class TicketMapper {
         dto.setProgressStatus(progressStatusMapper.toDTO(entity.getProgressStatus()));
         dto.setTitle(entity.getTitle());
         if (entity.getMessages() != null && !entity.getMessages().isEmpty() && entity.getProgressStatus().getId() != 3) {
-            dto.setHasNewMessage(!entity.getMessages().get(0).isSenderEmployee());
+            dto.setHasNewMessage(!entity.getMessages().get(entity.getMessages().size() - 1).isSenderEmployee()
+                    || entity.getMessages().get(entity.getMessages().size() - 1).isSenderSystem());
         }
-        return dto;
-    }
-
-    public TicketReportDTO toReportDTO(Ticket entity) {
-        TicketReportDTO dto = new TicketReportDTO();
-        dto.setId(entity.getId());
-        dto.setCreatedAt(entity.getCreatedAt());
-        dto.setResolutionRate(entity.getResolutionRate());
-        dto.setFirstResponseRate(entity.getFirstResponseRate());
-        dto.setOverallResponseRate(entity.getOverallResponseRate());
         return dto;
     }
 }

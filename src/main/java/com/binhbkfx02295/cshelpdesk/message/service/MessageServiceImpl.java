@@ -40,6 +40,7 @@ public class MessageServiceImpl implements MessageService {
             entityManager.flush();
             entityManager.clear();
             cache.putMessage(messageRepository.findById(saved.getId()).get());
+            cache.getTicket(messageDTO.getTicketId()).getMessages().add(saved);
             //TODO: publish event
             publisher.publishEvent(new MessageEvent(mapper.toEventDTO(cache.getMessage(saved.getId()))));
             return APIResultSet.ok("Message added successfully", mapper.toDTO(cache.getMessage(saved.getId())));

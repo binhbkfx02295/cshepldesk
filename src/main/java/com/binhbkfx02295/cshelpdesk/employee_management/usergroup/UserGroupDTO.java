@@ -10,6 +10,7 @@ import java.util.List;
 public class UserGroupDTO {
     private int groupId;
     private String name;
+    private String code;
     private List<PermissionDTO> permissions = new ArrayList<>();
     private String description;
 }

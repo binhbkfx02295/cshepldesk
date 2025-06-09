@@ -1,6 +1,5 @@
 package com.binhbkfx02295.cshelpdesk.message.dto;
 
-import com.binhbkfx02295.cshelpdesk.message.entity.Attachment;
 import lombok.Data;
 
 import java.sql.Timestamp;
@@ -14,5 +13,6 @@ public class MessageDTO {
     private String text = "";
     private boolean senderEmployee;
     private int ticketId;
+    private boolean senderSystem;
     private List<AttachmentDTO> attachments = new ArrayList<>();
 }

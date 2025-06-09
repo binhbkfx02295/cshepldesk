@@ -3,9 +3,9 @@ package com.binhbkfx02295.cshelpdesk.websocket.listener;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeTicketDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
 import com.binhbkfx02295.cshelpdesk.websocket.event.EmployeeEvent;
 import com.binhbkfx02295.cshelpdesk.websocket.event.MessageEvent;
+import com.binhbkfx02295.cshelpdesk.websocket.event.TicketAssignedEvent;
 import com.binhbkfx02295.cshelpdesk.websocket.event.TicketEvent;
 import com.binhbkfx02295.cshelpdesk.websocket.dto.NotificationDTO;
 import lombok.RequiredArgsConstructor;
@@ -26,48 +26,62 @@ public class NotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void onTicketEvent(TicketEvent event) {
-        log.debug("Publishing TicketEvent {} for ticket {}", event.getAction(), event.getTicket().getId());
         EmployeeTicketDTO assignee = event.getTicket().getAssignee();
         if (assignee != null) {
-            log.info(assignee.toString());
-            if (assignee.getGroup() != null && assignee.getGroup().getGroupId() == 1) {
+            if (assignee.getGroup().getCode().equalsIgnoreCase("staff")) {
                 messagingTemplate.convertAndSendToUser(assignee.getUsername(), "/queue/tickets",
                         new NotificationDTO<>("TICKET", event.getAction().name(), event.getTicket()));
             }
         } else {
-            messagingTemplate.convertAndSend("/topic/admin/tickets",
-                    new NotificationDTO<>("TICKET", event.getAction().name(), event.getTicket()));
+            for (Employee employee: cache.getAllEmployees().values()) {
+                messagingTemplate.convertAndSendToUser(employee.getUsername(), "/queue/tickets",
+                        new NotificationDTO<>("TICKET", event.getAction().name(), event.getTicket()));
+            }
         }
+
+        messagingTemplate.convertAndSend("/topic/admin/tickets",
+                new NotificationDTO<>("TICKET", event.getAction().name(), event.getTicket()));
 
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onMessageEvent(MessageEvent event) {
-        log.info("Publishing MessageEvent {} for message {}", event.getMessage().getId(), event.getMessage());
 
         EmployeeTicketDTO assignee = event.getMessage().getTicket().getAssignee();
         if (assignee != null && assignee.getGroup() != null) {
-            log.info(assignee.toString());
-            if (assignee.getGroup().getGroupId() == 1) {
+            if (assignee.getGroup().getCode().equalsIgnoreCase("staff")) {
                 messagingTemplate.convertAndSendToUser(assignee.getUsername(), "/queue/messages",
                         new NotificationDTO<>("MESSAGE", "CREATED", event.getMessage()));
-
             }
         } else {
-            messagingTemplate.convertAndSend("/topic/admin/messages",
-                    new NotificationDTO<>("MESSAGE","CREATED", event.getMessage()));
+            for (Employee employee: cache.getAllEmployees().values()) {
+                messagingTemplate.convertAndSendToUser(employee.getUsername(), "/queue/messages",
+                        new NotificationDTO<>("MESSAGE", "CREATED", event.getMessage()));
+            }
         }
+        messagingTemplate.convertAndSend("/topic/admin/messages",
+                new NotificationDTO<>("MESSAGE","CREATED", event.getMessage()));
 
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onEmployeeEvent(EmployeeEvent event) {
-        log.debug("Publishing EmployeeEvent {} for employee {}", event.getAction(), event.getEmployeeDTO());
-
         // Broadcast EMPLOYEE changes to admins only
         messagingTemplate.convertAndSend("/topic/admin/employees",
                 new NotificationDTO<>("EMPLOYEE", event.getAction().name(), event.getEmployeeDTO()));
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onTicketAssignedEvent(TicketAssignedEvent event) {
+        for (Employee employee: cache.getAllEmployees().values()) {
+            if (!employee.getUsername().equalsIgnoreCase(event.getTicket().getAssignee().getUsername())) {
+                messagingTemplate.convertAndSendToUser(employee.getUsername(), "/queue/tickets",
+                        new NotificationDTO<>("TICKET", "ASSIGNED", event.getTicket()));
+            }
+
+        }
     }
 }

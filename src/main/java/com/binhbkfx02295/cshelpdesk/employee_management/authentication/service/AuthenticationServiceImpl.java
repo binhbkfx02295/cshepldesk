@@ -1,9 +1,6 @@
 package com.binhbkfx02295.cshelpdesk.employee_management.authentication.service;
 
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeMapper;
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.UserGroupMapper;
-import com.binhbkfx02295.cshelpdesk.employee_management.permission.Permission;
-import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionMapper;
 import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.employee_management.authentication.dto.LoginRequestDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.authentication.dto.LoginResponseDTO;
@@ -15,11 +12,7 @@ import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Status;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.StatusLog;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.EmployeeRepository;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.StatusLogRepository;
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.service.EmployeeServiceImpl;
-import com.binhbkfx02295.cshelpdesk.employee_management.permission.PermissionDTO;
-import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupDTO;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
-import com.binhbkfx02295.cshelpdesk.websocket.dto.NotificationDTO;
 import com.binhbkfx02295.cshelpdesk.websocket.event.EmployeeEvent;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -117,8 +109,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             StatusLog newLog = new StatusLog();
             Status status = cache.getStatus(1);
             newLog.setStatus(status);
-            ArrayList<StatusLog> logs = new ArrayList<>();
-            logs.add(newLog);
             newLog.setEmployee(employee);
 
             employee.getStatusLogs().add(newLog);

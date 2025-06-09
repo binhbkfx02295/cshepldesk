@@ -1,14 +1,12 @@
-package com.binhbkfx02295.cshelpdesk.employee_management.employee.dto;
+package com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper;
 
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupDTO;
 import lombok.Data;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 
 @Data
-public class EmployeeDTO {
+public class EmployeeDetailDTO {
     private UserGroupDTO userGroup;
     private String name;
     private String username;
@@ -19,6 +17,4 @@ public class EmployeeDTO {
     private Timestamp createdAt;
     private boolean isActive;
     private int failedLoginCount;
-    private List<StatusLogDTO> statusLogs = new ArrayList<>();
-
 }
