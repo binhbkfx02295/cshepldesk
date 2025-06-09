@@ -8,14 +8,11 @@ import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Status;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.StatusLog;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeMapper;
-import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.StatusLogRepository;
-import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroup;
 import com.binhbkfx02295.cshelpdesk.employee_management.usergroup.UserGroupRepository;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.repository.EmployeeRepository;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.PasswordValidator;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.mapper.TicketMapper;
 import com.binhbkfx02295.cshelpdesk.websocket.event.EmployeeEvent;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -40,12 +37,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final UserGroupRepository userGroupRepository;
     private final PasswordEncoder passwordEncoder;
-    private final StatusLogRepository statusLogRepository;
     private final MasterDataCache cache;
     private final EmployeeMapper mapper;
     private final StatusLogMapper statusLogMapper;
     private final ApplicationEventPublisher publisher;
-    private final TicketMapper ticketMapper;
     private final EntityManager entityManager;
 
     @Override
@@ -339,13 +334,12 @@ public class EmployeeServiceImpl implements EmployeeService {
             Optional<Employee> employeeOpt = employeeRepository.findById(resetPasswordDTO.getUsername());
             if (employeeOpt.isPresent()) {
                 employeeOpt.get().setPassword(passwordEncoder.encode(resetPasswordDTO.getDefaultPassword()));
-                Employee saved = employeeRepository.save(employeeOpt.get());
+                employeeRepository.save(employeeOpt.get());
                 result = APIResultSet.ok("Đặt lại mật khẩu thành công", null);
             } else {
                 result = APIResultSet.badRequest(String.format("Nhân viên không tồn tại: %s", resetPasswordDTO.getUsername()));
             }
         }
-
         log.info(result.getMessage());
         return result;
     }

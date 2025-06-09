@@ -1,6 +1,5 @@
 package com.binhbkfx02295.cshelpdesk.message.mapper;
 
-import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import com.binhbkfx02295.cshelpdesk.message.dto.AttachmentDTO;
 import com.binhbkfx02295.cshelpdesk.message.dto.MessageDTO;
 import com.binhbkfx02295.cshelpdesk.message.dto.MessageEventDTO;

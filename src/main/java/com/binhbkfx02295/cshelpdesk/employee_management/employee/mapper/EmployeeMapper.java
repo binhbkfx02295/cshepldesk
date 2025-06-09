@@ -70,13 +70,6 @@ public class EmployeeMapper {
         return dto;
     }
 
-    public EmployeeStatusDTO toStatusDTO(Employee employee) {
-        EmployeeStatusDTO dto = new EmployeeStatusDTO();
-        dto.setUsername(employee.getUsername());
-        return dto;
-    }
-
-
     public EmployeeDetailDTO toDetailDTO(Employee entity) {
         EmployeeDetailDTO dto = new EmployeeDetailDTO();
         dto.setDescription(entity.getDescription());

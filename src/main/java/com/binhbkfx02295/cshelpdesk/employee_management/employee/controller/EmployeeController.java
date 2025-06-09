@@ -1,6 +1,5 @@
 package com.binhbkfx02295.cshelpdesk.employee_management.employee.controller;
 
-import com.binhbkfx02295.cshelpdesk.employee_management.authentication.dto.LoginResponseDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.*;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeDetailDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.service.EmployeeServiceImpl;
@@ -24,7 +23,6 @@ import java.util.List;
 public class EmployeeController {
 
     private final EmployeeServiceImpl employeeService;
-    private final UserGroupService userGroupService;
     private final MasterDataCache cache;
 
 

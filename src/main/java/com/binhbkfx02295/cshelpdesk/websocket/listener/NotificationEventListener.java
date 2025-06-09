@@ -3,7 +3,6 @@ package com.binhbkfx02295.cshelpdesk.websocket.listener;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.dto.EmployeeTicketDTO;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
 import com.binhbkfx02295.cshelpdesk.websocket.event.EmployeeEvent;
 import com.binhbkfx02295.cshelpdesk.websocket.event.MessageEvent;
 import com.binhbkfx02295.cshelpdesk.websocket.event.TicketAssignedEvent;

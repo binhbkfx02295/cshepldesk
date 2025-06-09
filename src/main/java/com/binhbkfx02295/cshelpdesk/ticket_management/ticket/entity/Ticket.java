@@ -11,8 +11,6 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisf
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.entity.Tag;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;

@@ -8,8 +8,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UserGroupMapper {
 
-    private final PermissionMapper permissionMapper;
-
     public UserGroup toEntity(UserGroupDTO dto) {
         if (dto == null) {
             return null;

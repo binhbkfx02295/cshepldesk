@@ -111,7 +111,7 @@ public class UserGroupServiceImpl implements UserGroupService {
 
     @Override
     public APIResultSet<List<UserGroupDTO>> getAllGroups() {
-        APIResultSet<List<UserGroupDTO>> result = null;
+        APIResultSet<List<UserGroupDTO>> result;
         try {
             result = APIResultSet.ok("Đã lấy danh sách tất cả nhóm quyền", cache.getAllUserGroup().values().stream().map(mapper::toDTO).toList());
         } catch (Exception e) {
@@ -121,9 +121,4 @@ public class UserGroupServiceImpl implements UserGroupService {
         log.info(result.getMessage());
         return result;
     }
-
-    private Set<Permission> fetchPermissions(Set<Integer> permissionIds) {
-        return new HashSet<>(permissionRepository.findAllById(permissionIds));
-    }
-
 }

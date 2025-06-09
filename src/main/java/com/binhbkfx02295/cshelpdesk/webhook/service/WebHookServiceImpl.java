@@ -3,7 +3,6 @@ package com.binhbkfx02295.cshelpdesk.webhook.service;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee;
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeMapper;
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.dto.FacebookUserProfileDTO;
-import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.config.FacebookAPIProperties;
 import com.binhbkfx02295.cshelpdesk.facebookgraphapi.service.FacebookGraphAPIService;
@@ -65,7 +64,7 @@ public class WebHookServiceImpl implements WebHookService {
                             //TODO: try assign ticket
                             if (autoAssign(ticket)) {
                                 ticketService.assignTicket(ticket.getId(), ticket);
-                            };
+                            }
 
                         }
                         //TODO: try add message

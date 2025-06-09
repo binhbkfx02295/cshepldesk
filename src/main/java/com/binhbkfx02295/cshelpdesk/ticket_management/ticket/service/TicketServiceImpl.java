@@ -17,13 +17,11 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.repository.Sa
 import com.binhbkfx02295.cshelpdesk.ticket_management.tag.dto.TagDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.*;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
-import com.binhbkfx02295.cshelpdesk.ticket_management.tag.repository.TagRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.repository.TicketRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.mapper.TicketMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.spec.TicketSpecification;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.PaginationResponse;
-import com.binhbkfx02295.cshelpdesk.websocket.event.MessageEvent;
 import com.binhbkfx02295.cshelpdesk.websocket.event.TicketAssignedEvent;
 import com.binhbkfx02295.cshelpdesk.websocket.event.TicketEvent;
 import jakarta.persistence.EntityManager;
@@ -31,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,7 +46,6 @@ import java.util.stream.Collectors;
 public class TicketServiceImpl implements TicketService {
 
     private final TicketRepository ticketRepository;
-    private final TagRepository tagRepository;
     private final TicketMapper mapper;
     private final NoteRepository noteRepository;
     private final FacebookUserServiceImpl facebookUserService;
@@ -127,9 +123,8 @@ public class TicketServiceImpl implements TicketService {
                 calculateKPI(existing);
 
                 //TODO: goi analyse service
-                List<Message> messages = cache.getAllMessages().values().stream().filter(message -> {
-                    return message.getTicket().getId() == existing.getId();
-                }).toList();
+                List<Message> messages = cache.getAllMessages().values().stream().filter(message ->
+                        message.getTicket().getId() == existing.getId()).toList();
                 if (!messages.isEmpty()) {
                     messages = existing.getMessages();
                 }
@@ -421,12 +416,11 @@ public class TicketServiceImpl implements TicketService {
         // Tính average response time giữa mỗi lần khách nhắn và nhân viên trả lời
         List<Long> responseTimes = new ArrayList<>();
         MessageDTO lastCustomerMsg = null;
-        for(int i=0; i<messageList.size(); i++) {
-            MessageDTO msg = messageList.get(i);
+        for (MessageDTO msg : messageList) {
             if (!msg.isSenderEmployee()) {
                 lastCustomerMsg = msg;
             } else if (lastCustomerMsg != null) {
-                long respTime = (msg.getTimestamp().getTime() - lastCustomerMsg.getTimestamp().getTime())/1000;
+                long respTime = (msg.getTimestamp().getTime() - lastCustomerMsg.getTimestamp().getTime()) / 1000;
                 if (respTime > 0) {
                     responseTimes.add(respTime);
                 }
@@ -470,7 +464,7 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public APIResultSet<TicketDetailDTO> assignTicket(int id, TicketDetailDTO dto) {
-        APIResultSet<TicketDetailDTO> result = null;
+        APIResultSet<TicketDetailDTO> result;
         try {
             if (dto.getAssignee() == null) {
                 result = APIResultSet.badRequest("Lỗi chưa gán assignee");

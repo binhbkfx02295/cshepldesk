@@ -7,8 +7,6 @@ import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeMapper;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.facebookuser.mapper.FacebookUserMapper;
-import com.binhbkfx02295.cshelpdesk.message.dto.MessageDTO;
-import com.binhbkfx02295.cshelpdesk.message.mapper.MessageMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.mapper.CategoryMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.CategoryRepository;
@@ -32,14 +30,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class TicketMapper {
 
-    private final MasterDataCache cache;
     private final ProgressStatusMapper progressStatusMapper;
     private final EmployeeMapper employeeMapper;
     private final FacebookUserMapper facebookUserMapper;
@@ -47,7 +43,6 @@ public class TicketMapper {
     private final TagMapper tagMapper;
     private final EmotionMapper emotionMapper;
     private final SatisfactionMapper satisfactionMapper;
-    private final NoteMapper noteMapper;
 
     private final CategoryRepository categoryRepository;
     private final EmotionRepository emotionRepository;
@@ -119,8 +114,8 @@ public class TicketMapper {
         return ticket;
     }
 
-    public Ticket mergeToEntity(TicketDetailDTO dto, Ticket entity) {
-        if (dto == null || entity == null) return entity;
+    public void mergeToEntity(TicketDetailDTO dto, Ticket entity) {
+        if (dto == null || entity == null) return;
 
         // 1. Title
         if (dto.getTitle() != null && !dto.getTitle().equals(entity.getTitle())) {
@@ -173,7 +168,6 @@ public class TicketMapper {
 
         // 10.Notes
         //TODO: implement later
-        return entity;
     }
 
     public TicketDashboardDTO toDashboardDTO(Ticket entity) {
@@ -191,16 +185,6 @@ public class TicketMapper {
             dto.setHasNewMessage(!entity.getMessages().get(entity.getMessages().size() - 1).isSenderEmployee()
                     || entity.getMessages().get(entity.getMessages().size() - 1).isSenderSystem());
         }
-        return dto;
-    }
-
-    public TicketReportDTO toReportDTO(Ticket entity) {
-        TicketReportDTO dto = new TicketReportDTO();
-        dto.setId(entity.getId());
-        dto.setCreatedAt(entity.getCreatedAt());
-        dto.setResolutionRate(entity.getResolutionRate());
-        dto.setFirstResponseRate(entity.getFirstResponseRate());
-        dto.setOverallResponseRate(entity.getOverallResponseRate());
         return dto;
     }
 }

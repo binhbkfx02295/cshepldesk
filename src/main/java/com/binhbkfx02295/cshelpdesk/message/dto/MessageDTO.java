@@ -1,6 +1,5 @@
 package com.binhbkfx02295.cshelpdesk.message.dto;
 
-import com.binhbkfx02295.cshelpdesk.message.entity.Attachment;
 import lombok.Data;
 
 import java.sql.Timestamp;

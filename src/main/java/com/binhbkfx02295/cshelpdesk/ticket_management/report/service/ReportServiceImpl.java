@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -56,7 +55,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public APIResultSet<Report> fetchWeekdayReport(long fromTime, long toTime, String type, String label, boolean main, String timezone) {
-        APIResultSet<Report> result = null;
+        APIResultSet<Report> result;
         try {
             ZoneId zone = ZoneId.of(timezone);
             LocalDate fromDate = Instant.ofEpochMilli(fromTime).atZone(zone).toLocalDate();
@@ -72,7 +71,7 @@ public class ReportServiceImpl implements ReportService {
                 result = APIResultSet.internalError("Không thể tạo báo cáo: " + resultSet.getMessage());
             } else {
                 Report report = toWeekdayReport(resultSet.getData(), fromDate, toDate, type, label, main, zone);
-                return APIResultSet.ok("Tạo báo cáo thành công", report);
+                result = APIResultSet.ok("Tạo báo cáo thành công", report);
             }
 
 
@@ -88,7 +87,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public APIResultSet<Report> fetchDayInMonthReport(long fromTime, long toTime, String type, String label, boolean main, String timezone) {
-        APIResultSet<Report> result = null;
+        APIResultSet<Report> result;
         try {
             ZoneId zone = ZoneId.of(timezone);
             LocalDate fromDate = Instant.ofEpochMilli(fromTime).atZone(zone).toLocalDate();
@@ -104,14 +103,14 @@ public class ReportServiceImpl implements ReportService {
                 result = APIResultSet.internalError("Không thể tạo báo cáo: " + resultSet.getMessage());
             } else {
                 Report report = toDailyReport(resultSet.getData(), fromDate, toDate, type, label, main, zone);
-                return APIResultSet.ok("Tạo báo cáo thành công", report);
+                result= APIResultSet.ok("Tạo báo cáo thành công", report);
             }
 
         } catch (Exception e) {
             log.error("Lỗi khi tạo báo cáo Day in Month", e);
             result = APIResultSet.internalError("Lỗi hệ thống khi tạo báo cáo Day in Month");
         }
-
+        log.info(result.getMessage());
         return result;
     }
 
@@ -291,7 +290,7 @@ public class ReportServiceImpl implements ReportService {
         List<Object> rows = new ArrayList<>(31);
         for (int i = 0; i < 31; i++) {
             double value = avgTicketsByDay.get(i);
-            double percent = totalTickets > 0 ? (double) value * 100 / totalTickets : 0.0;
+            double percent = totalTickets > 0 ? value * 100 / totalTickets : 0.0;
             rows.add(List.of(
                     labels.get(i),
                     value,

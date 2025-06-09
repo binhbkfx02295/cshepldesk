@@ -109,8 +109,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             StatusLog newLog = new StatusLog();
             Status status = cache.getStatus(1);
             newLog.setStatus(status);
-            ArrayList<StatusLog> logs = new ArrayList<>();
-            logs.add(newLog);
             newLog.setEmployee(employee);
 
             employee.getStatusLogs().add(newLog);
