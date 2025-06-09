@@ -67,7 +67,7 @@ public class MasterDataSeeder implements CommandLineRunner {
         seedCustomerEmotions();
         seedCustomerSatisfactions();
         seedCategory();
-        seedFacebookUsers(50);
+//        seedFacebookUsers(50);
 //        seedTickets(6720);
 //        seedConversations(20);
         log.info("seeding done");
