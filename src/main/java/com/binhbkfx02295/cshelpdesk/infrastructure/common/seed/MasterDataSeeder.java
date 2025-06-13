@@ -17,6 +17,8 @@ import com.binhbkfx02295.cshelpdesk.message.repository.MessageRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.CategoryRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
+import com.binhbkfx02295.cshelpdesk.ticket_management.performance.model.Criteria;
+import com.binhbkfx02295.cshelpdesk.ticket_management.performance.repository.CriteriaRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisfaction;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.entity.ProgressStatus;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.repository.EmotionRepository;
@@ -54,6 +56,7 @@ public class MasterDataSeeder implements CommandLineRunner {
     private final FacebookUserRepository facebookUserRepository;
     private final TicketRepository ticketRepository;
     private final MessageRepository messageRepository;
+    private final CriteriaRepository criteriaRepository;
 
 
 
@@ -70,9 +73,167 @@ public class MasterDataSeeder implements CommandLineRunner {
 //        seedFacebookUsers(50);
 //        seedTickets(6720);
 //        seedConversations(20);
+        seedTicketCriterias();
         log.info("seeding done");
         cache.refresh();
     }
+
+    private void seedTicketCriterias() {
+        if (!criteriaRepository.findAll().isEmpty()) {
+            return;
+        }
+        List<Criteria> criterias = new ArrayList<>();
+
+        Criteria c1 = new Criteria();
+        c1.setCode("salutation");
+        c1.setName("Lời chào");
+        c1.setDescription("Câu chào đón không thể hiện hiếu khách");
+        c1.setActive(true);
+        criterias.add(c1);
+
+        Criteria c2 = new Criteria();
+        c2.setCode("salutation");
+        c2.setName("Lời chào");
+        c2.setDescription("Không chào khách");
+        c2.setActive(true);
+        criterias.add(c2);
+
+        Criteria c3 = new Criteria();
+        c3.setCode("issue");
+        c3.setName("Xác minh vấn đề");
+        c3.setDescription("Mất nhiều thời gian hơn thông thường để xác minh");
+        c3.setActive(true);
+        criterias.add(c3);
+
+        Criteria c4 = new Criteria();
+        c4.setCode("issue");
+        c4.setName("Xác minh vấn đề");
+        c4.setDescription("Khiến khách khó chịu vì không hiểu vấn đề");
+        c4.setActive(true);
+        criterias.add(c4);
+
+        Criteria c5 = new Criteria();
+        c5.setCode("onhold");
+        c5.setName("Đặt chờ đợi");
+        c5.setDescription("Lặp lại việc đặt đợi hời hợt mà không có sự xoa dịu hay leo thang phù hợp");
+        c5.setActive(true);
+        criterias.add(c5);
+
+        Criteria c6 = new Criteria();
+        c6.setCode("onhold");
+        c6.setName("Đặt chờ đợi");
+        c6.setDescription("Đợi quá 3 lần mà không hẹn chủ động liên hệ");
+        c6.setActive(true);
+        criterias.add(c6);
+
+        Criteria c7 = new Criteria();
+        c7.setCode("resolution");
+        c7.setName("Xử lý vấn đề");
+        c7.setDescription("Mất nhiều thời gian/nỗ lực hơn thông thường");
+        c7.setActive(true);
+        criterias.add(c7);
+
+        Criteria c8 = new Criteria();
+        c8.setCode("resolution");
+        c8.setName("Xử lý vấn đề");
+        c8.setDescription("Thất bại giải quyết vấn đề của khách");
+        c8.setActive(true);
+        criterias.add(c8);
+
+        Criteria c9 = new Criteria();
+        c9.setCode("closure");
+        c9.setName("Kết thúc");
+        c9.setDescription("Kết thúc mà chưa có câu xác nhận với khách");
+        c9.setActive(true);
+        criterias.add(c9);
+
+        Criteria c10 = new Criteria();
+        c10.setCode("closure");
+        c10.setName("Kết thúc");
+        c10.setDescription("Tắt ngang hoặc ép buộc kết thúc");
+        c10.setActive(true);
+        criterias.add(c10);
+
+        Criteria c11 = new Criteria();
+        c11.setCode("formality");
+        c11.setName("Hình thức");
+        c11.setDescription("Xưng hô không phù hợp, chỉ chấp nhận (Anh/chi/quý khách với em)");
+        c11.setActive(true);
+        criterias.add(c11);
+
+        Criteria c12 = new Criteria();
+        c12.setCode("content");
+        c12.setName("Nội dung");
+        c12.setDescription("Dùng từ viết tắt, từ lóng, địa phương");
+        c12.setActive(true);
+        criterias.add(c12);
+
+        Criteria c13 = new Criteria();
+        c13.setCode("content");
+        c13.setName("Nội dung");
+        c13.setDescription("Dùng từ khó hiểu, gây hiểu lầm");
+        c13.setActive(true);
+        criterias.add(c13);
+
+        Criteria c14 = new Criteria();
+        c14.setCode("frequency");
+        c14.setName("Tần suất");
+        c14.setDescription("Ngắn cục không đủ thông tin khiến khách phải hỏi lại");
+        c14.setActive(true);
+        criterias.add(c14);
+
+        Criteria c15 = new Criteria();
+        c15.setCode("frequency");
+        c15.setName("Tần suất");
+        c15.setDescription("Dài lê thê khó đọc");
+        c15.setActive(true);
+        criterias.add(c15);
+
+        Criteria c16 = new Criteria();
+        c16.setCode("enthusiasm");
+        c16.setName("Năng lượng");
+        c16.setDescription("Sử dụng ngôn từ không phù hợp, phân biệt, hay ép buộc áp đặt và kết thúc ngang cuộc trò chuyện");
+        c16.setActive(true);
+        criterias.add(c16);
+
+        Criteria c17 = new Criteria();
+        c17.setCode("enthusiasm");
+        c17.setName("Năng lượng");
+        c17.setDescription("Đổ lỗi hay đối kháng chất vấn ngược");
+        c17.setActive(true);
+        criterias.add(c17);
+
+        Criteria c18 = new Criteria();
+        c18.setCode("enthusiasm");
+        c18.setName("Năng lượng");
+        c18.setDescription("Chỉ ở mức độ hỏi gì đáp nấy và không né tránh vấn đề");
+        c18.setActive(true);
+        criterias.add(c18);
+
+        Criteria c19 = new Criteria();
+        c19.setCode("addon");
+        c19.setName("Cung cấp thêm thông tin");
+        c19.setDescription("Không cung cấp thêm về products, promotions...");
+        c19.setActive(true);
+        criterias.add(c19);
+
+        Criteria c20 = new Criteria();
+        c20.setCode("addon");
+        c20.setName("Cung cấp thêm thông tin");
+        c20.setDescription("Cung cấp không đúng thời điểm: sau khi giải quyết xong vấn đề hoặc lúc đang đặt chờ chờ đợi.");
+        c20.setActive(true);
+        criterias.add(c20);
+
+        Criteria c21 = new Criteria();
+        c21.setCode("addon");
+        c21.setName("Cung cấp thêm thông tin");
+        c21.setDescription("Cung cấp khi khách đang thái độ tiêu cực");
+        c21.setActive(true);
+        criterias.add(c21);
+
+        criteriaRepository.saveAll(criterias);
+    }
+
 
     private void seedConversations(int num) {
         Random random = new Random();

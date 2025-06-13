@@ -10,6 +10,8 @@ import com.binhbkfx02295.cshelpdesk.message.entity.Message;
 import com.binhbkfx02295.cshelpdesk.message.repository.MessageRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
+import com.binhbkfx02295.cshelpdesk.ticket_management.performance.model.Criteria;
+import com.binhbkfx02295.cshelpdesk.ticket_management.performance.repository.CriteriaRepository;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisfaction;
 import com.binhbkfx02295.cshelpdesk.ticket_management.progress_status.entity.ProgressStatus;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.CategoryRepository;
@@ -51,6 +53,7 @@ public class MasterDataCache {
     private final TagRepository tagRepository;
     private final MessageRepository messageRepository;
     private final TicketRepository ticketRepository;
+    private final CriteriaRepository criteriaRepository;
 
 
     private Map<Integer, ProgressStatus> progressMap = new HashMap<>();
@@ -63,6 +66,7 @@ public class MasterDataCache {
     private Map<Integer, Tag> tagMap = new HashMap<>();
     private Map<Integer, Ticket> openingTickets = new HashMap<>();
     private Map<Integer, Message> messages = new HashMap<>();
+    private Map<Long, Criteria> criterias = new HashMap<>();
 
 
     public void refresh() {
@@ -76,7 +80,24 @@ public class MasterDataCache {
         updateALlTags();
         updateOpeningTickets();
         updateAllMessages();
+        updateAllTicketCriterias();
         log.info("caching successfully");
+    }
+
+    public void updateAllTicketCriterias() {
+        this.criterias = criteriaRepository.findAllByActiveTrue().stream().collect(Collectors.toMap(Criteria::getId, Function.identity()));
+    }
+
+    public Map<Long, Criteria> getAllCriterias() {
+        return this.criterias;
+    }
+
+    public void updateCriteria(Criteria criteria) {
+        this.criterias.put(criteria.getId(), criteria);
+    }
+
+    public Criteria getCriteria(Long id) {
+        return this.criterias.getOrDefault(id, null);
     }
 
     @Scheduled(cron = "0 0 7 * * *", zone = "Asia/Ho_Chi_Minh")

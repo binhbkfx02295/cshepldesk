@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Điều khoản dịch vụ - Customer Help Desk</title>
+    <link rel="shortcut icon" th:href="@{/img/favicon.ico}" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            background: url('img/img-auth-bg.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #3c3f45a8;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #222;
+            margin: 0;
+            padding: 0 0 60px;
+        }
+
+
+        .container {
+            max-width: 820px;
+            margin: 36px auto 0;
+            background: #fff;
+            padding: 32px 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.7em;
+            color: #445363;
+            text-align: center;
+            border-bottom: 1px solid #abababab;
+            padding-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            margin: 2.2em 0 0.8em;
+            color: #345;
+        }
+
+        ul,
+        ol {
+            margin-left: 1.6em;
+        }
+
+        .note {
+            font-size: 1rem;
+            color: #888;
+            margin-top: 2em;
+        }
+
+        .highlight {
+            color: #bb2222;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px 5px;
+            }
+
+            h1 {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <h1 class="text-center fw-3">Điều khoản dịch vụ <br>
+        <span style="
+    font-size: 18px;
+">Terms of Service</span></h1>
+
+    <h2>1. Mục đích sử dụng</h2>
+    <ul>
+        <li>Ứng dụng <strong>Customer Help Desk</strong> (“CHD”, “Hệ thống”, “chúng tôi”) được phát triển nhằm phục
+            vụ mục đích <span class="highlight">giáo dục</span>, nghiên cứu và thực hành kỹ năng phần mềm,
+            <strong>không phục vụ mục đích thương mại</strong> hoặc kinh doanh bất kỳ sản phẩm/dịch vụ nào.</li>
+        <li>Người dùng hệ thống (“bạn”) đồng ý rằng mọi hoạt động sử dụng đều nhằm mục đích học tập, thử nghiệm hoặc
+            hỗ trợ công tác nghiên cứu tại đơn vị sở hữu hệ thống.</li>
+    </ul>
+
+    <h2>2. Quyền truy cập và phạm vi sử dụng</h2>
+    <ul>
+        <li>Ứng dụng <strong>chỉ dành cho nhân sự nội bộ</strong> của đơn vị vận hành, không cung cấp cho khách hàng
+            cuối hoặc bất kỳ bên thứ ba nào khác.</li>
+        <li>Không được phép sử dụng hệ thống cho các giao dịch thương mại, quảng cáo, bán hàng hoặc các hoạt động
+            kiếm lợi nhuận.</li>
+        <li>Người dùng không được phép cung cấp, chia sẻ, hoặc tiết lộ tài khoản truy cập hệ thống cho người ngoài.
+        </li>
+    </ul>
+
+    <h2>3. Chính sách về dữ liệu &amp; bảo mật thông tin</h2>
+    <ul>
+        <li>Tất cả dữ liệu thu thập (bao gồm thông tin người dùng Facebook, nội dung hội thoại, thông tin nhân viên)
+            <strong>chỉ sử dụng cho mục đích nghiên cứu, báo cáo và thực hành kỹ năng nội bộ</strong>.</li>
+        <li>Hệ thống <strong>không lưu trữ, không sử dụng và không chia sẻ dữ liệu người dùng Facebook cho mục đích
+            quảng cáo, thương mại hoặc khai thác ngoài phạm vi giáo dục</strong>.</li>
+        <li>Các biện pháp bảo mật như xác thực truy cập, kiểm soát quyền hạn, mã hóa dữ liệu đã được triển khai để
+            bảo vệ thông tin khỏi truy cập trái phép, rò rỉ hoặc mất mát.</li>
+    </ul>
+
+    <h2>4. Quyền và nghĩa vụ của người dùng</h2>
+    <ul>
+        <li>Bạn có trách nhiệm bảo mật tài khoản, không chia sẻ mật khẩu hoặc cung cấp thông tin truy cập cho bất kỳ
+            ai.</li>
+        <li>Bạn cam kết <strong>không khai thác dữ liệu trên hệ thống</strong> vào bất kỳ hoạt động ngoài phạm vi
+            giáo dục, không lưu trữ hoặc sao chép thông tin để sử dụng cá nhân, truyền thông hoặc thương mại.</li>
+        <li>Mọi hành vi vi phạm sẽ bị xử lý theo quy định nội bộ của đơn vị sở hữu hệ thống.</li>
+    </ul>
+
+    <h2>5. Giới hạn trách nhiệm</h2>
+    <ul>
+        <li>Ứng dụng CHD là sản phẩm thử nghiệm phục vụ học tập, <strong>không cam kết sự chính xác tuyệt đối hoặc
+            đáp ứng các tiêu chuẩn thương mại</strong> về hiệu năng, độ tin cậy hay bảo mật.</li>
+        <li>Đơn vị phát triển và vận hành không chịu trách nhiệm với bất kỳ thiệt hại, mất mát hoặc hệ quả phát sinh
+            từ việc sử dụng hệ thống ngoài phạm vi cho phép nêu trên.</li>
+    </ul>
+
+    <h2>6. Sở hữu trí tuệ</h2>
+    <ul>
+        <li>Mọi mã nguồn, thiết kế, tài liệu và ý tưởng thuộc về tác giả, đơn vị phát triển và chỉ được phép sử dụng
+            cho mục đích giáo dục hoặc theo thỏa thuận riêng bằng văn bản.</li>
+    </ul>
+
+    <h2>7. Điều khoản bổ sung</h2>
+    <ul>
+        <li>Các điều khoản này có thể được cập nhật, chỉnh sửa bất kỳ lúc nào nhằm phù hợp với quy định pháp luật và
+            nhu cầu vận hành nội bộ.</li>
+        <li>Bằng việc sử dụng hệ thống, bạn xác nhận đã đọc, hiểu và đồng ý tuân thủ toàn bộ Điều khoản dịch vụ này.
+        </li>
+    </ul>
+
+    <hr style="margin:2.4em 0 1.5em;">
+
+    <div class="note">
+        <ul>
+            <li><em>Ứng dụng này sử dụng API của Facebook. Facebook không liên quan, tài trợ hoặc chịu trách nhiệm
+                cho ứng dụng này.</em></li>
+            <li><em>Nếu bạn là người dùng Facebook, thông tin của bạn sẽ chỉ được xử lý cho mục đích vận hành nội
+                bộ, không dùng cho thương mại.</em></li>
+            <li><em>Nếu có thắc mắc về chính sách bảo mật hoặc sử dụng dữ liệu, vui lòng liên hệ quản trị viên hệ
+                thống.</em></li>
+        </ul>
+    </div>
+</div>
+</body>
+
+</html>

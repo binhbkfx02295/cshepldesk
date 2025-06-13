@@ -68,18 +68,13 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer>, JpaSpe
     Page<Ticket> findAll(Specification<Ticket> spec, Pageable pageable);
 
     @Query("""
-    SELECT new com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketReportDTO(
-        t.id, t.firstResponseRate, t.overallResponseRate, 
-        t.resolutionRate, t.createdAt)
-    FROM Ticket t
-    WHERE t.progressStatus.id = 3
-      AND t.createdAt BETWEEN :startTime AND :endTime
-      AND t.firstResponseRate IS NOT NULL
-      AND t.overallResponseRate IS NOT NULL
-      AND t.resolutionRate IS NOT NULL
-""")
-    List<TicketReportDTO> findTicketsWithMetrics(@Param("startTime")Timestamp startTime,
-                                                 @Param("endTime")Timestamp endTime);
+            SELECT t
+            FROM Ticket t 
+            JOIN FETCH t.assignee 
+            JOIN FETCH t.messages 
+            WHERE t.progressStatus.id = 3
+            """)
+    List<Ticket> findResolvedWithMessages();
 
     @Query("""
             SELECT new com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketVolumeReportDTO 
@@ -89,4 +84,12 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer>, JpaSpe
             """)
     List<TicketVolumeReportDTO> findTicketsForHourlyReport(@Param("fromTime") Timestamp fromTime,
                                                            @Param("toTime") Timestamp toTime);
+    @Query("""
+            SELECT Count(t)
+            FROM Ticket t
+            WHERE t.progressStatus.id = 3 
+            AND t.createdAt BETWEEN :fromTime AND :toTime
+            """)
+    List<Ticket> findResolvedByMonth(@Param("fromTime") Timestamp fromTime,
+                                     @Param("toTime") Timestamp toTime);
 }

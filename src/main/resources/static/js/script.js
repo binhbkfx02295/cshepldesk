@@ -11,6 +11,7 @@ const API_EMOTION = `${BASE}/api/emotion`;
 const API_SATISFACTION = `${BASE}/api/satisfaction`;
 const API_MESSAGE = `${BASE}/api/message`;
 const API_FACEBOOK_USER = `${BASE}/api/facebookuser`
+const API_PERFORMANCE = `${BASE}/api/performance`
 const API_REPORT = `${BASE}/api/report`
 const USERS = []
 const CATEGORIES = []
@@ -18,6 +19,7 @@ const PROGRESS_STATUS = [];
 const EMOTIONS = [];
 const SATISFACTIONS = [];
 const USERGROUPS = []
+const TICKET_CRITERIAS = {}
 const GLOBAL_API_HEADERS = {
   "Content-Type": "application/json",
   "Accept": "application/json",
@@ -26,6 +28,9 @@ const HTTP_GET_METHOD = "GET";
 const HTTP_POST_METHOD = "POST";
 const HTTP_PUT_METHOD = "PUT";
 const HTTP_DELETE_METHOD = "DELETE";
+let currentGalleryImages = [];
+let currentGalleryIndex = 0;
+
 var refreshHandler = null;
 var submitHandler = null;
 var keyupHandler = null;
@@ -161,7 +166,7 @@ function renderDashboardEmployeeItem(employee) {
   console.log(tr);
   return tr;
 }
-function populateData(data, container, renderItemCallback) {
+function populateData(data, container, renderItemCallback, noResultCallback = null) {
   container.innerHTML = "";
   const fragment = document.createDocumentFragment();
   if (data.length > 0) {
@@ -169,7 +174,7 @@ function populateData(data, container, renderItemCallback) {
       fragment.append(renderItemCallback(item));
     })
   } else {
-    fragment.append(renderNoResultElement());
+    fragment.append(noResultCallback != null ? noResultCallback() : renderNoResultElement());
   }
 
   container.append(fragment);
@@ -177,6 +182,7 @@ function populateData(data, container, renderItemCallback) {
 
 // today-ticket.html
 function initTodayTicket() {
+  imgGalleryModal();
   initTicketDetailModal();
   refreshDashboardTicket();
   //TODO:
@@ -214,6 +220,7 @@ function initCustomer() {
   initCustomerExport();
   initCustomerViewModal();
   bindItemClickEvents();
+  performSearchCustomer(page = 0, size = $("#pageSize").val());
   window.customerViewDetailModal = new bootstrap.Modal(document.getElementById("customerDetailModal"));
 
   document.querySelector(".select-all input[type=checkbox]").addEventListener("click", function (e) {
@@ -564,11 +571,9 @@ function initCustomer() {
       size: 10
     }
     url = `${API_TICKET}/search?${buildQueryParam(data)}`;
-    setTimeout(function () {
-      openAPIxhr(HTTP_GET_METHOD, url, function (response) {
-        parseCustomerTicketHistoryResult(response, container)
-      })
-    }, 1000);
+    openAPIxhr(HTTP_GET_METHOD, url, function (response) {
+      parseCustomerTicketHistoryResult(response, container)
+    })
 
   }
   function parseCustomerTicketHistoryResult(res, container) {
@@ -608,12 +613,10 @@ function initCustomer() {
   function fetchCustomerDetail(id) {
     console.log(id);
     const container = document.querySelector("#customerDetailModal .detail-info");
-    setTimeout(function () {
-      openAPIxhr(HTTP_GET_METHOD, `${API_FACEBOOK_USER}?id=${id}`, function (response) {
-        console.log("ok..");
-        populateCustomerEditModal(response, container);
-      })
-    }, 700)
+    openAPIxhr(HTTP_GET_METHOD, `${API_FACEBOOK_USER}?id=${id}`, function (response) {
+      console.log("ok..");
+      populateCustomerEditModal(response, container);
+    })
 
   }
 
@@ -738,6 +741,8 @@ function getAPI({ url, container, renderItem,
 
 //ticket.html
 function initTicket() {
+
+
   console.log("init ticket search ..");
   initTicketSearch();
   //check coi co data table khong
@@ -746,7 +751,11 @@ function initTicket() {
     dataTable.forEach(table => initSortingByIndex(table));
   }
   initTicketCreate();
+  imgGalleryModal();
   initTicketDetailModal();
+
+  performTicketSearch(0, 10);
+
 }
 
 
@@ -1530,7 +1539,25 @@ function initTicketCreate() {
 
 }
 
+function imgGalleryModal() {
+  const container = document.getElementById("imgGalleryModal");
+  container.querySelector("#galleryNext").addEventListener("click", function (e) {
+    e.stopPropagation();
+    currentGalleryIndex = (currentGalleryIndex + 1) % currentGalleryImages.length;
+    showGalleryImage();
+  });
+  container.querySelector("#galleryPrev").addEventListener("click", function (e) {
+    e.stopPropagation();
+    currentGalleryIndex = (currentGalleryIndex - 1 + currentGalleryImages.length) % currentGalleryImages.length;
+    showGalleryImage();
+  });
+}
+
+function showGalleryImage() {
+  document.getElementById("galleryImg").src = currentGalleryImages[currentGalleryIndex];
+}
 function initTicketDetailModal() {
+
   const i = $(".field-group i");
   console.log("initTicketDetailModal");
   window.fullModal = new bootstrap.Modal(document.getElementById("ticketFullDetailModal"));
@@ -2229,7 +2256,7 @@ function toTimestampLocal(dateString) {
 }
 function toTimestampLocal(dateString) {
   let date = new Date(dateString);
-  date.getTime() + date.getTimezoneOffset()*60*1000;
+  date.getTime() + date.getTimezoneOffset() * 60 * 1000;
   return new Date(dateString).getTime();
 }
 
@@ -2322,6 +2349,8 @@ function loadTicketMessages(ticketId) {
   const callback = function (response) {
     console.log(response);
     populateData(response.data, container, renderMessageItem);
+    container.querySelectorAll(".type-image").forEach(item =>
+      item.addEventListener("click", (event) => { openImgModal(event.target) }));
     scrollToBottomMessageList(container);
   }
   openAPIxhr(HTTP_GET_METHOD, url, callback);
@@ -2336,7 +2365,9 @@ function renderMessageItem(msg) {
   const div = document.createElement("div");
   const innerDiv = document.createElement("div");
   let attachments = document.createElement("div");
+  let imgGroup = null;
   attachments.className = "message-attachments"
+  let countImg = 0;
   if (msg.attachments.length != 0) {
     for (let i = 0; i < msg.attachments.length; i++) {
       let attachment = msg.attachments[i];
@@ -2348,19 +2379,40 @@ function renderMessageItem(msg) {
         source.src = attachment.url;
         element.appendChild(source);
         element.append("Trình duyệt không hỗ trợ audio.");
+        attachments.append(element);
 
       } else if (attachment.type == "image") {
+        if (imgGroup == null) {
+          imgGroup = document.createElement("div");
+          imgGroup.className = "d-flex gap-2 mb-2";
+        }
+        let imgContainer = document.createElement("div");
+        imgContainer.className = `rounded-3 overflow-hidden shadow-sm`;
+        imgContainer.style.width = '120px';
+        imgContainer.style.height = '120px';
         element = document.createElement("img");
         element.className = "d-inline-block"
         element.src = attachment.url;
-        element.style.maxWidth = attachment.stickerId == null ? "120px" : "240px";
         element.style.cursor = "pointer";
-        element.addEventListener("click", function () { openImgModal(element) })
+        if (attachment.sticketId == null) {
+          element.classList.add("type-image");
+        } else {
+          element.classList.add("type-sticker");
+        }
+        imgContainer.append(element);
+        imgGroup.append(imgContainer);
+        countImg++
       }
-      attachments.append(element);
+
+      if (countImg % 3 === 0 || i === msg.attachments.length - 1) {
+        imgGroup.classList.add("mb-3");
+        attachments.append(imgGroup);
+        imgGroup = null;
+      }
     }
     innerDiv.append(attachments);
   }
+
   div.innerHTML =
     `<div class="d-flex mb-2 ${msg.senderEmployee ? "justify-content-end" : "justify-content-start"}">
         <div class="chat-bubble ${msg.senderEmployee ? "staff" : "user"}">
@@ -2369,17 +2421,18 @@ function renderMessageItem(msg) {
           <div class="message-timestamp text-muted small mt-1" title="Timestamp: ${msg.timestamp}">${formatEpochTimestamp(msg.timestamp)}</div>
         </div>
       </div>`
+
   return div.firstElementChild;
 }
 
 function openImgModal(imgElement) {
-  return function () {
-    const modalImg = document.getElementById("modal-img");
-    modalImg.src = imgElement.src;
-
-    const modal = new bootstrap.Modal(document.getElementById('imgModal'));
-    modal.show();
-  };
+  const gallery = imgElement.parentElement;
+  const allImgs = Array.from(gallery.querySelectorAll(".type-image"));
+  currentGalleryImages = allImgs.map(img => img.src);
+  currentGalleryIndex = allImgs.indexOf(imgElement);
+  showGalleryImage();
+  var modal = new bootstrap.Modal(document.getElementById('imgGalleryModal'));
+  modal.show();
 }
 
 // Auto scroll to bottom
@@ -2396,6 +2449,7 @@ function loadTicketHistory(facebookId) {
   const container = document.getElementById("historyList");
   const url = `${API_TICKET}/get-by-facebook-id?id=${facebookId}`;
   const callback = function (response) {
+    response.data.sort((a, b) => b.createdAt - a.createdAt)
     populateData(response.data, container, renderTicketHistoryItem)
   }
   openAPIxhr(HTTP_GET_METHOD, url, callback);
@@ -3137,7 +3191,302 @@ function openAPIxhr(method, url, callback, errorCallback = null, data = null, he
 }
 
 function initPerformance() {
+  console.log("init performance");
 
+  // ===== test, delete later
+
+  // ===========
+  const container = document.querySelector(".performance-content");
+  const performanceSearch = container.querySelector("#performance-search");
+  const modalContainer = document.getElementById("ticketModal");
+  ticketAssessmentDetailModal = new bootstrap.Modal(modalContainer);
+  const submitBtn = modalContainer.querySelector("#submit");
+  const textArea = modalContainer.querySelector("textarea")
+  textArea.addEventListener("keyup", function () {
+    if (this.value == this.getAttribute("data-original")) {
+      submitBtn.disabled = true;
+    } else {
+      submitBtn.disabled = false;
+    }
+  });
+  submitBtn.addEventListener("click", function () {
+    addShowButton(submitBtn);
+    let data = {
+      id: modalContainer.getAttribute("data-ticket-id"),
+      summary: textArea.value,
+    }
+
+    updateTicketAssessment(modalContainer.getAttribute("data-ticket-id"), data, function (response) {
+      successToast(response.message);
+      submitBtn.innerHTML =
+        `<i class="bi bi-check2 me-2"></i>Cập nhật`
+      ticketAssessmentDetailModal.hide();
+      setTimeout(function () {
+        openTicketAssessmentDetailModal(response.data.ticketId);
+      }, 300)
+    });
+  });
+
+  bindSearchBtn();
+  loadUsernameField();
+
+  function loadUsernameField() {
+    const i = performanceSearch.querySelector(".field-group i");
+    const input = performanceSearch.querySelector("input#username");
+    const ul = performanceSearch.querySelector("ul");
+    i.addEventListener("click", function () {
+      if (USERS.length == 0) {
+        openAPIxhr(HTTP_GET_METHOD, `${API_EMPLOYEE}/get-all-user`, function (res) {
+          res.data.forEach((item) => USERS.push(item))
+          ul.innerHTML = ``;
+          // ===== add clear ====
+          const clear = document.createElement("li");
+          clear.innerHTML = `<a class="dropdown-item">Xóa</a>`;
+          clear.addEventListener("click", () => {
+            input.value = "";
+            input.removeAttribute("data-username");
+            ul.classList.remove("show");
+          })
+          ul.append(clear);
+          const divider = document.createElement("li");
+          divider.innerHTML = `<hr class="dropdown-divider">`
+          ul.append(divider)
+          USERS.forEach(function (employee) {
+            const li = document.createElement("li");
+            li.innerHTML = `
+            <a class="dropdown-item">${employee.name}</a>
+          `
+            li.addEventListener("click", () => {
+              input.value = employee.name;
+              input.setAttribute("data-username", employee.username);
+              ul.classList.remove("show");
+            })
+            ul.append(li);
+          })
+        })
+      }
+
+      ul.classList.contains("show") ? ul.classList.remove("show") : ul.classList.add("show");
+
+    })
+  }
+
+  function updateTicketAssessment(id, data, callback) {
+    console.log("...updateing ticketAssessment");
+    openAPIxhr(HTTP_PUT_METHOD, `${API_PERFORMANCE}/ticket-assessment/${id}`, function (response) {
+      callback(response);
+    }, null, data);
+  }
+
+  function bindSearchBtn() {
+    const btn = performanceSearch.querySelector("#form-submit");
+    btn.addEventListener("click", fetchPerformanceReport);
+  }
+
+  function fetchPerformanceReport() {
+    const data = {
+      "username": performanceSearch.querySelector("input#username").getAttribute("data-username") || null,
+      "month": new Date(performanceSearch.querySelector("input#month-select").value).getMonth() + 1 || null,
+      "timezone": Intl.DateTimeFormat().resolvedOptions().timeZone
+    }
+
+    //validate
+    console.log("validate now", data)
+    console.log(data.username, data.month);
+    if (data.username == null
+      || data.month == null
+    ) {
+      errorToast("Lỗi chọn nhân viên hoặc tháng");
+      return;
+    }
+    //show loading
+    document.querySelectorAll(".loadable").forEach(item => {
+      item.innerHTML = `
+    <td colspan="999" class="text-center">
+        <div class="spinner-border spinner-border-sm me-2 text-primary" role="status"></div>
+        Đang tải dữ liệu...
+      </td>
+    `
+    })
+
+
+    openAPIxhr(HTTP_GET_METHOD, `${API_PERFORMANCE}?${buildQueryParam(data)}`, function (response) {
+      successToast(response.message);
+      populatePerformanceResult(response.data);
+    })
+
+    openAPIxhr(HTTP_GET_METHOD, `${API_PERFORMANCE}/chat-summary?${buildQueryParam(data)}`, function (response) {
+      successToast(response.message);
+      populateChatSummary(response.data);
+    })
+  }
+
+  function populateChatSummary(data) {
+    // 3. ChatGPT summary
+    document.getElementById('chatgpt-summary')
+      .innerHTML = data.summary.chatGPTsummary;
+  }
+
+  function populatePerformanceResult(data) {
+    console.log("..populatePerformanceResult")
+
+    renderReport(data);
+  }
+  function renderReport(data) {
+    // 1. Metrics
+    const { chatQuality, firstResponseTime, avgResponseTime, resolutionTime } = data.summary;
+    const mrow = document.getElementById('metrics-body');
+    mrow.innerHTML = `
+      ${cardHTML(firstResponseTime)}
+      ${cardHTML(avgResponseTime)}
+      ${cardHTML(resolutionTime)}
+      ${cardHTML(chatQuality)}
+    `;
+
+    console.log("here .2");
+    // 2. Error list
+    const errList = document.getElementById('failedCriterias-body');
+    if (chatQuality.failedCriterias.length == 0) {
+      errList.innerHTML =
+        `
+        <td colspan="999"><div class="text-center text-secondary py-3">Hiện chưa có ticket lỗi</div></td>
+      `
+    } else {
+      errList.innerHTML = ``;
+      errList.innerHTML = chatQuality.failedCriterias.map(c =>
+        `
+       <tr>
+        <td>${c.name}</td>
+        <td>${c.description}</td>
+        <td>${c.count}</td>
+       </tr>`
+      ).join('');
+
+    }
+
+    console.log("here .3");
+
+
+
+    console.log("here .4");
+    // 4. Tickets table
+    const tb = document
+      .querySelector('#tickets-table tbody');
+
+    populateData(chatQuality.ticketList, tb, function (t) {
+      let tr = document.createElement("tr");
+      tr.className = `${t.passed == true ? "passed" : "failed"}`;
+      tr.setAttribute("data-id", t.ticketId);
+      tr.innerHTML = `
+        <td>${t.ticketId}</td>
+        <td>${t.assigneeUsername}</td>
+        <td>${t.evaluatedBy}</td>
+        <td>${new Date(t.evaluatedAt).toLocaleString()}</td>
+        <td>${t.passed ? '✔️' : '❌'}</td>
+        `
+      tr.addEventListener("click", function () {
+        openTicketAssessmentDetailModal(t.ticketId);
+      })
+      return tr;
+    }, function () {
+      const div = document.createElement("div");
+      div.innerHTML = `
+        <td colspan="999"><div class="text-center text-secondary py-3">Hiện chưa có ticket lỗi</div></td>
+      `
+      return div.innerHTML;
+    })
+
+  }
+
+  function cardHTML(item) {
+    // return `
+    //   <div class="col-md-4 mb-3">
+    //     <div class="card text-center metric-card">
+    //       <div class="card-body">
+    //         <h6 class="card-title">${title}</h6>
+    //         <p class="display-5 mb-0">${value}</p>
+    //       </div>
+    //     </div>
+    //   </div>`;
+    return `
+      <tr class="${item.passed == true ? "" : "failed"}">
+        <td>${item.passed == true
+        ? `<span class="result"><i class="bi bi-check"></i></span>`
+        : `<span class="result failed"><i class="bi bi-x"></i></span></span>`}
+          ${item.name}</td>
+        <td>${item.ref}</td>
+        <td>${item.count}/${item.total} (${(item.count / item.total * 100).toFixed(2)}%)</td>
+        <td>${item.avg}</td>
+      </tr>
+    `;
+  }
+
+  function openTicketAssessmentDetailModal(id) {
+    console.log("modal show bao nhieue lan");
+    if (ticketAssessmentDetailModal == null) {
+      ticketAssessmentDetailModal = new bootstrap.Modal(document.getElementById("ticketModal"));
+
+    }
+    ticketAssessmentDetailModal.show();
+    const container = document.getElementById("ticketModal");
+    container.setAttribute("data-ticket-id", id);
+
+    //load criteria
+    if (Object.keys(TICKET_CRITERIAS).length == 0) {
+      openAPIxhr(HTTP_GET_METHOD, `${API_PERFORMANCE}/criteria`, function (res) {
+        res.data.forEach(criteria => TICKET_CRITERIAS[criteria.id] = criteria);
+        const container = document.getElementById("ticket-errors-body");
+        populateData(Object.values(TICKET_CRITERIAS), container, function (criteria) {
+          const tr = document.createElement("tr");
+          // tr.innerHTML = `<td>1</td><td>2</td><td>3</td>`
+          tr.setAttribute("data-criteria-id", criteria.id);
+          tr.innerHTML = `
+            <td>${criteria.name}</td>
+            <td>${criteria.description}</td>
+            <td></td>
+          `
+          console.log(tr);
+          return tr;
+        })
+        //load TicketAssessmentDetail
+        loadTicketAssessmentDetail(id);
+        //load Messages;
+        loadTicketMessages(id);
+      })
+
+    } else {
+      //load TicketAssessmentDetail
+      loadTicketAssessmentDetail(id);
+      //load Messages;
+      loadTicketMessages(id);
+    }
+    console.log(window.TICKET_CRITERIAS);
+
+  }
+
+}
+
+function loadTicketAssessmentDetail(id) {
+  console.log("..laoding");
+  openAPIxhr(HTTP_GET_METHOD, `${API_PERFORMANCE}/ticket-assessment/${id}`, function (response) {
+    console.log(response);
+    successToast(response.message);
+    const container = document.getElementById("ticket-errors-body");
+    //render;
+    const ticket = response.data;
+    ticket.criterias.forEach(criteria => {
+      const target = container.querySelector(`[data-criteria-id="${criteria.id}"]`);
+      target.classList.add("failed");
+      target.querySelector("td:first-child").innerText = `❌ ${criteria.name}`;
+    })
+    document.querySelector(".summary").innerHTML = `${ticket.summary}`;
+    document.querySelector(".summary").setAttribute("data-original", `${ticket.summary}`)
+  })
+
+}
+
+function addShowButton(container) {
+  container.innerHTML = `<i class="bi bi-check2 me-2"></i>Cập nhật`
 }
 
 function renderAddDadasetModal(nonce) {
@@ -3166,6 +3515,7 @@ function initSetting() {
   const employeeAddModal = new bootstrap.Modal(document.getElementById('addEmployeeModal'));
   initCreateEmployeeModal();
   initViewEmployeeDetailModal();
+  searchEmployees();
 
   modalId.querySelector("button[type=\"submit\"]").addEventListener("click", (e) => {
     e.preventDefault();
@@ -3257,7 +3607,7 @@ function initSetting() {
       console.log("...submit edit employee");
       let data = getUpdateEmployeeDataField(modalId);
       updateEmployee(data);
-      fetchDetailEmployee(modalId.getAttribute("data-username"));
+
     })
 
     modalId.querySelectorAll("input:not(disabled)").forEach(item => {
@@ -3479,6 +3829,11 @@ function initSetting() {
       console.log("oldchild", oldChild);
       let item = renderEmployeeItem(response.data);
       container.replaceChild(item, oldChild);
+
+      employeeDetailModal.hide()
+      setTimeout(function () {
+        fetchDetailEmployee(response.data.username);
+      }, 500)
 
     }, null, data)
   }

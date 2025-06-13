@@ -26,24 +26,12 @@
         }
 
         body {
-            background: url('img/img-auth-bg.jpg') no-repeat center center fixed;
+            background: url('img/img-auth-bg.jpg') no-repeat center fixed;
             background-size: cover;
             color: #3c3f45a8;
 
             font-family: "Quicksand", sans-serif;
             font-optical-sizing: auto;
-        }
-
-        body::after {
-            position: absolute;
-            top: 0;
-            left: 0;
-            content: "";
-            display: table;
-            width: 100%;
-            height: 100%;
-            z-index: -5;
-            background-color: #1c1c1cd4;
         }
 
         .overlay {
@@ -213,8 +201,8 @@
     </div>
 
     <div class="d-flex flex-row justify-content-center documentation position-absolute bottom-0 mb-3">
-        <a href="" class="text-muted me-2"><span class="">Điều khoản</span></a>
-        <a href="" class="text-muted"><span class="">Tài liệu</span></a>
+        <a th:href="@{/term-of-service}" class="text-muted me-2"><span class="">Điều khoản dịch vụ</span></a>
+        <a th:href="@{/privacy-policy}" class="text-muted"><span class="">Quyền riêng tư</span></a>
     </div>
 </div>
 <!-- Bootstrap JS -->

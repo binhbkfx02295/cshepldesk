@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 public class MessageServiceImpl implements MessageService {
 
     private final MessageRepository messageRepository;
-    private final TicketRepository ticketRepository;
     private final MasterDataCache cache;
     private final MessageMapper mapper;
     private final ApplicationEventPublisher publisher;

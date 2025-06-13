@@ -1,13 +1,20 @@
 
 package com.binhbkfx02295.cshelpdesk.openai.adapter;
 
+import com.binhbkfx02295.cshelpdesk.openai.common.PromptBuilder;
 import com.binhbkfx02295.cshelpdesk.openai.dto.OpenAIResponse;
+import com.binhbkfx02295.cshelpdesk.openai.model.TicketEvaluateResult;
+import com.binhbkfx02295.cshelpdesk.ticket_management.performance.dto.PerformanceSummaryDTO;
+import com.binhbkfx02295.cshelpdesk.ticket_management.performance.model.TicketAssessment;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketReportDTO;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import com.binhbkfx02295.cshelpdesk.message.entity.Message;
@@ -20,6 +27,7 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.emotion.entity.Emotion;
 import com.binhbkfx02295.cshelpdesk.ticket_management.satisfaction.entity.Satisfaction;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -28,11 +36,13 @@ public abstract class BaseGPTModelAdapter implements GPTModelAdapter {
     protected final RestTemplate restTemplate;
     protected final ObjectMapper objectMapper;
     protected final MasterDataCache masterDataCache;
+    private final PromptBuilder promptBuilder;
 
-    public BaseGPTModelAdapter(RestTemplate restTemplate, ObjectMapper objectMapper, MasterDataCache masterDataCache) {
+    public BaseGPTModelAdapter(RestTemplate restTemplate, ObjectMapper objectMapper, MasterDataCache masterDataCache, PromptBuilder promptBuilder) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
         this.masterDataCache = masterDataCache;
+        this.promptBuilder = promptBuilder;
     }
 
     public GPTResult analyze(List<Message> messages) {
@@ -40,11 +50,40 @@ public abstract class BaseGPTModelAdapter implements GPTModelAdapter {
         log.info(config.toString());
         String prompt = buildPrompt(messages);
         log.info(prompt);
-        String requestJson = buildRequestJson(config, prompt);
-        String rawResponse = callOpenAI(config, requestJson);
-        OpenAIResponse openAIResponse = parseOpenAIResponse(rawResponse);
+        OpenAIResponse openAIResponse = getOpenAIResponse(config, prompt);
         GPTResult result = extractGPTResult(openAIResponse, config);
         log.info(result.toString());
+        return result;
+    }
+
+    private OpenAIResponse getOpenAIResponse(ModelSettings config, String prompt) {
+        String requestJson = buildRequestJson(config, prompt);
+        String rawResponse = callOpenAI(config, requestJson);
+        return parseOpenAIResponse(rawResponse);
+    }
+
+    public TicketEvaluateResult evaluateTicketByBatch(Map<String, Object> object) {
+        String prompt = promptBuilder.buildBatchEvaluateTicket(object);
+        TicketEvaluateResult result = new TicketEvaluateResult();
+        log.info(prompt);
+        System.out.println(prompt);
+        //TODO: build requestJson
+        String requestJson = buildRequestJson(getModelSettings(), prompt);
+        log.info("request json {}", requestJson);
+        //TODO: callOpenAI
+        String rawResponse = callOpenAI(getModelSettings(), requestJson);
+
+        log.info("rawResponse {}", rawResponse);
+        OpenAIResponse openAIResponse = parseOpenAIResponse(rawResponse);
+        log.info("ket qua {}", openAIResponse.toString());
+        log.info("ket qua string {}", openAIResponse.getChoices().get(0).getMessage().getContent());
+        try {
+            List<TicketEvaluateResult.EvaluatedTicket> parseResult = objectMapper.readValue(openAIResponse.getChoices().get(0).getMessage().getContent(), new TypeReference<List<TicketEvaluateResult.EvaluatedTicket>>() {});
+            result.setResult(parseResult);
+        } catch (Exception e) {
+            log.info("Loi parse json tu ket qua chatGPT", e);
+        }
+
         return result;
     }
 
@@ -89,7 +128,9 @@ public abstract class BaseGPTModelAdapter implements GPTModelAdapter {
         try {
             var body = java.util.Map.of(
                     "model", config.getModelName(),
-                    "messages", List.of(java.util.Map.of("role", "user", "content", prompt))
+                    "messages", List.of(java.util.Map.of("role", "user", "content", prompt)),
+                    "temperature", 0,
+                    "max_tokens", 20000
             );
             return objectMapper.writeValueAsString(body);
         } catch (Exception e) {
@@ -138,5 +179,34 @@ public abstract class BaseGPTModelAdapter implements GPTModelAdapter {
     }
 
 
+    public String analyseStaff(PerformanceSummaryDTO report) throws RuntimeException {
+        String prompt = """
+                %s
+               
+                Bên trên là một json object chứa summary về performance của một nhân viên, bao gồm:
+                 - tên nhân viên
+                 - tháng đánh giá
+                 - tổng hợp:
+                   + phản hồi đầu: Tham chiếu là dưới 10s
+                   + phản hồi trung bình: tham chiếu là dưới 30s
+                   + xử lý trung bình: không có tham chiếu
+                   + tổng tickets
+                   + số tickets lỗi
+                   + tỷ lệ lỗi: tham chiếu là dưới 20 %%
+                   + danh sách lỗi gồm: tên, mô tả và số lượng lỗi, đã sort theo số lượng cao nhất
+                   bạn hãy đưa ra kết luận ngắn gọn, súc tích, về Nhân viên này. bao gồm điểm mạnh nên tiếp tục phát huy, điểm cần cải thiện. Thêm tag html bootstrap để dễ đọc.
+                   Ví dụ:
+                    - Điểm mạnh:
+                       + Thời gian phản hồi đầu rất nhanh
+                       + ...
+                    - Điểm cần cải thiện:
+                       + Tỷ lệ lỗi 100%% là điều đáng báo động, cần nghiêm túc cải thiện
+                       + Thời gian phản hồi trung bình rất lâu, cần nghiêm túc cải thiện
+                    - Kết luận: Nhân viên Bình rất nhanh chóng trong đón tiếp khách hàng, tuy nhiên thường xuyên để khách hàng đợi phản hồi lâu là điều cần cải thiện. Đặc biệt: cần nghiêm túc cải thiện các lỗi hay gặp, nếu không khách hàng có khả năng đánh giá chất lượng dịch vụ rất tệ
+                """.formatted(report);
+
+        OpenAIResponse jsonResult = getOpenAIResponse(getModelSettings(), prompt);
+        return jsonResult.getChoices().get(0).getMessage().getContent();
+    };
 
 }

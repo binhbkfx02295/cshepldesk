@@ -186,44 +186,64 @@ a {
   display: block;
 }
 
-.ticket-detail-modal {
+#ticketModal .summary-container .card-header {
+  background-color: #2196f3;
+  color: white;
+}
+#ticketModal .summary-container .summary {
+  font-size: 18px;
+}
+
+.ticket-detail-modal,
+#ticketModal {
   font-size: 13px;
 }
-.ticket-detail-modal .modal-dialog {
+.ticket-detail-modal .modal-dialog,
+#ticketModal .modal-dialog {
   max-width: 90%;
 }
-.ticket-detail-modal .modal-content {
+.ticket-detail-modal .modal-content,
+#ticketModal .modal-content {
   border-radius: 12px;
   overflow: hidden;
 }
-.ticket-detail-modal .modal-header {
+.ticket-detail-modal .modal-header,
+#ticketModal .modal-header {
   background-color: #f8f9fa;
   border-bottom: 1px solid #dee2e6;
   padding: 16px 24px;
 }
-.ticket-detail-modal .modal-title {
+.ticket-detail-modal .modal-title,
+#ticketModal .modal-title {
   font-weight: 600;
   font-size: 14px;
 }
-.ticket-detail-modal .modal-body {
+.ticket-detail-modal .modal-body,
+#ticketModal .modal-body {
   padding: 0;
   background-color: #ffffff;
 }
-.ticket-detail-modal .modal-body .row {
+.ticket-detail-modal .modal-body .row,
+#ticketModal .modal-body .row {
   height: 80vh;
   margin: 0;
 }
-.ticket-detail-modal #ticketInfoColumn input {
+.ticket-detail-modal #ticketInfoColumn input,
+#ticketModal #ticketInfoColumn input {
   font-size: 13px;
   width: 100%;
 }
-.ticket-detail-modal #ticketInfoColumn .field-group {
+.ticket-detail-modal #ticketInfoColumn .field-group,
+#ticketModal #ticketInfoColumn .field-group {
   width: 100%;
   max-width: 100%;
 }
 .ticket-detail-modal #ticketInfoColumn,
 .ticket-detail-modal #chatBox,
-.ticket-detail-modal #ticketHistory {
+.ticket-detail-modal #ticketHistory,
+#ticketModal #ticketInfoColumn,
+#ticketModal #chatBox,
+#ticketModal #ticketHistory {
   display: flex;
   flex-direction: column;
   padding: 20px;
@@ -232,7 +252,10 @@ a {
 }
 .ticket-detail-modal #ticketInfoColumn,
 .ticket-detail-modal #messageList,
-.ticket-detail-modal #historyList {
+.ticket-detail-modal #historyList,
+#ticketModal #ticketInfoColumn,
+#ticketModal #messageList,
+#ticketModal #historyList {
   flex-grow: 1;
   overflow-y: auto;
   padding-right: 10px;
@@ -240,28 +263,48 @@ a {
 }
 .ticket-detail-modal #ticketInfoColumn::-webkit-scrollbar,
 .ticket-detail-modal #messageList::-webkit-scrollbar,
-.ticket-detail-modal #historyList::-webkit-scrollbar {
+.ticket-detail-modal #historyList::-webkit-scrollbar,
+#ticketModal #ticketInfoColumn::-webkit-scrollbar,
+#ticketModal #messageList::-webkit-scrollbar,
+#ticketModal #historyList::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 .ticket-detail-modal #ticketInfoColumn::-webkit-scrollbar-thumb,
 .ticket-detail-modal #messageList::-webkit-scrollbar-thumb,
-.ticket-detail-modal #historyList::-webkit-scrollbar-thumb {
+.ticket-detail-modal #historyList::-webkit-scrollbar-thumb,
+#ticketModal #ticketInfoColumn::-webkit-scrollbar-thumb,
+#ticketModal #messageList::-webkit-scrollbar-thumb,
+#ticketModal #historyList::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 3px;
 }
 .ticket-detail-modal #ticketInfoColumn::-webkit-scrollbar-track,
 .ticket-detail-modal #messageList::-webkit-scrollbar-track,
-.ticket-detail-modal #historyList::-webkit-scrollbar-track {
+.ticket-detail-modal #historyList::-webkit-scrollbar-track,
+#ticketModal #ticketInfoColumn::-webkit-scrollbar-track,
+#ticketModal #messageList::-webkit-scrollbar-track,
+#ticketModal #historyList::-webkit-scrollbar-track {
   background: transparent;
 }
 .ticket-detail-modal #ticketInfoColumn,
 .ticket-detail-modal #messageList,
-.ticket-detail-modal #historyList {
+.ticket-detail-modal #historyList,
+#ticketModal #ticketInfoColumn,
+#ticketModal #messageList,
+#ticketModal #historyList {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
-.ticket-detail-modal .chat-bubble {
+.ticket-detail-modal .type-image,
+#ticketModal .type-image {
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.ticket-detail-modal .chat-bubble,
+#ticketModal .chat-bubble {
   max-width: 70%;
   padding: 10px 15px;
   border-radius: 12px;
@@ -271,25 +314,30 @@ a {
   word-break: break-word;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
-.ticket-detail-modal .chat-bubble.user {
+.ticket-detail-modal .chat-bubble.user,
+#ticketModal .chat-bubble.user {
   background-color: #d0f0fd;
   color: #000;
   text-align: left;
 }
-.ticket-detail-modal .chat-bubble.staff {
+.ticket-detail-modal .chat-bubble.staff,
+#ticketModal .chat-bubble.staff {
   background-color: #f0f0f0;
   color: #000;
   text-align: right;
 }
-.ticket-detail-modal .message-text {
+.ticket-detail-modal .message-text,
+#ticketModal .message-text {
   margin-bottom: 5px;
 }
-.ticket-detail-modal .message-timestamp {
+.ticket-detail-modal .message-timestamp,
+#ticketModal .message-timestamp {
   font-size: 12px;
   color: #6c757d;
   text-align: right;
 }
-.ticket-detail-modal #messageList .chat-bubble {
+.ticket-detail-modal #messageList .chat-bubble,
+#ticketModal #messageList .chat-bubble {
   animation: fadeInMessage 0.3s ease;
 }
 @keyframes fadeInMessage {
@@ -302,15 +350,18 @@ a {
     transform: translateY(0);
   }
 }
-.ticket-detail-modal #messageList .chat-bubble:hover {
+.ticket-detail-modal #messageList .chat-bubble:hover,
+#ticketModal #messageList .chat-bubble:hover {
   background-color: #e1f5fe;
   cursor: pointer;
 }
-.ticket-detail-modal #historyList .list-group-item.active {
+.ticket-detail-modal #historyList .list-group-item.active,
+#ticketModal #historyList .list-group-item.active {
   background-color: #0d6efd;
   color: white;
 }
-.ticket-detail-modal #historyList .list-group-item:hover {
+.ticket-detail-modal #historyList .list-group-item:hover,
+#ticketModal #historyList .list-group-item:hover {
   background-color: #e9ecef;
 }
 
@@ -1073,10 +1124,6 @@ a {
 #createTicketModal .field-group input {
   width: 100%;
 }
-#createTicketModal .field-group.title {
-  width: auto;
-}
-
 /* ================END================= */
 #dashboardLoadingOverlay {
   position: absolute;
@@ -1664,4 +1711,86 @@ a {
   box-shadow: 0 2px 5px #b3b3b3;
 }
 
+/* ================END================== */
+#performance-search .field-group {
+  max-width: none !important;
+  width: -moz-fit-content;
+  width: fit-content;
+}
+#performance-search .field-group input {
+  width: 170px;
+}
+
+.performance-list {
+  background: none !important;
+  box-shadow: none !important;
+}
+
+.metric-card {
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+#chatgpt-summary {
+  font-style: italic;
+  line-height: 1.4;
+}
+
+#tickets-table tbody tr {
+  cursor: pointer;
+}
+#tickets-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+#metrics-table th:first-child {
+  width: 50%;
+}
+#metrics-table th:not(:first-child) {
+  width: 15%;
+}
+#metrics-table span.result {
+  margin: 0 10px;
+  background: rgba(0, 140, 0, 0.72);
+  border-radius: 50%;
+  display: inline-block;
+}
+#metrics-table span.result i {
+  font-size: 18px;
+  color: #ffffff;
+}
+#metrics-table span.result.failed {
+  background: rgba(140, 0, 0, 0.72);
+}
+
+.card {
+  box-shadow: 0px 0px 15px #e9ecef;
+}
+.card .card-header {
+  font-size: 18px;
+  font-weight: 700;
+  color: #6c757d;
+}
+#chatgpt-summary {
+  font-size: 16px;
+}
+
+#failedCriterias-table th:nth-child(2) {
+  width: 60%;
+}
+#failedCriterias-table th:not(:nth-child(2)) {
+  width: 20%;
+}
+
+.table {
+  font-size: 13px;
+}
+.table tr th,
+.table tr td {
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
+.table tr.failed td {
+  background-color: rgba(201, 5, 5, 0.3294117647);
+}
 /* ================END================== *//*# sourceMappingURL=style.css.map */

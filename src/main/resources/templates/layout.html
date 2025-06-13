@@ -87,17 +87,30 @@
         </div>
     </div>
 </div>
-
-<!-- Modal để xem ảnh lớn -->
-<div class="modal fade" id="imgModal" tabindex="-1" aria-labelledby="imgModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content bg-dark text-center">
-            <div class="modal-body p-0">
-                <img id="modal-img" src="" alt="image" style="max-width: 100%; max-height: 80vh; margin: auto;" />
+<!-- Modal gallery -->
+<div class="modal fade" id="imgGalleryModal" tabindex="-1" aria-labelledby="imgGalleryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content bg-dark border-0 position-relative">
+            <div class="modal-header border-bottom bg-dark">
+                <h5 class="modal-title text-white" id="imgGalleryModalLabel">Hình ảnh</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body d-flex align-items-center justify-content-center p-0" style="position:relative;">
+                <button type="button" class="btn btn-light position-absolute top-50 start-0 translate-middle-y ms-2"
+                        id="galleryPrev" style="z-index:10">
+                    &lt;
+                </button>
+                <img id="galleryImg"
+                     style="display:block; max-width:100vw; max-height:100vh; width:auto; height:auto;">
+                <button type="button" class="btn btn-light position-absolute top-50 end-0 translate-middle-y me-2"
+                        id="galleryNext" style="z-index:10">
+                    &gt;
+                </button>
             </div>
         </div>
     </div>
 </div>
+
 
 
 <!-- Modal: Settings -->

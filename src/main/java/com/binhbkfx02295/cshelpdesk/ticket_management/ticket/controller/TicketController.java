@@ -2,10 +2,7 @@ package com.binhbkfx02295.cshelpdesk.ticket_management.ticket.controller;
 
 import com.binhbkfx02295.cshelpdesk.infrastructure.security.auth.UserPrincipal;
 import com.binhbkfx02295.cshelpdesk.ticket_management.note.dto.NoteDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketListDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDetailDTO;
-import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketSearchCriteria;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.*;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.service.TicketServiceImpl;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResponseEntityHelper;
 import com.binhbkfx02295.cshelpdesk.infrastructure.util.APIResultSet;
@@ -115,6 +112,11 @@ public class TicketController {
             log.error("Lỗi xuất Excel: ", e);
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @GetMapping("/findResolvedWithMessages")
+    public ResponseEntity<APIResultSet<List<TicketReportDTO>>> sadas() {
+        return APIResponseEntityHelper.from(ticketService.getForEvaluation());
     }
 
 
