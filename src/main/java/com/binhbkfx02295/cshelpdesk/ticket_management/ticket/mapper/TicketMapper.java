@@ -6,6 +6,8 @@ import com.binhbkfx02295.cshelpdesk.employee_management.employee.entity.Employee
 import com.binhbkfx02295.cshelpdesk.employee_management.employee.mapper.EmployeeMapper;
 import com.binhbkfx02295.cshelpdesk.facebookuser.entity.FacebookUser;
 import com.binhbkfx02295.cshelpdesk.facebookuser.mapper.FacebookUserMapper;
+import com.binhbkfx02295.cshelpdesk.message.dto.MessageDTO;
+import com.binhbkfx02295.cshelpdesk.message.entity.Message;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.entity.Category;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.mapper.CategoryMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.CategoryRepository;
@@ -22,11 +24,13 @@ import com.binhbkfx02295.cshelpdesk.ticket_management.tag.mapper.TagMapper;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketListDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDashboardDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketDetailDTO;
+import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.dto.TicketReportDTO;
 import com.binhbkfx02295.cshelpdesk.ticket_management.ticket.entity.Ticket;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -181,6 +185,25 @@ public class TicketMapper {
         if (entity.getMessages() != null && !entity.getMessages().isEmpty() && entity.getProgressStatus().getId() != 3) {
             dto.setHasNewMessage(!entity.getMessages().get(entity.getMessages().size() - 1).isSenderEmployee()
                     || entity.getMessages().get(entity.getMessages().size() - 1).isSenderSystem());
+        }
+        return dto;
+    }
+
+    public TicketReportDTO toReportDTO(Ticket entity) {
+        TicketReportDTO dto = new TicketReportDTO();
+        dto.setId(entity.getId());
+        dto.setName(entity.getAssignee().getName());
+        dto.setUsername(entity.getAssignee().getUsername());
+        dto.setCreatedAt(entity.getCreatedAt().getTime());
+        dto.setClosedAt(entity.getClosedAt().getTime());
+        for (Message message: entity.getMessages()) {
+            MessageDTO messageDTO = new MessageDTO();
+            messageDTO.setId(message.getId());
+            messageDTO.setText(message.getText());
+            messageDTO.setTimestamp(message.getTimestamp());
+            messageDTO.setSenderEmployee(message.isSenderEmployee());
+            messageDTO.setTicketId(message.getTicket().getId());
+            dto.getMessages().add(messageDTO);
         }
         return dto;
     }

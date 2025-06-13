@@ -86,6 +86,16 @@ public class MainController {
         return "pending"; // layout.html sẽ chèn fragment này
     }
 
+    @GetMapping("/term-of-service")
+    public String tos() {
+        return "term-of-service"; // layout.html sẽ chèn fragment này
+    }
+
+    @GetMapping("/privacy-policy")
+    public String privacy() {
+        return "privacy-policy"; // layout.html sẽ chèn fragment này
+    }
+
     private boolean isStaticAsset(String path) {
         return path.matches(".*\\.(css|js|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot)$");
     }

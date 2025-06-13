@@ -1,6 +1,7 @@
 package com.binhbkfx02295.cshelpdesk.openai.adapter;
 
 import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
+import com.binhbkfx02295.cshelpdesk.openai.common.PromptBuilder;
 import com.binhbkfx02295.cshelpdesk.openai.config.ModelRegistryConfig;
 import com.binhbkfx02295.cshelpdesk.openai.model.ModelSettings;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,8 +22,9 @@ public class GPT41MiniAdapter extends BaseGPTModelAdapter{
     public GPT41MiniAdapter(ModelRegistryConfig modelRegistryConfig,
                             RestTemplate restTemplate,
                             ObjectMapper objectMapper,
-                            MasterDataCache masterDataCache) {
-        super(restTemplate, objectMapper, masterDataCache);
+                            MasterDataCache masterDataCache,
+                            PromptBuilder promptBuilder) {
+        super(restTemplate, objectMapper, masterDataCache, promptBuilder);
         modelSettings = modelRegistryConfig.getGpt41Mini();
     }
 

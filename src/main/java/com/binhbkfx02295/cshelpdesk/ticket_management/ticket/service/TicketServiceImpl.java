@@ -5,7 +5,6 @@ import com.binhbkfx02295.cshelpdesk.infrastructure.common.cache.MasterDataCache;
 import com.binhbkfx02295.cshelpdesk.facebookuser.service.FacebookUserServiceImpl;
 import com.binhbkfx02295.cshelpdesk.message.dto.MessageDTO;
 import com.binhbkfx02295.cshelpdesk.message.entity.Message;
-import com.binhbkfx02295.cshelpdesk.message.service.MessageServiceImpl;
 import com.binhbkfx02295.cshelpdesk.openai.model.GPTResult;
 import com.binhbkfx02295.cshelpdesk.openai.service.GPTTicketService;
 import com.binhbkfx02295.cshelpdesk.ticket_management.category.repository.CategoryRepository;
@@ -50,7 +49,6 @@ public class TicketServiceImpl implements TicketService {
     private final NoteRepository noteRepository;
     private final FacebookUserServiceImpl facebookUserService;
     private final MasterDataCache cache;
-    private final MessageServiceImpl messageService;
     private final GPTTicketService gptService;
     private final CategoryRepository categoryRepository;
     private final EmotionRepository emotionRepository;
@@ -89,7 +87,6 @@ public class TicketServiceImpl implements TicketService {
             log.info("kiem tra map to detail DTO cua ticket: {}", mapper.toDetailDTO(cache.getTicket(saved.getId())));
             APIResultSet<TicketDetailDTO> result = APIResultSet.ok("Created successfully", mapper.toDetailDTO(cache.getTicket(saved.getId())));
             log.info(result.getMessage());
-            //TODO: publish event
             publisher.publishEvent(new TicketEvent(mapper.toDashboardDTO(cache.getTicket(saved.getId())), TicketEvent.Action.CREATED));
             return result;
 
@@ -120,9 +117,7 @@ public class TicketServiceImpl implements TicketService {
                             existing.getOverallResponseRate() == null ||
                             existing.getResolutionRate() == null)) {
                 existing.setClosedAt(new Timestamp(System.currentTimeMillis()));
-                calculateKPI(existing);
 
-                //TODO: goi analyse service
                 List<Message> messages = cache.getAllMessages().values().stream().filter(message ->
                         message.getTicket().getId() == existing.getId()).toList();
                 if (!messages.isEmpty()) {
@@ -144,7 +139,6 @@ public class TicketServiceImpl implements TicketService {
             entityManager.flush();
             entityManager.clear();
             cache.updateOpeningTickets();
-            //TODO: publish event
             if (saved.getProgressStatus().getId() == 3) {
                 Ticket temp = cache.getTicket(existing.getId());
                 if (temp == null) {
@@ -194,13 +188,11 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public APIResultSet<Void> addTagToTicket(int ticketId, int hashtagId) {
-        //TODO:
         return null;
     }
 
     @Override
     public APIResultSet<Void> removeTagFromTicket(int ticketId, int tagId) {
-        //TODO:
         return null;
     }
 
@@ -242,13 +234,11 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public APIResultSet<Void> addNoteToTicket(int ticketId, NoteDTO noteDTO) {
-        //TODO:
         return null;
     }
 
     @Override
     public APIResultSet<Void> deleteNoteFromTicket(int ticketId, int noteId) {
-        //TODO:
         return null;
     }
 
@@ -375,25 +365,16 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
-    private void calculateKPI(Ticket existing) {
+    @Override
+    public void calculateKPI(TicketReportDTO ticket) {
 
         long firstResponseRate = 0;
         long overallResponseRate = 0;
-        long resolutionRate = (existing.getClosedAt().getTime() - existing.getCreatedAt().getTime())/1000;
+        long resolutionRate = (ticket.getClosedAt() - ticket.getCreatedAt())/1000;
 
-        List<MessageDTO> messageList = new ArrayList<>();
-        APIResultSet<List<MessageDTO>> result;
-        result = messageService.getMessagesByTicketId(existing.getId());
-        if (result.isSuccess()) {
-            messageList.addAll(result.getData());
-        } else {
-            log.info("Loi tinh kpi ticket {}", result.getMessage());
-            return;
-        }
-
+        List<MessageDTO> messageList = ticket.getMessages();
         messageList.sort((o1, o2) -> o1.getId() - o2.getId());
 
-        // Tính first response time
         log.info("bat dau tinh");
         for (int i = 0; i < messageList.size(); i++) {
             MessageDTO current = messageList.get(i);
@@ -403,7 +384,6 @@ public class TicketServiceImpl implements TicketService {
             }
 
             if (current.isSenderEmployee()) {
-                // tìm tin nhắn trước đó là của khách hàng
                 MessageDTO customerMessage = messageList.get(i-1);
                 log.info(current.toString());
                 log.info(customerMessage.toString());
@@ -412,7 +392,6 @@ public class TicketServiceImpl implements TicketService {
             }
         }
 
-        // Tính average response time giữa mỗi lần khách nhắn và nhân viên trả lời
         List<Long> responseTimes = new ArrayList<>();
         MessageDTO lastCustomerMsg = null;
         for (MessageDTO msg : messageList) {
@@ -427,25 +406,37 @@ public class TicketServiceImpl implements TicketService {
             }
         }
 
-        //neu tin nhan cuoi cung la cua khach, thi lay thoi gian dong ticket tinh avg response
         if (lastCustomerMsg != null) {
-            long respTime = (existing.getClosedAt().getTime() - lastCustomerMsg.getTimestamp().getTime())/1000;
+            long respTime = (ticket.getClosedAt() - lastCustomerMsg.getTimestamp().getTime())/1000;
             if (respTime > 0) {
                 responseTimes.add(respTime);
             }
         }
-//        log.info("responseTimes: {}", responseTimes);
         overallResponseRate = responseTimes.isEmpty()
                 ? 0
                 : responseTimes.stream().mapToLong(Long::longValue).sum() / responseTimes.size();
 
-        // Gán lại vào Ticket nếu bạn có field tương ứng
-        existing.setFirstResponseRate(firstResponseRate);
-        existing.setOverallResponseRate(overallResponseRate);
-        existing.setResolutionRate(resolutionRate);
-        log.info("Ticket {} closed, tinh KPI thanh cong: {} {} {}", existing.getId(), firstResponseRate,
+        ticket.setFirstResponseTime(firstResponseRate);
+        ticket.setAvgResponseTime(overallResponseRate);
+        ticket.setResolutionTime(resolutionRate);
+        log.info("Ticket {} closed, tinh KPI thanh cong: {} {} {}", ticket.getId(), firstResponseRate,
                 overallResponseRate,
                 resolutionRate);
+    }
+
+
+    @Override
+    public APIResultSet<List<TicketReportDTO>> findResolvedByMonth(Timestamp startOfMonth, Timestamp endOfMonth) {
+        APIResultSet<List<TicketReportDTO>> result;
+        try {
+            List<Ticket> tickets = ticketRepository.findResolvedByMonth(startOfMonth, endOfMonth);
+            result = APIResultSet.ok("OK", tickets.stream().map(mapper::toReportDTO).toList());
+        } catch (Exception e) {
+            log.error("", e);
+            result = APIResultSet.internalError();
+        }
+        log.info(result.getMessage());
+        return result;
     }
 
     @Override
@@ -476,6 +467,19 @@ public class TicketServiceImpl implements TicketService {
             result = APIResultSet.internalError("Lỗi không thể assign ticket");
         }
         log.info(result.getMessage());
+        return result;
+    }
+
+    @Override
+    public APIResultSet<List<TicketReportDTO>> getForEvaluation() {
+        APIResultSet<List<TicketReportDTO>> result;
+        try {
+            List<Ticket> tickets = ticketRepository.findResolvedWithMessages();
+            result = APIResultSet.ok("Lấy ticket thành công", tickets.stream().map(mapper::toReportDTO).toList());
+        } catch (Exception e) {
+            result = APIResultSet.internalError("Lỗi không thể assign ticket");
+            log.error(result.getMessage(), e);
+        }
         return result;
     }
 

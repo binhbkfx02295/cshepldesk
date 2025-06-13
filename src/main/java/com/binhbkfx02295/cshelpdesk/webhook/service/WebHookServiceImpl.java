@@ -75,6 +75,11 @@ public class WebHookServiceImpl implements WebHookService {
                     TicketDetailDTO ticket;
                     if (result.isSuccess() && result.getData().getProgressStatus().getId() != 3) {
                         ticket = result.getData();
+                        if (ticket.getAssignee() == null) {
+                            if (autoAssign(ticket)) {
+                                ticketService.assignTicket(ticket.getId(), ticket);
+                            }
+                        }
                     } else {
                         //if no existign ticket, create, assign, add message -> save ticket to database;
                         facebookUser = getOrCreateFacebookUser(senderId);
@@ -89,11 +94,8 @@ public class WebHookServiceImpl implements WebHookService {
 
                         ticket = ticketService.createTicket(ticket).getData();
                     }
-                    if (ticket.getAssignee() == null) {
-                        if (autoAssign(ticket)) {
-                            ticketService.assignTicket(ticket.getId(), ticket);
-                        }
-                    }
+
+
 
                     messageDTO = convertToMessageDTO(messaging);
                     messageDTO.setTicketId(ticket.getId());

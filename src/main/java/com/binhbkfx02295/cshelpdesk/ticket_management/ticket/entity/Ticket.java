@@ -26,9 +26,7 @@ public class Ticket {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-
     private String title;
-
     private Timestamp createdAt;
     private Timestamp lastUpdateAt;
     private Timestamp closedAt;
